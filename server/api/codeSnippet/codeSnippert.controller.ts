@@ -2,7 +2,9 @@ import { Request, Response } from 'express';
 import { createClient } from '@supabase/supabase-js'
 import { supabaseKey, supabaseUrl, rootProjectDirectory } from '../../../utils/envVariable';
 import { folderLooper } from '../../../utils/iterateOverFolders';
-import { parseCode } from '../../../utils/treeSitter';
+import { parseCode, ParsedCode } from '../../../utils/treeSitter';
+import { createEmbeddings, createTextCompletion } from '../../../utils/openAi';
+import { CompletionResponse } from '../../../types/openAiTypes/openAiCompletionReqRes';
 
 // Create a single supabase client for interacting with your database
 const supabase = createClient(supabaseUrl, supabaseKey)
@@ -52,21 +54,84 @@ export const testParser = async (req: Request, res: Response) => {
 
         const serverDirectory = rootProjectDirectory + "/server"
         const utilsDirectory = rootProjectDirectory + "/utils"
+        const exampleDirectory = rootProjectDirectory + "/example"
+        const typeDirectory = rootProjectDirectory + "/types"
 
-        function handleSnippert(snippet: any) {
-            console.log({
-                pageContent: snippet,
-                metadata: {
-                    type: "code",
-                    codeSnippet: snippet,
-                    element: "1"
-                }
-            })
+        async function handleSnippet(snippet: ParsedCode) {
+            // TODO - run a gpt query to find what the code does
+
+            const codeExplaination = await createTextCompletion("What does this code snippet do: return only one string" + snippet.code)
+
+            const code_embedding = await createEmbeddings([snippet.code])
+
+            let code_explaination = null
+            let code_explaination_embedding = null
+
+            if (codeExplaination && codeExplaination.choices && codeExplaination.choices[0] && codeExplaination.choices[0].text) {
+                const { choices } = codeExplaination
+                code_explaination = choices[0].text
+                const e = await createEmbeddings([code_explaination])
+                code_explaination_embedding = e[0]
+            }
+
+            code_explaination_embedding = await createEmbeddings([code_explaination])
+
+
+            const dbRecord = {
+                code_string: snippet.code,
+                code_explaination,
+                code_explaination_embedding,
+                code_embedding,
+                relative_file_path: snippet.metadata.filePath,
+                parsed_code_type: snippet.metadata.type,
+            }
+
+            const { data, error } = await supabase
+                .from('code_snippet')
+                .insert([dbRecord])
+
+            console.log(data, error)
         }
 
-        folderLooper(utilsDirectory, parseCode, handleSnippert)
+        folderLooper(typeDirectory, parseCode, handleSnippet)
 
         res.status(200).json({ data: "done" })
+    } catch (error: any) {
+        res.status(500).json({ message: error.message });
+    }
+}
+
+
+export const testOpenAi = async (req: Request, res: Response) => {
+    try {
+
+        const response = await createTextCompletion("Can you build a model of an express server?", "Loading")
+        console.log(response)
+
+        res.status(200).json({ data: response })
+    } catch (error: any) {
+        res.status(500).json({ message: error.message });
+    }
+}
+
+
+export const searchCodeEmbeddings = async (req: Request, res: Response) => {
+    try {
+
+        const code = "const express = require('express'); const app = express(); const port = 3000; app.get('/', (req, res) => res.send('Hello World!')); app.listen(port, () => console.log(`Example app listening at http://localhost:${port}`));"
+
+        const code_embedding = await createEmbeddings([code])
+
+        const query = {
+            query_embedding: code_embedding,
+            similarity_threshold: 0.80,
+            match_count: 10,
+        }
+
+        const { data, error } = await supabase.rpc("match_code", query)
+        console.log(data, error)
+
+        res.status(200).json({ data })
     } catch (error: any) {
         res.status(500).json({ message: error.message });
     }

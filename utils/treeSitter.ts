@@ -11,36 +11,43 @@ const parser = new Parser();
 // TODO - will need to dynamically import the language
 parser.setLanguage(TypeScript);
 
-export async function parseCode(code: string, handleSnippet: any) {
+export interface ParseCode {
+    contents: string,
+    filePath: string
+}
 
-    const tree = parser.parse(code);
+export interface ParsedCodeMetadata {
+    element: any,
+    filePath: string,
+    type: string
+
+}
+
+export interface ParsedCode {
+    code: string,
+    metadata: ParsedCodeMetadata
+}
+
+export async function parseCode(code: ParseCode, handleSnippet: (parsedCode: ParsedCode) => void) {
+    const { contents, filePath } = code
+
+    const tree = parser.parse(contents);
     // Split the actual code into an array of lines
-    const lines = code.split('\n')
+    const lines = contents.split('\n')
 
     for await (const element of tree.rootNode.children) {
-        const { startPosition, endPosition } = element
+        const { startPosition, endPosition, type } = element
         const codeSnippet = getSubstringFromMultilineCode(lines, startPosition.row, startPosition.column, endPosition.row, endPosition.column)
-        console.log("code snippet>>>>>>>>>>>>>>>", codeSnippet)
-        // This part is not data intensive, so maybe we should add this to the DB so that we can query it later
-
-        // TODO - embed and store the code snippet 
-
-        // TODO - run a gpt query to find what the code does
-
-
-
-        // const whatDoesItDo = await generateText("What does this code snippet do" + codeSnippet, process.env.OPENAI_API_KEY ? process.env.OPENAI_API_KEY : "")
-        // console.log(whatDoesItDo)
 
         if (handleSnippet) {
-            handleSnippet([{
-                pageContent: codeSnippet,
+            handleSnippet({
+                code: codeSnippet,
                 metadata: {
-                    type: "code",
-                    codeSnippet,
-                    element
+                    element,
+                    filePath,
+                    type
                 }
-            }])
+            })
         }
     }
 }

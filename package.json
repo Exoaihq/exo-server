@@ -18,6 +18,9 @@
     "concurrently": "^7.6.0",
     "dotenv": "^16.0.3",
     "express": "^4.18.2",
+    "gpt-3-encoder": "^1.1.4",
+    "limiter": "^2.1.0",
+    "openai": "^3.2.1",
     "rimraf": "^4.4.0",
     "tree-sitter": "^0.20.1",
     "tree-sitter-typescript": "^0.20.1"

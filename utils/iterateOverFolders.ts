@@ -1,34 +1,25 @@
 import * as fs from 'fs';
 
-export const folderLooper = (folderPath: string, handleFile: any, handleSnippet: any) => {
+export const folderLooper = async (folderPath: string, handleFile: any, handleSnippet: any) => {
     let output = '';
-    const files = fs.readdirSync(folderPath);
-    files.forEach((file, index) => {
-        const filePath = `${folderPath}/${file}`;
-        const stats = fs.statSync(filePath);
-        if (stats.isFile()) {
-            console.log("File path >>>>>>>>>>>>>>>>>>", filePath)
+    const files = fs.readdir(folderPath, async (err: any, files: any) => {
+        for await (const file of files) {
+            const filePath = `${folderPath}/${file}`;
+            const stats = fs.statSync(filePath);
+            if (stats.isFile()) {
+                console.log("File path >>>>>>>>>>>>>>>>>>", filePath)
 
+                const contents = fs.readFileSync(filePath, 'utf8');
 
-            const contents = fs.readFileSync(filePath, 'utf8');
+                handleFile({ filePath, contents }, handleSnippet)
 
-            handleFile(contents, handleSnippet)
-
-
-            // parse the file into functions
-
-            // Use the parsing to create embedding snippets
-
-            // Store the embeddings
-
-            // Store the snippets?
-
-
-        } else if (stats.isDirectory()) {
-            console.log("Folder >>>>>>>>>>>>>>>>>>")
-            output += folderLooper(filePath, handleFile, handleSnippet);
+            } else if (stats.isDirectory()) {
+                console.log("Folder >>>>>>>>>>>>>>>>>>")
+                output += folderLooper(filePath, handleFile, handleSnippet);
+            }
         }
     });
+
     return output;
 };
 
