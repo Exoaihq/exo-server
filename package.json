@@ -1,0 +1,9 @@
+{
+  "name": "code-gen-server",
+  "version": "1.0.0",
+  "description": "Server to support the code generation electron app",
+  "main": "index.ts",
+  "author": "Kevin Grassi",
+  "license": "UNLICENSED",
+  "private": true
+}
