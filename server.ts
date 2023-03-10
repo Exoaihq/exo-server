@@ -1,6 +1,7 @@
 import express, { Express, Request, Response } from 'express';
-import { routes } from './routes';
+import routes from './routes';
 import cors from 'cors'
+import bodyParser from 'body-parser';
 
 const app: Express = express();
 const port = 8081;
@@ -9,6 +10,7 @@ var corsOptions = {
     origin: '*',
 }
 
+app.use(bodyParser.json())
 app.use(cors(corsOptions))
 
 app.use('/', routes)
