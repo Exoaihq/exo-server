@@ -5,9 +5,20 @@ import { folderLooper } from '../../../utils/iterateOverFolders';
 import { parseCode, ParsedCode } from '../../../utils/treeSitter';
 import { createEmbeddings, createTextCompletion } from '../../../utils/openAi';
 import { CompletionResponse } from '../../../types/openAiTypes/openAiCompletionReqRes';
+import { createCodeCompletionAddToFiles } from '../../../utils/generateCode';
 
 // Create a single supabase client for interacting with your database
 const supabase = createClient(supabaseUrl, supabaseKey)
+
+export const helloWorld = async (req: Request, res: Response) => {
+    try {
+
+        const hello = "Hello, this is Express + asdfsadasdfasdfasdfsadfasdfsadfdsa";
+        res.status(200).json({ hello })
+    } catch (error: any) {
+        res.status(500).json({ message: error.message });
+    }
+}
 
 export const getCodeSnippet = async (req: Request, res: Response) => {
     try {
@@ -114,7 +125,6 @@ export const testOpenAi = async (req: Request, res: Response) => {
     }
 }
 
-
 export const searchCodeEmbeddings = async (req: Request, res: Response) => {
     try {
 
@@ -132,6 +142,20 @@ export const searchCodeEmbeddings = async (req: Request, res: Response) => {
         console.log(data, error)
 
         res.status(200).json({ data })
+    } catch (error: any) {
+        res.status(500).json({ message: error.message });
+    }
+}
+
+export const generateCode = async (req: Request, res: Response) => {
+    try {
+
+        const prompt = "Can you create a html page with chatbot functionality?"
+
+        const response = await createCodeCompletionAddToFiles(prompt, "Loading")
+        console.log(response)
+
+        res.status(200).json({ data: response })
     } catch (error: any) {
         res.status(500).json({ message: error.message });
     }

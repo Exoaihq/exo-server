@@ -26,7 +26,6 @@ export async function createCodeCompletion(
 
 export async function createCodeCompletionAddToFiles(
   prompt: string,
-  apiKey: string,
   loadingMessage: string,
   location: string = "./"
 ) {
