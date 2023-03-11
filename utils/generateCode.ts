@@ -8,7 +8,7 @@ import { removeTest } from "./removeTextAfterString";
 import { createTextCompletion } from "./openAi";
 
 const writeATestPrompt = "Write a test in the same file.";
-const writeAFileNamePrompt = "Add a filename in the same file with a comment.";
+const writeAFileNamePrompt = "Add a filename in the same file with this format: filename: <filename>.<suffix>";
 
 function buildPromptWithTestAndFileName(prompt: string) {
   return `${prompt} ${writeATestPrompt} ${writeAFileNamePrompt}`;

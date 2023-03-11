@@ -150,9 +150,9 @@ export const searchCodeEmbeddings = async (req: Request, res: Response) => {
 export const generateCode = async (req: Request, res: Response) => {
     try {
 
-        const prompt = "Can you create a html page with chatbot functionality?"
+        const prompt = "Can you create a typescript react login page."
 
-        const response = await createCodeCompletionAddToFiles(prompt, "Loading")
+        const response = await createCodeCompletionAddToFiles(prompt, "Loading", "/Users/kg/Repos/code-gen-app/")
         console.log(response)
 
         res.status(200).json({ data: response })

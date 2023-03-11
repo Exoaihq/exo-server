@@ -1,5 +1,5 @@
 import { Router } from 'express';
-import { startChat } from './server/api/codeSnippet/chat.controller';
+import { runJavaScript, startChat, startClassification } from './server/api/codeSnippet/chat.controller';
 import { createCodeSnippet, generateCode, getCodeSnippet, helloWorld, searchCodeEmbeddings, testOpenAi, testParser } from './server/api/codeSnippet/codeSnippert.controller';
 
 
@@ -16,7 +16,8 @@ codeSnippet.get('/code-snippet/openai', testOpenAi);
 codeSnippet.get('/code-snippet/search', searchCodeEmbeddings);
 codeSnippet.get('/code-snippet/generate-code', generateCode);
 
-codeSnippet.post('/chat', startChat)
+codeSnippet.post('/chat', startClassification)
+codeSnippet.get('/chat', runJavaScript)
 
 routes.use(codeSnippet)
 
