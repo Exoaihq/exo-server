@@ -1,11 +1,11 @@
+import { createClient } from '@supabase/supabase-js';
 import { Request, Response } from 'express';
-import { createClient } from '@supabase/supabase-js'
-import { supabaseKey, supabaseUrl, rootProjectDirectory } from '../../../utils/envVariable';
-import { folderLooper } from '../../../utils/iterateOverFolders';
-import { parseCode, ParsedCode } from '../../../utils/treeSitter';
-import { createEmbeddings, createTextCompletion } from '../../../utils/openAi';
-import { CompletionResponse } from '../../../types/openAiTypes/openAiCompletionReqRes';
+import { rootProjectDirectory, supabaseKey, supabaseUrl } from '../../../utils/envVariable';
 import { createCodeCompletionAddToFiles } from '../../../utils/generateCode';
+import { iterateOverFolder, iterateOverFolderAndHandleFile, iterateOverFolderAndHandleFileContents } from '../../../utils/iterateOverFolders';
+import { createEmbeddings, createTextCompletion } from '../../../utils/openAi';
+import { extractFileNameAndPath, parseCode } from '../../../utils/treeSitter';
+import { addCodeToSupabase, addFileToSupabase } from './supabase.service';
 
 // Create a single supabase client for interacting with your database
 const supabase = createClient(supabaseUrl, supabaseKey)
@@ -68,43 +68,73 @@ export const testParser = async (req: Request, res: Response) => {
         const exampleDirectory = rootProjectDirectory + "/example"
         const typeDirectory = rootProjectDirectory + "/types"
 
-        async function handleSnippet(snippet: ParsedCode) {
-            // TODO - run a gpt query to find what the code does
 
-            const codeExplaination = await createTextCompletion("What does this code snippet do: return only one string" + snippet.code)
+        iterateOverFolderAndHandleFileContents(utilsDirectory, parseCode, addCodeToSupabase)
 
-            const code_embedding = await createEmbeddings([snippet.code])
+        res.status(200).json({ data: "done" })
+    } catch (error: any) {
+        res.status(500).json({ message: error.message });
+    }
+}
 
-            let code_explaination = null
-            let code_explaination_embedding = null
+export const addAllFilesToDb = async (req: Request, res: Response) => {
+    try {
 
-            if (codeExplaination && codeExplaination.choices && codeExplaination.choices[0] && codeExplaination.choices[0].text) {
-                const { choices } = codeExplaination
-                code_explaination = choices[0].text
-                const e = await createEmbeddings([code_explaination])
-                code_explaination_embedding = e[0]
-            }
+        const serverDirectory = rootProjectDirectory + "/server"
+        const utilsDirectory = rootProjectDirectory + "/utils"
+        const typeDirectory = rootProjectDirectory + "/types"
 
-            code_explaination_embedding = await createEmbeddings([code_explaination])
+        const parentDirectory = "code-gen-server"
 
+        async function handleFoundFile(file: string) {
 
-            const dbRecord = {
-                code_string: snippet.code,
-                code_explaination,
-                code_explaination_embedding,
-                code_embedding,
-                relative_file_path: snippet.metadata.filePath,
-                parsed_code_type: snippet.metadata.type,
-            }
+            const { fileName, extractedPath } = extractFileNameAndPath(file)
+            const relativeDirectory = extractedPath.split(parentDirectory)[1]
 
-            const { data, error } = await supabase
-                .from('code_snippet')
-                .insert([dbRecord])
-
-            console.log(data, error)
+            await addFileToSupabase({
+                fileName,
+                filePath: relativeDirectory ? relativeDirectory : "/",
+            })
         }
 
-        folderLooper(typeDirectory, parseCode, handleSnippet)
+        iterateOverFolderAndHandleFile(rootProjectDirectory, handleFoundFile)
+
+        res.status(200).json({ data: "done" })
+    } catch (error: any) {
+        res.status(500).json({ message: error.message });
+    }
+}
+
+
+export const testCodeNodeParsing = async (req: Request, res: Response) => {
+    try {
+
+        async function findFiles(directory: string) {
+            const { data, error } = await supabase.from('code_snippet')
+                .select('code_explaination')
+                .eq('relative_file_path', directory)
+            if (data && data[0]) {
+                const codeExplaination = data[0].code_explaination
+                console.log(codeExplaination.trim())
+            }
+        }
+
+        function handleFile(file: string) {
+            console.log(file)
+        }
+
+        const directory = rootProjectDirectory + "/server"
+
+        const output = iterateOverFolder(directory, findFiles)
+
+        // const path = "/Users/kg/Repos/code-gen-server/server/api/codeSnippet/codeSnippert.controller.ts"
+
+
+
+
+        // console.log(data, error)
+        // console.log(data?.length)
+
 
         res.status(200).json({ data: "done" })
     } catch (error: any) {

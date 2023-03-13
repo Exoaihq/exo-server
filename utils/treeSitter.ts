@@ -1,3 +1,4 @@
+import { ParseCode, ParsedCode, Element } from "../types/parseCode.types";
 import { getSubstringFromMultilineCode } from "./getSubstringFromMultilineCode";
 
 require("dotenv").config();
@@ -11,21 +12,14 @@ const parser = new Parser();
 // TODO - will need to dynamically import the language
 parser.setLanguage(TypeScript);
 
-export interface ParseCode {
-    contents: string,
-    filePath: string
-}
 
-export interface ParsedCodeMetadata {
-    element: any,
-    filePath: string,
-    type: string
 
-}
+export function extractFileNameAndPath(path: string): { fileName: string, extractedPath: string } {
 
-export interface ParsedCode {
-    code: string,
-    metadata: ParsedCodeMetadata
+    const fileName = path.split('/');
+    console.log(fileName)
+    const extractedPath = fileName.slice(0, fileName.length - 1).join('/');
+    return { fileName: fileName[fileName.length - 1], extractedPath }
 }
 
 export async function parseCode(code: ParseCode, handleSnippet: (parsedCode: ParsedCode) => void) {
@@ -36,16 +30,19 @@ export async function parseCode(code: ParseCode, handleSnippet: (parsedCode: Par
     const lines = contents.split('\n')
 
     for await (const element of tree.rootNode.children) {
-        const { startPosition, endPosition, type } = element
+        const { startPosition, endPosition, type }: Element = element
         const codeSnippet = getSubstringFromMultilineCode(lines, startPosition.row, startPosition.column, endPosition.row, endPosition.column)
+
+        const { fileName, extractedPath } = extractFileNameAndPath(filePath)
 
         if (handleSnippet) {
             handleSnippet({
                 code: codeSnippet,
                 metadata: {
                     element,
-                    filePath,
-                    type
+                    filePath: extractedPath,
+                    type,
+                    fileName
                 }
             })
         }

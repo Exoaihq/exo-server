@@ -11,7 +11,8 @@
     "prestart": "npm run build",
     "start": "node dist/server.js",
     "preserve": "npm run build",
-    "serve": "concurrently \"npx tsc -w\" \"nodemon dist/server.js\""
+    "serve": "concurrently \"npx tsc -w\" \"nodemon dist/server.js\"",
+    "generate-db-types": "npx supabase gen types typescript --project-id xexjtohvdexqxpomspdb --schema public > types/supabase.ts"
   },
   "dependencies": {
     "@supabase/supabase-js": "^2.10.0",
