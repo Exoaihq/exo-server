@@ -1,6 +1,6 @@
 import { Router } from 'express';
-import { runJavaScript, startChat, startClassification } from './server/api/codeSnippet/chat.controller';
-import { addAllFilesToDb, assignSnippetToFile, createCodeSnippet, findAllFilesWithoutExplainations, findAllFilesWithoutExplainationsAndAddThem, findAllSnippetsWithoutFiles, findAllSnippetsWithoutFilesAndAssign, findFileById, generateCode, getCodeSnippet, helloWorld, searchCodeEmbeddings, testCodeNodeParsing, testOpenAi, testParser } from './server/api/codeSnippet/codeSnippert.controller';
+import { runCalculator, startChat, startClassification } from './server/api/codeSnippet/chat.controller';
+import { addAllFilesToDb, assignSnippetToFile, createCodeSnippet, findAllFilesWithoutExplainations, findAllFilesWithoutExplainationsAndAddThem, findAllSnippetsWithoutFiles, findAllSnippetsWithoutFilesAndAssign, findFileById, generateCode, getCodeSnippet, helloWorld, searchCodeEmbeddings, testCodeNodeParsing, testOpenAi, testParser } from './server/api/codeSnippet/codeSnippet.controller';
 
 
 export const routes = Router();
@@ -27,7 +27,10 @@ codeSnippet.get('/code-files/find-without-explaination', findAllFilesWithoutExpl
 codeSnippet.get('/code-files/find-without-explaination-add-them', findAllFilesWithoutExplainationsAndAddThem)
 
 codeSnippet.post('/chat', startClassification)
-codeSnippet.get('/chat', runJavaScript)
+codeSnippet.get('/calculator', runCalculator)
+
+codeSnippet.get('/query', startChat)
+
 
 routes.use(codeSnippet)
 

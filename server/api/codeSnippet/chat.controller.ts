@@ -31,7 +31,7 @@ export const startChat = async (req: Request, res: Response) => {
     }
 }
 
-export const runJavaScript = async (req: Request, res: Response) => {
+export const runCalculator = async (req: Request, res: Response) => {
 
 
     const prompt = "You are GPT-3, and you can't do math.\
