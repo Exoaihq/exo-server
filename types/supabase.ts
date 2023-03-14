@@ -142,6 +142,20 @@ export interface Database {
           similarity: number
         }[]
       }
+      match_code_file: {
+        Args: {
+          query_embedding: unknown
+          similarity_threshold: number
+          match_count: number
+        }
+        Returns: {
+          id: number
+          file_explaination: string
+          file_name: string
+          file_path: string
+          similarity: number
+        }[]
+      }
       match_documents: {
         Args: {
           query_embedding: unknown

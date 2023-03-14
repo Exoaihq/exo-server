@@ -81,24 +81,10 @@ export async function createImage(prompt: string, responseFormat: ResponseFormat
     }
 }
 
-function truncateStringTokens(str: string, maxTokens = 2046) {
+export function truncateStringTokens(str: string, maxTokens = 2046) {
     let encoded = encode(str || "");
     return decode(encoded.slice(0, maxTokens));
 };
 
 
-export async function createEmbeddings(documents: Array<any>, model?: string): Promise<any> {
-    const configuration = new Configuration({
-        apiKey: openAiApiKey
-    });
 
-    const openai = new OpenAIApi(configuration);
-    const response = await openai.createEmbedding({
-        model: model || "text-embedding-ada-002",
-        input: documents.map((d) =>
-            truncateStringTokens(d.replace("\n", " "), 8191)
-        ),
-    });
-    const [{ embedding }] = response?.data?.data
-    return embedding
-};

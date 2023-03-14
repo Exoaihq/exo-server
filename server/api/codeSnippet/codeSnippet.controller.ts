@@ -3,8 +3,9 @@ import { Request, Response } from 'express';
 import { rootProjectDirectory, supabaseKey, supabaseUrl } from '../../../utils/envVariable';
 import { createCodeCompletionAddToFiles } from '../../../utils/generateCode';
 import { iterateOverFolder, iterateOverFolderAndHandleFile, iterateOverFolderAndHandleFileContents } from '../../../utils/iterateOverFolders';
-import { createEmbeddings, createTextCompletion } from '../../../utils/openAi';
+import { createTextCompletion } from '../../../utils/openAi';
 import { extractFileNameAndPath, parseCode } from '../../../utils/treeSitter';
+import { createEmbeddings } from '../openai.service';
 import { addCodeToSupabase, addFileToSupabase, assignCodeSnippetToFile, assignExplainationsForFilesWhereNull, findAllSnippetWithoutFiles, findFileId, findFilesWithoutExplaination, findSnippetsWithoutFilesAndAssignFiles } from './supabase.service';
 
 // Create a single supabase client for interacting with your database

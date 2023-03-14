@@ -32,7 +32,6 @@ export async function createCodeCompletionAddToFiles(
   const res = await createTextCompletion(
     buildPromptWithTestAndFileName(prompt), loadingMessage
   );
-  console.log(res)
   try {
     let generatedCode = await res?.choices[0].text;
 
@@ -42,6 +41,24 @@ export async function createCodeCompletionAddToFiles(
       generatedCode = removeTest(generatedCode);
       createFile(createTestFileName(fileName), findTest, location);
     }
+    createFile(fileName, generatedCode, location);
+  } catch (error: any) {
+    console.log(error)
+  }
+
+  return res
+}
+
+export async function createCodeCompletionAddToNewNamedFile(
+  prompt: string,
+  loadingMessage: string,
+  location: string,
+  fileName: string
+) {
+  const res = await createTextCompletion(prompt, loadingMessage);
+  try {
+    let generatedCode = await res?.choices[0].text;
+
     createFile(fileName, generatedCode, location);
   } catch (error: any) {
     console.log(error)

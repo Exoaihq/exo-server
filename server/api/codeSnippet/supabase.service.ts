@@ -1,8 +1,9 @@
-import { createEmbeddings, createTextCompletion } from "../../../utils/openAi"
+import { createTextCompletion } from "../../../utils/openAi"
 import { createClient } from '@supabase/supabase-js'
 import { supabaseKey, supabaseUrl } from '../../../utils/envVariable';
 import { Database } from "../../../types/supabase"
 import { ParsedCode, ParsedDirectory, ParsedFile } from "../../../types/parseCode.types";
+import { createEmbeddings } from "../openai.service";
 
 // Create a single supabase client for interacting with your database
 const supabase = createClient<Database>(supabaseUrl, supabaseKey)
@@ -249,4 +250,24 @@ export async function assignExplainationsForFilesWhereNull(files: {
 
     }
 
+}
+
+export async function findFileByExplainationEmbedding(embedding: number[]) {
+
+    const query = {
+        query_embedding: embedding,
+        similarity_threshold: 0.50,
+        match_count: 10,
+    }
+
+    const { data, error } = await supabase.rpc("match_code_file", query)
+
+    if (error) {
+        console.log(error)
+        return null
+    }
+    if (!data) {
+        return null
+    }
+    return data
 }

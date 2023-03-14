@@ -1,4 +1,6 @@
 import { Router } from 'express';
+import { handleCodeCompletion } from './server/api/codeCompletion/codeCompletion.controller';
+import { findCodeFile } from './server/api/codeFile/codeFile.controller';
 import { runCalculator, startChat, startClassification } from './server/api/codeSnippet/chat.controller';
 import { addAllFilesToDb, assignSnippetToFile, createCodeSnippet, findAllFilesWithoutExplainations, findAllFilesWithoutExplainationsAndAddThem, findAllSnippetsWithoutFiles, findAllSnippetsWithoutFilesAndAssign, findFileById, generateCode, getCodeSnippet, helloWorld, searchCodeEmbeddings, testCodeNodeParsing, testOpenAi, testParser } from './server/api/codeSnippet/codeSnippet.controller';
 
@@ -29,8 +31,9 @@ codeSnippet.get('/code-files/find-without-explaination-add-them', findAllFilesWi
 codeSnippet.post('/chat', startClassification)
 codeSnippet.get('/calculator', runCalculator)
 
-codeSnippet.get('/query', startChat)
+codeSnippet.get('/query', findCodeFile)
 
+codeSnippet.post('/code', handleCodeCompletion)
 
 routes.use(codeSnippet)
 

@@ -2,6 +2,7 @@
 
 import { ChatMessage } from "../../types/chatMessage.type";
 import { openAiApiKey } from "../../utils/envVariable";
+import { truncateStringTokens } from "../../utils/openAi";
 const { Configuration, OpenAIApi } = require('openai');
 
 
@@ -88,14 +89,21 @@ export async function handlePromptAfterClassification(messages: ChatMessage[]) {
 
     const lastMessage = messages[messages.length - 1].content
     const completion = await queryClassification(lastMessage);
+    console.log(messages)
 
     const getTextAfterClassification = completion.data.choices[0].text.split("classification: ")[1].trim()
 
     switch (getTextAfterClassification) {
         case "code":
-            const code = await getCodeCompletion(lastMessage)
+            // const code = await getCodeCompletion(lastMessage)
             return {
-                data: code.data,
+                data: {
+                    choices: [
+                        {
+                            text: "It sounds like you'd like some help with some code. Do you want to work on a specific repo or just output some code to the scratch pad?"
+                        }
+                    ]
+                },
                 type: "code"
             }
         case "question":
@@ -118,6 +126,17 @@ export async function handlePromptAfterClassification(messages: ChatMessage[]) {
             }
 
     }
-
-
 }
+
+
+export async function createEmbeddings(documents: Array<any>, model?: string): Promise<any> {
+
+    const response = await openai.createEmbedding({
+        model: model || "text-embedding-ada-002",
+        input: documents.map((d) =>
+            truncateStringTokens(d.replace("\n", " "), 8191)
+        ),
+    });
+    const [{ embedding }] = response?.data?.data
+    return embedding
+};
