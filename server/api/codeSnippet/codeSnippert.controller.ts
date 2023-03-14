@@ -5,7 +5,7 @@ import { createCodeCompletionAddToFiles } from '../../../utils/generateCode';
 import { iterateOverFolder, iterateOverFolderAndHandleFile, iterateOverFolderAndHandleFileContents } from '../../../utils/iterateOverFolders';
 import { createEmbeddings, createTextCompletion } from '../../../utils/openAi';
 import { extractFileNameAndPath, parseCode } from '../../../utils/treeSitter';
-import { addCodeToSupabase, addFileToSupabase } from './supabase.service';
+import { addCodeToSupabase, addFileToSupabase, assignCodeSnippetToFile, assignExplainationsForFilesWhereNull, findAllSnippetWithoutFiles, findFileId, findFilesWithoutExplaination, findSnippetsWithoutFilesAndAssignFiles } from './supabase.service';
 
 // Create a single supabase client for interacting with your database
 const supabase = createClient(supabaseUrl, supabaseKey)
@@ -186,6 +186,83 @@ export const generateCode = async (req: Request, res: Response) => {
         console.log(response)
 
         res.status(200).json({ data: response })
+    } catch (error: any) {
+        res.status(500).json({ message: error.message });
+    }
+}
+
+export const assignSnippetToFile = async (req: Request, res: Response) => {
+    try {
+
+        //file name = generateCode.ts
+        const response = await assignCodeSnippetToFile(176, 87)
+
+        res.status(200).json({ data: "done" })
+    } catch (error: any) {
+        res.status(500).json({ message: error.message });
+    }
+}
+
+export const findAllSnippetsWithoutFiles = async (req: Request, res: Response) => {
+    try {
+
+        //file name = generateCode.ts
+        const response = await findAllSnippetWithoutFiles()
+
+        res.status(200).json({ data: "done" })
+    } catch (error: any) {
+        res.status(500).json({ message: error.message });
+    }
+}
+
+export const findFileById = async (req: Request, res: Response) => {
+    try {
+
+        //file name = generateCode.ts
+        const response = await findFileId("generateCode.ts")
+
+        res.status(200).json({ data: "done" })
+    } catch (error: any) {
+        res.status(500).json({ message: error.message });
+    }
+}
+
+export const findAllSnippetsWithoutFilesAndAssign = async (req: Request, res: Response) => {
+    try {
+
+        //file name = generateCode.ts
+        const response = await findSnippetsWithoutFilesAndAssignFiles()
+
+        res.status(200).json({ data: "done" })
+    } catch (error: any) {
+        res.status(500).json({ message: error.message });
+    }
+}
+
+
+export const findAllFilesWithoutExplainations = async (req: Request, res: Response) => {
+    try {
+
+        //file name = generateCode.ts
+        const response = await findFilesWithoutExplaination()
+
+        res.status(200).json({ data: "done" })
+    } catch (error: any) {
+        res.status(500).json({ message: error.message });
+    }
+}
+
+
+
+export const findAllFilesWithoutExplainationsAndAddThem = async (req: Request, res: Response) => {
+    try {
+
+        //file name = generateCode.ts
+        const response = await findFilesWithoutExplaination()
+        console.log(response)
+        const assign = assignExplainationsForFilesWhereNull(response)
+
+        res.status(200).json({ data: "done" })
     } catch (error: any) {
         res.status(500).json({ message: error.message });
     }

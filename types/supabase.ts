@@ -40,6 +40,7 @@ export interface Database {
       }
       code_file: {
         Row: {
+          code_directory_id: number | null
           created_at: string
           file_explaination: string | null
           file_explaination_embedding: unknown | null
@@ -49,6 +50,7 @@ export interface Database {
           updated_at: string | null
         }
         Insert: {
+          code_directory_id?: number | null
           created_at?: string
           file_explaination?: string | null
           file_explaination_embedding?: unknown | null
@@ -58,6 +60,7 @@ export interface Database {
           updated_at?: string | null
         }
         Update: {
+          code_directory_id?: number | null
           created_at?: string
           file_explaination?: string | null
           file_explaination_embedding?: unknown | null
@@ -72,6 +75,7 @@ export interface Database {
           code_embedding: unknown | null
           code_explaination: string | null
           code_explaination_embedding: unknown | null
+          code_file_id: number | null
           code_string: string | null
           created_at: string
           end_column: number | null
@@ -88,6 +92,7 @@ export interface Database {
           code_embedding?: unknown | null
           code_explaination?: string | null
           code_explaination_embedding?: unknown | null
+          code_file_id?: number | null
           code_string?: string | null
           created_at?: string
           end_column?: number | null
@@ -104,6 +109,7 @@ export interface Database {
           code_embedding?: unknown | null
           code_explaination?: string | null
           code_explaination_embedding?: unknown | null
+          code_file_id?: number | null
           code_string?: string | null
           created_at?: string
           end_column?: number | null
