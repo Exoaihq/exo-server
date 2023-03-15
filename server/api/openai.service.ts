@@ -1,10 +1,19 @@
 
 
 import { ChatMessage } from "../../types/chatMessage.type";
+import { CompletionResponse } from "../../types/openAiTypes/openAiCompletionReqRes";
+import { EngineName } from "../../types/openAiTypes/openAiEngine";
+import { clearLoading, commandLineLoading } from "../../utils/commandLineLoadingl";
 import { openAiApiKey } from "../../utils/envVariable";
 import { truncateStringTokens } from "../../utils/openAi";
+import { RateLimiter } from "limiter";
 const { Configuration, OpenAIApi } = require('openai');
 
+// Allow 30 requests per min (the Open api limit for embeddings). Also understands
+// 'second', 'minute', 'day', or a number of milliseconds
+const limiter = new RateLimiter({ tokensPerInterval: 30, interval: "minute" });
+
+const raisingHands = String.fromCodePoint(0x1F64C)
 
 const configuration = new Configuration({
     apiKey: openAiApiKey
@@ -140,3 +149,35 @@ export async function createEmbeddings(documents: Array<any>, model?: string): P
     const [{ embedding }] = response?.data?.data
     return embedding
 };
+
+export async function createTextCompletion(prompt: string, loadingMessage: string = "Loading"): Promise<CompletionResponse> {
+    const configuration = new Configuration({
+        apiKey: openAiApiKey
+    });
+
+    const openai = new OpenAIApi(configuration);
+
+    const interval = commandLineLoading(loadingMessage);
+
+    try {
+        const remainingRequests = await limiter.removeTokens(1);
+        console.log(remainingRequests)
+        const res = await openai.createCompletion({
+            model: EngineName.TextDavinci,
+            prompt,
+            max_tokens: 2048,
+            temperature: 0,
+        });
+        const data: CompletionResponse = res.data;
+        clearLoading(interval, `${raisingHands} Query completed ${raisingHands}`);
+        return data;
+    } catch (error: any) {
+        if (error.response) {
+            clearLoading(interval, `Error status: ${error.response.status}`);
+            console.log(error.response.data);
+        } else {
+            clearLoading(interval, `Error status: ${error.message}`);
+        }
+        throw error;
+    }
+}

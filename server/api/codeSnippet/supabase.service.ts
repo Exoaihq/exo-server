@@ -1,9 +1,8 @@
-import { createTextCompletion } from "../../../utils/openAi"
 import { createClient } from '@supabase/supabase-js'
 import { supabaseKey, supabaseUrl } from '../../../utils/envVariable';
 import { Database } from "../../../types/supabase"
 import { ParsedCode, ParsedDirectory, ParsedFile } from "../../../types/parseCode.types";
-import { createEmbeddings } from "../openai.service";
+import { createEmbeddings, createTextCompletion } from "../openai.service";
 
 // Create a single supabase client for interacting with your database
 const supabase = createClient<Database>(supabaseUrl, supabaseKey)

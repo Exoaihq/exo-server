@@ -1,6 +1,6 @@
 
+import { createTextCompletion } from "../server/api/openai.service";
 import { getTimestamp } from "./getTimestamp";
-import { createTextCompletion } from "./openAi";
 
 const getFilenameFromComment = (comment: any) => {
   const regex = /filename: (.*)/;

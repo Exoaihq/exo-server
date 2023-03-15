@@ -4,7 +4,7 @@ import { rootProjectDirectory, supabaseKey, supabaseUrl } from '../../../utils/e
 import { createEmbeddings } from '../openai.service';
 import { findFileByExplainationEmbedding } from '../codeSnippet/supabase.service';
 import { checkForAllValuesInCodeCompletionDetails } from './codeCompletion.service';
-import { createCodeCompletion, createCodeCompletionAddToFiles, createCodeCompletionAddToNewNamedFile } from '../../../utils/generateCode';
+import { createCodeCompletion, createCodeCompletionAddToFiles, createCodeCompletionAddToNewNamedFile, refactorAFunction } from '../../../utils/generateCode';
 
 const supabase = createClient(supabaseUrl, supabaseKey)
 
@@ -30,7 +30,7 @@ export interface CodeCompletionDetails {
 export const handleCodeCompletion = async (req: Request, res: Response) => {
     try {
 
-        const { projectDirectory, projectFile, newFunction, requiredFunctionality } = req.body as CodeCompletionDetails
+        const { projectDirectory, projectFile, newFunction, requiredFunctionality, newFile } = req.body as CodeCompletionDetails
 
         // TODO - will need to check the db to make sure these are present
         const check = checkForAllValuesInCodeCompletionDetails(req.body as CodeCompletionDetails)
@@ -39,7 +39,28 @@ export const handleCodeCompletion = async (req: Request, res: Response) => {
             res.status(200).json({ data: check })
             return
         } else {
-            const response = await createCodeCompletionAddToNewNamedFile(requiredFunctionality, "Loading", projectDirectory, projectFile)
+
+            if (newFile) {
+                const response = await createCodeCompletionAddToNewNamedFile(requiredFunctionality, "Loading", projectDirectory, projectFile)
+            } else if (newFunction) {
+                // TODO - handle adding to a file
+
+            } else {
+                // Refactoring a function in a file 
+
+                try {
+                    const response = await refactorAFunction(requiredFunctionality, projectDirectory + "/" + projectFile)
+                    console.log("Adding to existing file, new function")
+                    res.status(200).json({ data: "How does that look?" })
+                } catch (error: any) {
+                    console.log(error)
+                    res.status(200).json({ data: "Something went wrong" })
+                }
+
+
+
+            }
+
         }
 
     } catch (error: any) {

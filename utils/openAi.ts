@@ -18,37 +18,7 @@ export enum ResponseFormat {
 
 const raisingHands = String.fromCodePoint(0x1F64C)
 
-export async function createTextCompletion(prompt: string, loadingMessage: string = "Loading"): Promise<CompletionResponse> {
-    const configuration = new Configuration({
-        apiKey: openAiApiKey
-    });
 
-    const openai = new OpenAIApi(configuration);
-
-    const interval = commandLineLoading(loadingMessage);
-
-    try {
-        const remainingRequests = await limiter.removeTokens(1);
-        console.log(remainingRequests)
-        const res = await openai.createCompletion({
-            model: EngineName.TextDavinci,
-            prompt,
-            max_tokens: 2048,
-            temperature: 0,
-        });
-        const data: CompletionResponse = res.data;
-        clearLoading(interval, `${raisingHands} Query completed ${raisingHands}`);
-        return data;
-    } catch (error: any) {
-        if (error.response) {
-            clearLoading(interval, `Error status: ${error.response.status}`);
-            console.log(error.response.data);
-        } else {
-            clearLoading(interval, `Error status: ${error.message}`);
-        }
-        throw error;
-    }
-}
 
 export async function createImage(prompt: string, responseFormat: ResponseFormat = ResponseFormat.URL, n: number = 2, size: string = "1024x1024",): Promise<any> {
 
