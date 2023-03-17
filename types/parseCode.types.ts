@@ -67,3 +67,15 @@ export const parseCodeTypes = [
         parse: false
     }
 ]
+
+export interface SnippetByFileName {
+    file_name: string | null,
+    id: number,
+    code_file_id: number | null,
+    code_string: string | null,
+    code_explaination: string | null,
+    start_row: number | null,
+    start_column: number | null,
+    end_row: number | null,
+    end_column: number | null
+}

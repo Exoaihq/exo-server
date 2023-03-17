@@ -1,24 +1,44 @@
 import * as fs from 'fs';
+import { compareAndUpdateSnippets, findSnippetByFileName } from '../server/api/codeSnippet/supabase.service';
+
+
+const foldersToExclude = ["node_modules", "dist", ".vscode", ".git", "yarn.lock"]
+
+const filesToExcule = ["yarn.lock", ".json"]
+
+
+function doesPathContainFolderToExclude(path: string): boolean {
+    return foldersToExclude.some(folder => path.includes(folder))
+}
+
+function doesPathContainFileToExclude(path: string): boolean {
+    return filesToExcule.some(file => path.includes(file))
+}
 
 export const iterateOverFolderAndHandleFileContents = async (folderPath: string, handleFile: any, handleSnippet: any) => {
     let output = '';
-    fs.readdir(folderPath, async (err: any, files: any) => {
-        for await (const file of files) {
-            const filePath = `${folderPath}/${file}`;
-            const stats = fs.statSync(filePath);
-            if (stats.isFile()) {
-                console.log("File path >>>>>>>>>>>>>>>>>>", filePath)
 
-                const contents = fs.readFileSync(filePath, 'utf8');
+    if (doesPathContainFolderToExclude(folderPath)) {
+        console.log("Skipping >>>>>>>>>>>>>>>>>>", folderPath)
+    } else {
+        fs.readdir(folderPath, async (err: any, files: any) => {
+            for await (const file of files) {
+                const filePath = `${folderPath}/${file}`;
+                const stats = fs.statSync(filePath);
+                if (stats.isFile()) {
+                    console.log("File path >>>>>>>>>>>>>>>>>>", filePath)
 
-                handleFile({ filePath, contents }, handleSnippet)
+                    const contents = fs.readFileSync(filePath, 'utf8');
 
-            } else if (stats.isDirectory()) {
-                console.log("Folder >>>>>>>>>>>>>>>>>>")
-                output += iterateOverFolderAndHandleFileContents(filePath, handleFile, handleSnippet);
+                    handleFile({ filePath, contents }, handleSnippet)
+
+                } else if (stats.isDirectory()) {
+                    console.log("Folder >>>>>>>>>>>>>>>>>>")
+                    output += iterateOverFolderAndHandleFileContents(filePath, handleFile, handleSnippet);
+                }
             }
-        }
-    });
+        });
+    }
 
     return output;
 };
@@ -90,7 +110,63 @@ const containsOnlyFiles = (folderPath: string): boolean => {
 }
 
 
-// Find a node with only files in it - find the node, if no node than create it
-// Get the child node folder
-// Find all the files in the folder (or other folders)
-// For each file get the explaination
+
+export const iterateOverFolderAndHandleAndUpdateFileContents = async (folderPath: string, handleFile: any, handleSnippet: any, printTotalsOnly: boolean = false) => {
+    let output = '';
+
+    let totalUpdateCount = 0
+    let totalMatchedCount = 0
+    let totalNotFound = 0
+
+
+    if (doesPathContainFolderToExclude(folderPath)) {
+        console.log("Skipping >>>>>>>>>>>>>>>>>>", folderPath)
+    } else {
+        fs.readdir(folderPath, async (err: any, files: any) => {
+
+            for await (const file of files) {
+                const filePath = `${folderPath}/${file}`;
+                const stats = fs.statSync(filePath);
+                if (stats.isFile()) {
+                    if (doesPathContainFileToExclude(filePath)) {
+                        console.log("Skipping >>>>>>>>>>>>>>>>>>", filePath)
+                        continue
+                    }
+
+                    const contents = fs.readFileSync(filePath, 'utf8');
+
+
+                    // Find all code snippets for this file
+                    const snippets = await findSnippetByFileName(file)
+
+                    if (snippets && snippets?.length > 0) {
+
+                        // Update the file with the snippet
+
+                        const { updateCount, matchedCount, notFound } = await compareAndUpdateSnippets({ filePath, contents }, snippets, printTotalsOnly);
+
+                        totalUpdateCount += updateCount
+                        totalMatchedCount += matchedCount
+                        totalNotFound += notFound
+                    }
+
+
+
+                } else if (stats.isDirectory()) {
+
+                    iterateOverFolderAndHandleAndUpdateFileContents(filePath, handleFile, handleSnippet, printTotalsOnly);
+                }
+            }
+
+            console.log("Total update count >>>>>>>>>>>>>>>>>>", totalUpdateCount)
+            console.log("Total matched count >>>>>>>>>>>>>>>>>>", totalMatchedCount)
+            console.log("Total not found ", folderPath, totalNotFound)
+        });
+    }
+
+    return {
+        totalUpdateCount,
+        totalMatchedCount,
+        totalNotFound
+    };
+};

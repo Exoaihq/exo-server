@@ -36,6 +36,9 @@ export async function createCodeCompletionAddToFiles(
   );
   try {
     let generatedCode = await res?.choices[0].text;
+    if (!generatedCode) {
+      return;
+    }
 
     const fileName = findFileName(generatedCode);
     const findTest = findAllTextAfterStringAndLineBreak(generatedCode, ".test");
@@ -60,6 +63,9 @@ export async function createCodeCompletionAddToNewNamedFile(
   const res = await createTextCompletion(prompt, loadingMessage);
   try {
     let generatedCode = await res?.choices[0].text;
+    if (!generatedCode) {
+      return;
+    }
 
     createFile(fileName, generatedCode, location);
   } catch (error: any) {
@@ -69,3 +75,31 @@ export async function createCodeCompletionAddToNewNamedFile(
   return res
 }
 
+// Takes a file name, parsed the code and uses it to prompt a new function
+export async function refactorFile(
+  prompt: string,
+  filePath: string
+) {
+
+  const prefix = "Here is a function you can refactor:"
+
+  let response = null
+
+  await fs.readFile(filePath, 'utf8', async function (err: any, data: any) {
+    if (err) throw err;
+
+    const entirePrompt = prefix + await data + "\n" + prompt
+    console.log(">>>>>>>>>>", entirePrompt)
+    const res = await createTextCompletion(entirePrompt, "Refactoring...");
+    if (res.choices[0].text) {
+      addCodeToTheBottonOfFile(filePath, res.choices[0].text);
+
+    }
+    console.log(res)
+    response = res
+    return res
+  });
+
+  return response
+
+}

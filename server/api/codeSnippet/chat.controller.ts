@@ -1,6 +1,8 @@
 import { Request, Response } from 'express';
 import { ChatMessage } from "../../../types/chatMessage.type";
-import { getChatCompletion, getCompletion, handlePromptAfterClassification } from "../openAi/openai.service";
+import { addCodeToTheBottonOfFile } from '../../../utils/appendFile';
+import { createFile } from '../../../utils/createfile';
+import { createTextCompletion, getChatCompletion, getCompletion, handlePromptAfterClassification } from "../openAi/openai.service";
 
 
 export const startClassification = async (req: Request, res: Response) => {
@@ -21,10 +23,21 @@ export const startChat = async (req: Request, res: Response) => {
 
 
     try {
-        const messages = req.body ? req.body : [];
-        const completion = await getChatCompletion(messages);
+        const messages = [
+            {
+                role: "user",
+                content: "Write a typescript function uses the open ai api response to check how many tokens are left in the api response and throttles the request if there are less than 100 tokens left"
+            }
+        ]
+        const completion = await createTextCompletion(messages[0].content, "Loading", "chat");
+        console.log(completion)
 
-        res.status(200).json({ data: completion.data })
+        const content = completion.choices[0].message?.content ? completion.choices[0].message?.content : ""
+        console.log(content)
+
+        createFile("gitDiff.ts", content, "./example")
+
+        res.status(200).json({ data: completion.choices[0] })
 
     } catch (error: any) {
         res.status(500).json({ message: error.message });

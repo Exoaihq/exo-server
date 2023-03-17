@@ -5,14 +5,20 @@ import { CompletionResponse } from "../../../types/openAiTypes/openAiCompletionR
 import { EngineName } from "../../../types/openAiTypes/openAiEngine";
 import { clearLoading, commandLineLoading } from "../../../utils/commandLineLoadingl";
 import { openAiApiKey } from "../../../utils/envVariable";
-import { truncateStringTokens } from "../../../utils/openAi";
+
 import { RateLimiter } from "limiter";
 import { getOpenAiModelsFromDb } from "../codeSnippet/supabase.service";
 const { Configuration, OpenAIApi } = require('openai');
+const { encode, decode } = require("gpt-3-encoder");
+
+export function truncateStringTokens(str: string, maxTokens = 2046) {
+    let encoded = encode(str || "");
+    return decode(encoded.slice(0, maxTokens));
+};
 
 // Allow 30 requests per min (the Open api limit for embeddings). Also understands
 // 'second', 'minute', 'day', or a number of milliseconds
-const limiter = new RateLimiter({ tokensPerInterval: 30, interval: "minute" });
+const limiter = new RateLimiter({ tokensPerInterval: 15, interval: "minute" });
 
 const raisingHands = String.fromCodePoint(0x1F64C)
 
@@ -30,7 +36,6 @@ export async function getOpenAiModels() {
         throw error
     }
 }
-
 
 export async function getChatCompletion(messages: any) {
 
@@ -61,8 +66,10 @@ export async function getCompletion(prompt: string) {
 
     try {
         return await openai.createCompletion({
-            model: gpt4 ? gpt4.id : "text-davinci-003",
+            model: "text-davinci-003",
             prompt,
+            max_tokens: 2048,
+            temperature: 0,
         })
     } catch (error: any) {
         console.log(error)
@@ -175,7 +182,7 @@ export async function createEmbeddings(documents: Array<any>, model?: string): P
     return embedding
 };
 
-export async function createTextCompletion(prompt: string, loadingMessage: string = "Loading"): Promise<CompletionResponse> {
+export async function createTextCompletion(prompt: string, loadingMessage: string = "Loading", type: string = "completion"): Promise<CompletionResponse> {
     const configuration = new Configuration({
         apiKey: openAiApiKey
     });
@@ -186,13 +193,12 @@ export async function createTextCompletion(prompt: string, loadingMessage: strin
 
     try {
         const remainingRequests = await limiter.removeTokens(1);
-        console.log(remainingRequests)
-        const res = await openai.createCompletion({
-            model: EngineName.TextDavinci,
-            prompt,
-            max_tokens: 2048,
-            temperature: 0,
-        });
+        const res = type === "completion" ? await getCompletion(prompt) : await getChatCompletion([
+            {
+                role: "user",
+                content: prompt
+            }
+        ])
         const data: CompletionResponse = res.data;
         clearLoading(interval, `${raisingHands} Query completed ${raisingHands}`);
         return data;

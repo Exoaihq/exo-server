@@ -49,7 +49,7 @@ export interface CompletionRequest extends BaseModel {
     user?: string;
 }
 export interface CompletionChoice {
-    text: string;
+    text?: string;
     index: number;
     logprobs: null | {
         tokens: string[];
@@ -58,6 +58,10 @@ export interface CompletionChoice {
         text_offset: number[];
     };
     finish_reason: string;
+    message?: {
+        role: string;
+        content: string;
+    }
 }
 export interface CompletionResponse {
     id: string;

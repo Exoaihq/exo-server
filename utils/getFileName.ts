@@ -33,6 +33,13 @@ export function findFileName(str: string): string {
 export async function generateFileNameWithOpenAi(prompt: string, suffix: string = "ts", apiKey: string) {
   const promptModifier = `Create a one line filename using camel case with a ${suffix} suffix from the following prompt:`
   return await createTextCompletion(promptModifier + prompt, "Generating file name").then(async (data) => {
-    return data.choices[0].text.trim()
+    return data.choices[0]?.text?.trim()
   })
+}
+
+export function extractFileNameAndPathFromFullPath(path: string): { fileName: string, extractedPath: string } {
+
+  const fileName = path.split('/');
+  const extractedPath = fileName.slice(0, fileName.length - 1).join('/');
+  return { fileName: fileName[fileName.length - 1], extractedPath }
 }

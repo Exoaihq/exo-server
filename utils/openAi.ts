@@ -51,10 +51,7 @@ export async function createImage(prompt: string, responseFormat: ResponseFormat
     }
 }
 
-export function truncateStringTokens(str: string, maxTokens = 2046) {
-    let encoded = encode(str || "");
-    return decode(encoded.slice(0, maxTokens));
-};
+
 
 
 

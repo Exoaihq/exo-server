@@ -2,8 +2,9 @@ import { createClient } from '@supabase/supabase-js';
 import { Request, Response } from 'express';
 import { rootProjectDirectory, supabaseKey, supabaseUrl } from '../../../utils/envVariable';
 import { createCodeCompletionAddToFiles } from '../../../utils/generateCode';
+import { extractFileNameAndPathFromFullPath } from '../../../utils/getFileName';
 import { iterateOverFolder, iterateOverFolderAndHandleFile, iterateOverFolderAndHandleFileContents } from '../../../utils/iterateOverFolders';
-import { extractFileNameAndPathFromFullPath, parseCode } from '../../../utils/treeSitter';
+import { parseCode } from '../../../utils/treeSitter';
 import { createEmbeddings, createTextCompletion } from '../openAi/openai.service';
 import { addCodeToSupabase, addFileToSupabase, assignCodeSnippetToFile, assignExplainationsForFilesWhereNull, findAllSnippetWithoutFiles, findFileId, findFilesWithoutExplaination, findSnippetsWithoutFilesAndAssignFiles } from './supabase.service';
 
@@ -69,7 +70,7 @@ export const testParser = async (req: Request, res: Response) => {
         const typeDirectory = rootProjectDirectory + "/types"
 
 
-        iterateOverFolderAndHandleFileContents(utilsDirectory, parseCode, addCodeToSupabase)
+        iterateOverFolderAndHandleFileContents(exampleDirectory, parseCode, addCodeToSupabase)
 
         res.status(200).json({ data: "done" })
     } catch (error: any) {
@@ -146,7 +147,9 @@ export const testCodeNodeParsing = async (req: Request, res: Response) => {
 export const testOpenAi = async (req: Request, res: Response) => {
     try {
 
-        const response = await createTextCompletion("Can you build a model of an express server?", "Loading")
+        const prompt = "Write a typescript that takes the result of a git diff and outputs an object with the name of the file updated and the line numbers of the changes."
+
+        const response = await createTextCompletion(prompt, "Loading")
         console.log(response)
 
         res.status(200).json({ data: response })
