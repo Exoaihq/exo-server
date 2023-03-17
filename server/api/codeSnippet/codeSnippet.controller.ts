@@ -3,8 +3,8 @@ import { Request, Response } from 'express';
 import { rootProjectDirectory, supabaseKey, supabaseUrl } from '../../../utils/envVariable';
 import { createCodeCompletionAddToFiles } from '../../../utils/generateCode';
 import { iterateOverFolder, iterateOverFolderAndHandleFile, iterateOverFolderAndHandleFileContents } from '../../../utils/iterateOverFolders';
-import { extractFileNameAndPath, parseCode } from '../../../utils/treeSitter';
-import { createEmbeddings, createTextCompletion } from '../openai.service';
+import { extractFileNameAndPathFromFullPath, parseCode } from '../../../utils/treeSitter';
+import { createEmbeddings, createTextCompletion } from '../openAi/openai.service';
 import { addCodeToSupabase, addFileToSupabase, assignCodeSnippetToFile, assignExplainationsForFilesWhereNull, findAllSnippetWithoutFiles, findFileId, findFilesWithoutExplaination, findSnippetsWithoutFilesAndAssignFiles } from './supabase.service';
 
 // Create a single supabase client for interacting with your database
@@ -88,7 +88,7 @@ export const addAllFilesToDb = async (req: Request, res: Response) => {
 
         async function handleFoundFile(file: string) {
 
-            const { fileName, extractedPath } = extractFileNameAndPath(file)
+            const { fileName, extractedPath } = extractFileNameAndPathFromFullPath(file)
             const relativeDirectory = extractedPath.split(parentDirectory)[1]
 
             await addFileToSupabase({

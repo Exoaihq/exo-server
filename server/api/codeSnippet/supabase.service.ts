@@ -2,7 +2,8 @@ import { createClient } from '@supabase/supabase-js'
 import { supabaseKey, supabaseUrl } from '../../../utils/envVariable';
 import { Database } from "../../../types/supabase"
 import { ParsedCode, ParsedDirectory, ParsedFile } from "../../../types/parseCode.types";
-import { createEmbeddings, createTextCompletion } from "../openai.service";
+import { createEmbeddings, createTextCompletion } from "../openAi/openai.service";
+import { AddModel } from '../../../types/openAiTypes/openAiEngine';
 
 // Create a single supabase client for interacting with your database
 const supabase = createClient<Database>(supabaseUrl, supabaseKey)
@@ -268,5 +269,32 @@ export async function findFileByExplainationEmbedding(embedding: number[]) {
     if (!data) {
         return null
     }
+    return data
+}
+
+
+export async function updateOpenAiModels(models: AddModel[]) {
+
+    const { data, error } = await supabase
+        .from('openai_models')
+        .upsert(models)
+
+    console.log(data, error)
+}
+
+export async function getOpenAiModelsFromDb(): Promise<{
+    created_at: string | null;
+    id: string;
+    object: string | null;
+    ready: boolean | null;
+    updated_at: string;
+}[] | null> {
+
+    const { data, error } = await supabase
+        .from('openai_models')
+        .select("*")
+
+    console.log(data, error)
+
     return data
 }

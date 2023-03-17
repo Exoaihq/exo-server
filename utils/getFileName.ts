@@ -1,5 +1,5 @@
 
-import { createTextCompletion } from "../server/api/openai.service";
+import { createTextCompletion } from "../server/api/openAi/openai.service";
 import { getTimestamp } from "./getTimestamp";
 
 const getFilenameFromComment = (comment: any) => {

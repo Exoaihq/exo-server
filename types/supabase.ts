@@ -123,6 +123,29 @@ export interface Database {
           updated_at?: string | null
         }
       }
+      openai_models: {
+        Row: {
+          created_at: string | null
+          id: string
+          object: string | null
+          ready: boolean | null
+          updated_at: string
+        }
+        Insert: {
+          created_at?: string | null
+          id: string
+          object?: string | null
+          ready?: boolean | null
+          updated_at?: string
+        }
+        Update: {
+          created_at?: string | null
+          id?: string
+          object?: string | null
+          ready?: boolean | null
+          updated_at?: string
+        }
+      }
     }
     Views: {
       [_ in never]: never

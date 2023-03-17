@@ -1,6 +1,6 @@
 
 
-import { createTextCompletion } from "../server/api/openai.service";
+import { createTextCompletion } from "../server/api/openAi/openai.service";
 import { addCodeToTheBottonOfFile } from "./appendFile";
 import { createFile } from "./createfile";
 import { findAllTextAfterStringAndLineBreak } from "./findTextAfterComment";
@@ -69,31 +69,3 @@ export async function createCodeCompletionAddToNewNamedFile(
   return res
 }
 
-// Takes a file name, parsed the code and uses it to prompt a new function
-export async function refactorAFunction(
-  prompt: string,
-  filePath: string
-) {
-
-  const prefix = "Here is a function you can refactor:"
-
-  let response = null
-
-  await fs.readFile(filePath, 'utf8', async function (err: any, data: any) {
-    if (err) throw err;
-
-    const entirePrompt = prefix + await data + "\n" + prompt
-    console.log(">>>>>>>>>>", entirePrompt)
-    const res = await createTextCompletion(entirePrompt, "Refactoring...");
-    if (res.choices[0].text) {
-      addCodeToTheBottonOfFile(filePath, res.choices[0].text);
-
-    }
-    console.log(res)
-    response = res
-    return res
-  });
-
-  return response
-
-}

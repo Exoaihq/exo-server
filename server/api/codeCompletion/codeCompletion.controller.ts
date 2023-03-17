@@ -1,10 +1,8 @@
-import { Request, Response } from 'express';
 import { createClient } from '@supabase/supabase-js';
-import { rootProjectDirectory, supabaseKey, supabaseUrl } from '../../../utils/envVariable';
-import { createEmbeddings } from '../openai.service';
-import { findFileByExplainationEmbedding } from '../codeSnippet/supabase.service';
-import { checkForAllValuesInCodeCompletionDetails } from './codeCompletion.service';
-import { createCodeCompletion, createCodeCompletionAddToFiles, createCodeCompletionAddToNewNamedFile, refactorAFunction } from '../../../utils/generateCode';
+import { Request, Response } from 'express';
+import { supabaseKey, supabaseUrl } from '../../../utils/envVariable';
+import { createCodeCompletionAddToNewNamedFile } from '../../../utils/generateCode';
+import { checkForAllValuesInCodeCompletionDetails, refactorFunctionInAFile } from './codeCompletion.service';
 
 const supabase = createClient(supabaseUrl, supabaseKey)
 
@@ -48,9 +46,14 @@ export const handleCodeCompletion = async (req: Request, res: Response) => {
             } else {
                 // Refactoring a function in a file 
 
+
+
                 try {
-                    const response = await refactorAFunction(requiredFunctionality, projectDirectory + "/" + projectFile)
-                    console.log("Adding to existing file, new function")
+
+                    const response = await refactorFunctionInAFile(requiredFunctionality, projectDirectory + "/" + projectFile, "getTomorrow")
+
+                    // const response = await refactorFile(requiredFunctionality, projectDirectory + "/" + projectFile)
+                    // console.log("Adding to existing file, new function")
                     res.status(200).json({ data: "How does that look?" })
                 } catch (error: any) {
                     console.log(error)

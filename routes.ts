@@ -3,6 +3,8 @@ import { handleCodeCompletion } from './server/api/codeCompletion/codeCompletion
 import { findCodeFile } from './server/api/codeFile/codeFile.controller';
 import { runCalculator, startChat, startClassification } from './server/api/codeSnippet/chat.controller';
 import { addAllFilesToDb, assignSnippetToFile, createCodeSnippet, findAllFilesWithoutExplainations, findAllFilesWithoutExplainationsAndAddThem, findAllSnippetsWithoutFiles, findAllSnippetsWithoutFilesAndAssign, findFileById, generateCode, getCodeSnippet, helloWorld, searchCodeEmbeddings, testCodeNodeParsing, testOpenAi, testParser } from './server/api/codeSnippet/codeSnippet.controller';
+import { getModels } from './server/api/openAi/openAi.controller';
+import { getOpenAiModels } from './server/api/openAi/openai.service';
 
 
 export const routes = Router();
@@ -34,6 +36,8 @@ codeSnippet.get('/calculator', runCalculator)
 codeSnippet.get('/query', findCodeFile)
 
 codeSnippet.post('/code', handleCodeCompletion)
+
+codeSnippet.get('/models', getModels)
 
 routes.use(codeSnippet)
 

@@ -1,7 +1,7 @@
 import { Request, Response } from 'express';
 import { createClient } from '@supabase/supabase-js';
 import { rootProjectDirectory, supabaseKey, supabaseUrl } from '../../../utils/envVariable';
-import { createEmbeddings } from '../openai.service';
+import { createEmbeddings } from '../openAi/openai.service';
 import { findFileByExplainationEmbedding } from '../codeSnippet/supabase.service';
 
 const supabase = createClient(supabaseUrl, supabaseKey)

@@ -1,12 +1,13 @@
 
 
-import { ChatMessage } from "../../types/chatMessage.type";
-import { CompletionResponse } from "../../types/openAiTypes/openAiCompletionReqRes";
-import { EngineName } from "../../types/openAiTypes/openAiEngine";
-import { clearLoading, commandLineLoading } from "../../utils/commandLineLoadingl";
-import { openAiApiKey } from "../../utils/envVariable";
-import { truncateStringTokens } from "../../utils/openAi";
+import { ChatMessage } from "../../../types/chatMessage.type";
+import { CompletionResponse } from "../../../types/openAiTypes/openAiCompletionReqRes";
+import { EngineName } from "../../../types/openAiTypes/openAiEngine";
+import { clearLoading, commandLineLoading } from "../../../utils/commandLineLoadingl";
+import { openAiApiKey } from "../../../utils/envVariable";
+import { truncateStringTokens } from "../../../utils/openAi";
 import { RateLimiter } from "limiter";
+import { getOpenAiModelsFromDb } from "../codeSnippet/supabase.service";
 const { Configuration, OpenAIApi } = require('openai');
 
 // Allow 30 requests per min (the Open api limit for embeddings). Also understands
@@ -21,10 +22,27 @@ const configuration = new Configuration({
 
 const openai = new OpenAIApi(configuration);
 
+export async function getOpenAiModels() {
+    try {
+        return await openai.listEngines();
+    } catch (error: any) {
+        console.log(error)
+        throw error
+    }
+}
+
+
 export async function getChatCompletion(messages: any) {
+
+    const availableEngines = await getOpenAiModelsFromDb()
+
+    const gpt4 = availableEngines?.find((engine: any) => {
+        return engine.id === "gpt-4"
+    })
+
     try {
         return await openai.createChatCompletion({
-            model: "gpt-3.5-turbo",
+            model: gpt4 ? gpt4.id : "gpt-3.5-turbo",
             messages,
         });
     } catch (error: any) {
@@ -34,9 +52,16 @@ export async function getChatCompletion(messages: any) {
 }
 
 export async function getCompletion(prompt: string) {
+
+    const availableEngines = await getOpenAiModelsFromDb()
+
+    const gpt4 = availableEngines?.find((engine: any) => {
+        return engine.id === "gpt-4"
+    })
+
     try {
         return await openai.createCompletion({
-            model: "text-davinci-003",
+            model: gpt4 ? gpt4.id : "text-davinci-003",
             prompt,
         })
     } catch (error: any) {

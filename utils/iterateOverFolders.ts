@@ -2,7 +2,7 @@ import * as fs from 'fs';
 
 export const iterateOverFolderAndHandleFileContents = async (folderPath: string, handleFile: any, handleSnippet: any) => {
     let output = '';
-    const files = fs.readdir(folderPath, async (err: any, files: any) => {
+    fs.readdir(folderPath, async (err: any, files: any) => {
         for await (const file of files) {
             const filePath = `${folderPath}/${file}`;
             const stats = fs.statSync(filePath);

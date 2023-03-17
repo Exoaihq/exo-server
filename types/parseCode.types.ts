@@ -39,3 +39,31 @@ export interface ParsedFile {
     fileName: string,
     filePath: string,
 }
+
+export const parseCodeTypes = [
+    {
+        name: 'function_declaration',
+        prefix: 'function',
+        parse: true,
+    },
+    {
+        name: 'lexical_declaration',
+        prefix: 'const',
+        parse: true,
+    },
+    {
+        name: 'export_statement',
+        prefix: "export",
+        parse: true,
+    },
+    {
+        name: 'import_statement',
+        prefix: null,
+        parse: true
+    },
+    {
+        name: 'empty_statement',
+        prefix: null,
+        parse: false
+    }
+]

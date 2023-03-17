@@ -24,3 +24,9 @@ export interface ListEngine {
     data: Engine[];
     object: 'list';
 }
+
+export interface AddModel {
+    object: string;
+    id: string;
+    ready: boolean;
+}

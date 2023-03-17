@@ -1,6 +1,6 @@
 import { Request, Response } from 'express';
 import { ChatMessage } from "../../../types/chatMessage.type";
-import { getChatCompletion, getCompletion, handlePromptAfterClassification } from "../openai.service";
+import { getChatCompletion, getCompletion, handlePromptAfterClassification } from "../openAi/openai.service";
 
 
 export const startClassification = async (req: Request, res: Response) => {

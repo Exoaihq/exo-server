@@ -1,6 +1,10 @@
-import { Tree } from "tree-sitter";
+import { Tree, SyntaxNode } from "tree-sitter";
 import { ParseCode, ParsedCode, Element } from "../types/parseCode.types";
 import { getSubstringFromMultilineCode } from "./getSubstringFromMultilineCode";
+
+//https://github.com/tree-sitter/tree-sitter-javascript/blob/7a29d06274b7cf87d643212a433d970b73969016/src/node-types.json
+
+// javascript node types ^
 
 require("dotenv").config();
 const Parser = require("tree-sitter")
@@ -14,8 +18,12 @@ const parser = new Parser();
 parser.setLanguage(TypeScript);
 
 
+export async function parseFile(fileContents: string): Promise<Tree> {
+    return await parser.parse(fileContents)
+}
 
-export function extractFileNameAndPath(path: string): { fileName: string, extractedPath: string } {
+
+export function extractFileNameAndPathFromFullPath(path: string): { fileName: string, extractedPath: string } {
 
     const fileName = path.split('/');
     const extractedPath = fileName.slice(0, fileName.length - 1).join('/');
@@ -25,12 +33,11 @@ export function extractFileNameAndPath(path: string): { fileName: string, extrac
 export async function parseCode(code: ParseCode, handleSnippet: (parsedCode: ParsedCode) => void) {
     const { contents, filePath } = code
 
-    const tree = parser.parse(contents);
+    const tree = await parseFile(contents);
     // Split the actual code into an array of lines
     const lines = contents.split('\n')
 
     await iterateOverTree(tree, lines, filePath, handleSnippet)
-
 }
 
 export async function iterateOverTree(tree: Tree, lines: string[], filePath: string, handleSnippet: (parsedCode: ParsedCode) => void) {
@@ -38,7 +45,7 @@ export async function iterateOverTree(tree: Tree, lines: string[], filePath: str
         const { startPosition, endPosition, type }: Element = element
         const codeSnippet = getSubstringFromMultilineCode(lines, startPosition.row, startPosition.column, endPosition.row, endPosition.column)
 
-        const { fileName, extractedPath } = extractFileNameAndPath(filePath)
+        const { fileName, extractedPath } = extractFileNameAndPathFromFullPath(filePath)
 
         if (handleSnippet) {
             handleSnippet({
