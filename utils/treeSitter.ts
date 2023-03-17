@@ -1,6 +1,8 @@
 import { Tree, SyntaxNode } from "tree-sitter";
 import { ParseCode, ParsedCode, Element } from "../types/parseCode.types";
 import { getSubstringFromMultilineCode } from "./getSubstringFromMultilineCode";
+import { simpleGit, SimpleGit, CleanOptions, SimpleGitOptions } from 'simple-git';
+
 
 //https://github.com/tree-sitter/tree-sitter-javascript/blob/7a29d06274b7cf87d643212a433d970b73969016/src/node-types.json
 
@@ -40,7 +42,32 @@ export async function parseCode(code: ParseCode, handleSnippet: (parsedCode: Par
     await iterateOverTree(tree, lines, filePath, handleSnippet)
 }
 
+export async function getGitDiff() {
+    console.log(process.cwd());
+
+    const options: Partial<SimpleGitOptions> = {
+        baseDir: process.cwd(),
+        binary: 'git',
+        maxConcurrentProcesses: 6,
+        trimmed: false,
+    };
+
+    const git: SimpleGit = simpleGit(options);
+
+    const gitDiffOptions = [
+        "--word-diff",
+        "--unified=0"
+    ]
+
+    const diff = await git.diff(gitDiffOptions)
+    console.log(diff.split('@@'))
+    return diff
+}
+
 export async function iterateOverTree(tree: Tree, lines: string[], filePath: string, handleSnippet: (parsedCode: ParsedCode) => void) {
+
+    getGitDiff()
+
     for await (const element of tree.rootNode.children) {
         const { startPosition, endPosition, type }: Element = element
         const codeSnippet = getSubstringFromMultilineCode(lines, startPosition.row, startPosition.column, endPosition.row, endPosition.column)
