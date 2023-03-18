@@ -1,7 +1,9 @@
 import express, { Express, Request, Response } from 'express';
-import routes from './routes';
+import routes from './routes/routes';
 import cors from 'cors'
 import bodyParser from 'body-parser';
+import codeSnippetRoutes from './server/api/codeSnippet/codeSnippet.routes';
+import codeFileRoutes from './server/api/codeFile/codeFile.routes';
 
 const app: Express = express();
 const port = 8081;
@@ -13,7 +15,11 @@ var corsOptions = {
 app.use(bodyParser.json())
 app.use(cors(corsOptions))
 
+app.use('/code-file', codeFileRoutes)
+app.use('/code-snippet', codeSnippetRoutes)
 app.use('/', routes)
+
+
 app.listen(port, () => {
     console.log(`[Server]: Running at https://localhost:${port}`);
 });
