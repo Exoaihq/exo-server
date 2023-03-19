@@ -60,7 +60,7 @@ export async function createCodeCompletionAddToNewNamedFile(
   location: string,
   fileName: string
 ) {
-  const res = await createTextCompletion(prompt, loadingMessage);
+  const res = await createTextCompletion(prompt, loadingMessage, "chat");
   try {
     let generatedCode = await res?.choices[0].text;
     if (!generatedCode) {

@@ -107,8 +107,6 @@ export async function addCodeToSupabase(snippet: ParsedCode, dbSnippetId?: numbe
 
     const fileId = await findFileId(snippet.metadata.fileName)
 
-
-
     const dbRecord = {
         code_string: snippet.code,
         code_explaination,

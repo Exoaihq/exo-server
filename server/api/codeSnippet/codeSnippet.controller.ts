@@ -144,12 +144,12 @@ export const testCodeNodeParsing = async (req: Request, res: Response) => {
 }
 
 
-export const testOpenAi = async (req: Request, res: Response) => {
+export const testGpt4 = async (req: Request, res: Response) => {
     try {
 
-        const prompt = "Write a typescript that takes the result of a git diff and outputs an object with the name of the file updated and the line numbers of the changes."
+        const prompt = "Write a typescript function that writes a string to a file at a specific location and moved the existing code down"
 
-        const response = await createTextCompletion(prompt, "Loading")
+        const response = await createTextCompletion(prompt, "Loading", "chat")
         console.log(response)
 
         res.status(200).json({ data: response })

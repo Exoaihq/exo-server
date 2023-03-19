@@ -1,7 +1,7 @@
-import { Tree, SyntaxNode } from "tree-sitter";
-import { ParseCode, ParsedCode, Element } from "../types/parseCode.types";
+import { Tree } from "tree-sitter";
+import { Element, ParseCode, ParsedCode } from "../types/parseCode.types";
+import { extractFileNameAndPathFromFullPath } from "./getFileName";
 import { getSubstringFromMultilineCode } from "./getSubstringFromMultilineCode";
-import { simpleGit, SimpleGit, CleanOptions, SimpleGitOptions } from 'simple-git';
 
 
 //https://github.com/tree-sitter/tree-sitter-javascript/blob/7a29d06274b7cf87d643212a433d970b73969016/src/node-types.json
@@ -25,13 +25,6 @@ export async function parseFile(fileContents: string): Promise<Tree> {
 }
 
 
-export function extractFileNameAndPathFromFullPath(path: string): { fileName: string, extractedPath: string } {
-
-    const fileName = path.split('/');
-    const extractedPath = fileName.slice(0, fileName.length - 1).join('/');
-    return { fileName: fileName[fileName.length - 1], extractedPath }
-}
-
 export async function parseCode(code: ParseCode, handleSnippet: (parsedCode: ParsedCode) => void) {
     const { contents, filePath } = code
 
@@ -42,40 +35,43 @@ export async function parseCode(code: ParseCode, handleSnippet: (parsedCode: Par
     await iterateOverTree(tree, lines, filePath, handleSnippet)
 }
 
-export async function getGitDiff() {
-    console.log(process.cwd());
 
-    const options: Partial<SimpleGitOptions> = {
-        baseDir: process.cwd(),
-        binary: 'git',
-        maxConcurrentProcesses: 6,
-        trimmed: false,
-    };
-
-    const git: SimpleGit = simpleGit(options);
-
-    const gitDiffOptions = [
-        "--word-diff",
-        "--unified=0"
-    ]
-
-    const diff = await git.diff(gitDiffOptions)
-    console.log(diff.split('@@'))
-    return diff
-}
 
 export async function iterateOverTree(tree: Tree, lines: string[], filePath: string, handleSnippet: (parsedCode: ParsedCode) => void) {
 
-    getGitDiff()
+    const { fileName, extractedPath } = extractFileNameAndPathFromFullPath(filePath)
+
+    // const diff = await getDiffAndParse()
+
 
     for await (const element of tree.rootNode.children) {
         const { startPosition, endPosition, type }: Element = element
         const codeSnippet = getSubstringFromMultilineCode(lines, startPosition.row, startPosition.column, endPosition.row, endPosition.column)
 
-        const { fileName, extractedPath } = extractFileNameAndPathFromFullPath(filePath)
+        // diff.forEach((element) => {
+        //     const elementFileName = extractFileNameAndPathFromFullPath(element.fileName).fileName
+
+        //     if (elementFileName === fileName) {
+
+        //         element.changedLines.forEach((line) => {
+        //             if (inRange(line, startPosition.row, endPosition.row)) {
+        //                 console.log("match")
+        //                 // This code snippet needs to be update in the DB
+        //                 // TODO - update the code snippet in DB
+        //                 console.log(codeSnippet)
+        //                 console.log(startPosition, endPosition)
+        //             }
+        //         })
+        //         // console.log("match")
+        //         // console.log(element.changedLines)
+        //         // console.log(startPosition, endPosition)
+
+        //     }
+        // })
+
 
         if (handleSnippet) {
-            handleSnippet({
+            await handleSnippet({
                 code: codeSnippet,
                 metadata: {
                     element,
