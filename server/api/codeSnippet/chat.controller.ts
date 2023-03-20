@@ -26,15 +26,7 @@ export const startChat = async (req: Request, res: Response) => {
         const messages = [
             {
                 role: "user",
-                content: `Write a typescript function that takes a string and deserializes it to JSON. The function should return the deserialized object as a json and the function should take into account different values for the properties. for example:
-
-                input string: "done! Here is the completed object:\n{\n  \"projectDirectory\": \"/Users\",\n  \"refactorExistingCode\": false\n}
-                return value:
-                {
-                    "projectDirectory": "/Users",
-                    "refactorExistingCode": false
-                }
-                `
+                content: `Write a typescript function that creates a loading elipsis with three dots and cycles through them every second. The function should take a string as an argument and return the loading elipsis as a string.`
             }
         ]
         const completion = await createTextCompletion(messages[0].content, "Loading", "chat");
@@ -43,7 +35,7 @@ export const startChat = async (req: Request, res: Response) => {
         const content = completion.choices[0].message?.content ? completion.choices[0].message?.content : ""
         console.log(content)
 
-        createFile("deserialize.ts", content, "./example")
+        createFile("elipsis.ts", content, "./example")
 
         res.status(200).json({ data: completion.choices[0] })
 

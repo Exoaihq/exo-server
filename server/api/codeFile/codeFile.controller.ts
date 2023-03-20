@@ -1,10 +1,10 @@
-import { Request, Response } from 'express';
 import { createClient } from '@supabase/supabase-js';
+import { Request, Response } from 'express';
 import { rootProjectDirectory, supabaseKey, supabaseUrl } from '../../../utils/envVariable';
-import { createEmbeddings } from '../openAi/openai.service';
-import { addCodeToSupabase, findFileByExplainationEmbedding } from '../codeSnippet/supabase.service';
-import { iterateOverFolderAndHandleAndUpdateFileContents, iterateOverFolderAndHandleFileContents } from '../../../utils/iterateOverFolders';
+import { iterateOverFolderAndHandleAndUpdateFileContents } from '../../../utils/iterateOverFolders';
 import { parseCode } from '../../../utils/treeSitter';
+import { addCodeToSupabase, findFileByExplainationEmbedding } from '../codeSnippet/supabase.service';
+import { createEmbeddings } from '../openAi/openai.service';
 
 const supabase = createClient(supabaseUrl, supabaseKey)
 
@@ -31,9 +31,6 @@ export const findAndUpdateFiles = async (req: Request, res: Response) => {
         const serverDirectory = rootProjectDirectory
         // code-gen-server
         const serverRoot = serverDirectory.split("/").pop()
-
-
-        console.log(serverDirectory)
 
         iterateOverFolderAndHandleAndUpdateFileContents(serverDirectory, parseCode, addCodeToSupabase, true)
 

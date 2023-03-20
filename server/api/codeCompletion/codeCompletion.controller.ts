@@ -1,12 +1,11 @@
 import { createClient } from '@supabase/supabase-js';
 import { Request, Response } from 'express';
 import { ChatMessage, ChatUserType } from '../../../types/chatMessage.type';
-import { writeStringToFileAtLocation } from '../../../utils/appendFile';
+import { overwriteFile, writeStringToFileAtLocation } from '../../../utils/appendFile';
 import { createFile } from '../../../utils/createfile';
 import { supabaseKey, supabaseUrl } from '../../../utils/envVariable';
-import { createCodeCompletionAddToNewNamedFile } from '../../../utils/generateCode';
 import { createChatCompletion, createTextCompletion } from '../openAi/openai.service';
-import { checkForAllValuesInCodeCompletionDetails, refactorFunctionInAFile } from './codeCompletion.service';
+import { handleUsersDirAndRefactorResponses } from './codeCompletion.service';
 
 const supabase = createClient(supabaseUrl, supabaseKey)
 
@@ -44,59 +43,52 @@ export interface CodeCompletionDetails {
 export const handleCodeCompletion = async (req: Request, res: Response) => {
     try {
 
-        const initialDirectoryState = {
-            projectDirectory: "",
-            refactorExistingCode: false
-        }
-
-        const requiredFunctionalityInitialState = {
-            projectFile: "",
-            requiredFunctionality: ""
-        }
 
         const { messages, codeDirectory, codeDetails } = req.body as CodeCompletionRequest
         const { projectDirectory, refactorExistingCode } = codeDirectory
         const { projectFile, requiredFunctionality } = codeDetails
 
 
+
+        // If the user has providerd the project directory, refactor existing code, project file and required functionality then create the file with the functionality
+
+        let newFile = false
+        let updateFile = false
+
         if (projectDirectory && refactorExistingCode === false && projectFile && requiredFunctionality) {
-            const completion = await createTextCompletion(requiredFunctionality, "Loading", "chat");
-
-            const content = completion.choices[0].message?.content ? completion.choices[0].message?.content : ""
-            console.log(content)
-
-            createFile(projectFile, content, projectDirectory)
-
-            res.status(200).json({ data: completion })
-            return
+            newFile = true
         }
 
-        const directoryPrompt = `You an and api chatbot that is helping the user create code.
-            You need to get the use to complete the following object before you can continue:
-            ${JSON.stringify(initialDirectoryState, null, 2)}
-            Here is the conversation so far:
-            ${JSON.stringify(messages, null, 2)}
-            When the object is complete, return "done!" and the object.
-            Make sure to put quotes around the values.
-            Ask the user questions to complete the object.
-        `
-        const requiredFunctionalityPrompt = `You an and api chatbot that is helping the user create code. You need to get the use to complete the following object before you can continue:
-            ${JSON.stringify(requiredFunctionalityInitialState, null, 2)}
-            Here is the conversation so far:
-            ${JSON.stringify(messages, null, 2)}
-            When the object is complete, return "done!" and the object.
-            Make sure to put quotes around the values.
-            Ask the user questions to complete the object
-        `
+        if (projectDirectory && refactorExistingCode === true && projectFile && requiredFunctionality) {
+            updateFile = true
+        }
 
-        const messageStart: ChatMessage[] = [
-            {
-                role: ChatUserType.system,
-                content: codeDirectory.projectDirectory && codeDirectory.refactorExistingCode !== null ? requiredFunctionalityPrompt : directoryPrompt
+        const messageStart = await handleUsersDirAndRefactorResponses(req.body as CodeCompletionRequest)
+
+        const response = await createChatCompletion(newFile ? [{
+            role: ChatUserType.user,
+            content: requiredFunctionality
+        }] : messageStart)
+
+        if (newFile) {
+            const content = response.choices[0].message?.content ? response.choices[0].message?.content : ""
+            const splitOnQuotes = content.split("```")
+            createFile(projectFile, splitOnQuotes[1], projectDirectory)
+
+            // @ts-ignore
+            response.choices[0].message.content = splitOnQuotes[0]
+
+        }
+
+        if (updateFile) {
+            const content = response.choices[0].message?.content ? response.choices[0].message?.content : ""
+            if (content) {
+                const splitOnQuotes = content.split("```")
+                overwriteFile(projectDirectory + "/" + projectFile, splitOnQuotes[1])
+                // @ts-ignore
+                response.choices[0].message.content = splitOnQuotes[0]
             }
-        ]
-        const response = await createChatCompletion(messageStart)
-
+        }
 
         res.status(200).json({ data: response });
 

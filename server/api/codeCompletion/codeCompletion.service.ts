@@ -1,10 +1,87 @@
+import { ChatMessage, ChatUserType } from "../../../types/chatMessage.type";
 import { parseCodeTypes } from "../../../types/parseCode.types";
 import { addCodeToTheBottonOfFile } from "../../../utils/appendFile";
+import { createFile } from "../../../utils/createfile";
 import { findFileAndReturnContents } from "../../../utils/fileOperations.service";
 import { parseFile } from "../../../utils/treeSitter";
 import { createTextCompletion } from "../openAi/openai.service";
-import { CodeCompletionDetails } from "./codeCompletion.controller";
+import { CodeCompletionDetails, CodeCompletionRequest } from "./codeCompletion.controller";
 const fs = require('fs');
+
+
+
+export async function handleUsersDirAndRefactorResponses(response: CodeCompletionRequest): Promise<ChatMessage[]> {
+
+    const { messages, codeDirectory, codeDetails } = response
+
+    const initialDirectoryState = {
+        projectDirectory: "",
+        refactorExistingCode: false
+    }
+
+    const requiredFunctionalityInitialState = {
+        projectFile: "",
+        requiredFunctionality: ""
+    }
+
+    const { projectDirectory, refactorExistingCode } = codeDirectory
+    const { projectFile, requiredFunctionality } = codeDetails
+
+    const directoryPrompt = `You an and api chatbot that is helping the user create code.
+        You need to get the use to complete the following object before you can continue:
+        ${JSON.stringify(initialDirectoryState, null, 2)}
+        Here is the conversation so far:
+        ${JSON.stringify(messages, null, 2)}
+        When the object is complete, return "done!" and the object.
+        Make sure to put quotes around the values.
+        Ask the user questions to complete the object.
+    `
+    const requiredFunctionalityPrompt = `You an and api chatbot that is helping the user create code. You need to get the use to complete the following object before you can continue:
+        ${JSON.stringify(requiredFunctionalityInitialState, null, 2)}
+        Here is the conversation so far:
+        ${JSON.stringify(messages, null, 2)}
+        When the object is complete, return "done!" and the object.
+        Make sure to put quotes around the values.
+        Ask the user questions to complete the object
+    `
+
+
+
+    const getReleventPrompt = () => {
+
+        if (projectDirectory && refactorExistingCode === true && projectFile && requiredFunctionality) {
+
+            const fileConent = findFileAndReturnContents(projectDirectory + "/" + projectFile)
+
+            if (!fileConent) {
+                return "I can't find the file you want to update"
+            }
+            const promptForRefactoring = `You an and api chatbot that is helping the user create code. Here is the content of the file the user wants to update:
+            '''
+            ${fileConent}
+            '''
+            And here is the refactor the user wants to make:
+            ${requiredFunctionality}
+            `
+            return promptForRefactoring
+        } else if (!projectDirectory || (projectDirectory && refactorExistingCode === null)) {
+            return directoryPrompt
+        } else if (codeDirectory.projectDirectory && codeDirectory.refactorExistingCode !== null && (!projectFile || !requiredFunctionality)) {
+            return requiredFunctionalityPrompt
+        } else {
+            return "I don't know what to do"
+        }
+    }
+
+    const messageStart: ChatMessage[] = [
+        {
+            role: ChatUserType.system,
+            content: getReleventPrompt()
+        }
+    ]
+
+    return messageStart
+}
 
 
 export function checkForAllValuesInObject(object: any) {
@@ -19,22 +96,6 @@ function nullCheck(value: string) {
     return value === "" || value === null || value === undefined
 }
 
-
-export function checkForAllValuesInCodeCompletionDetails(object: CodeCompletionDetails) {
-    if (nullCheck(object.projectDirectory)) {
-        return "What project directory are we working in?"
-    } else if (nullCheck(object.projectFile)) {
-        return "What file are we working in?"
-    } else if (object.newFile === null) {
-        return "Are we creating a new file?"
-    } else if (object.newFunction === null) {
-        return "Are we creating a new function?"
-    } else if (nullCheck(object.requiredFunctionality)) {
-        return "What functionality are we trying to add?"
-    } else {
-        return "All values are present"
-    }
-}
 
 // Takes a file name, parsed the code and uses it to prompt a new function
 export async function refactorFile(

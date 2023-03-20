@@ -132,11 +132,6 @@ export const testCodeNodeParsing = async (req: Request, res: Response) => {
 
 
 
-
-        // console.log(data, error)
-        // console.log(data?.length)
-
-
         res.status(200).json({ data: "done" })
     } catch (error: any) {
         res.status(500).json({ message: error.message });
@@ -147,7 +142,7 @@ export const testCodeNodeParsing = async (req: Request, res: Response) => {
 export const testGpt4 = async (req: Request, res: Response) => {
     try {
 
-        const prompt = "Write a typescript function that writes a string to a file at a specific location and moved the existing code down"
+        const prompt = "Write a typescript function that creates a loading elipsis with three dots and cycles through them every second. The function should take a string as an argument and return the loading elipsis as a string."
 
         const response = await createTextCompletion(prompt, "Loading", "chat")
         console.log(response)

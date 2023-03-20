@@ -13,6 +13,10 @@ export async function addCodeToTheBottonOfFile(fileName: string, code: string) {
     }
 }
 
+export async function overwriteFile(filePath: string, code: string) {
+    await fs.writeFile(filePath, code, (err: any) => err && console.log(err));
+}
+
 
 
 export async function writeStringToFileAtLocation(

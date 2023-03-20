@@ -215,18 +215,12 @@ export async function createTextCompletion(prompt: string, loadingMessage: strin
 
 
 export async function createChatCompletion(messages: ChatMessage[], loadingMessage: string = "Loading"): Promise<CompletionResponse> {
-    const configuration = new Configuration({
-        apiKey: openAiApiKey
-    });
-
-    const openai = new OpenAIApi(configuration);
 
     const interval = commandLineLoading(loadingMessage);
 
     try {
         const remainingRequests = await limiter.removeTokens(1);
         const res = await getChatCompletion(messages)
-        console.log(res)
         const data: CompletionResponse = res.data;
         clearLoading(interval, `${raisingHands} Query completed ${raisingHands}`);
         return data;
