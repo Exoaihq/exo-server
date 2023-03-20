@@ -1,10 +1,10 @@
 import { createClient } from '@supabase/supabase-js';
 import { Request, Response } from 'express';
 import { ChatMessage, ChatUserType } from '../../../types/chatMessage.type';
-import { overwriteFile, writeStringToFileAtLocation } from '../../../utils/appendFile';
-import { createFile } from '../../../utils/createfile';
+import { CompletionResponse } from '../../../types/openAiTypes/openAiCompletionReqRes';
+import { writeStringToFileAtLocation } from '../../../utils/appendFile';
 import { supabaseKey, supabaseUrl } from '../../../utils/envVariable';
-import { createChatCompletion, createTextCompletion } from '../openAi/openai.service';
+import { createChatCompletion } from '../openAi/openai.service';
 import { handleUsersDirAndRefactorResponses } from './codeCompletion.service';
 
 const supabase = createClient(supabaseUrl, supabaseKey)
@@ -25,19 +25,22 @@ export interface CodeCompletionDetails {
     requiredFunctionality: string
 }
 
+export enum CodeCompletionResponseType {
+    newFile = "newFile",
+    updateFile = "updateFile",
+}
 
-/* Breaking down the code completion steps
-    1. Create a new project
-    2. Add to an existing project
-*/
+export interface CodeCompletionResponseMetadata {
+    type: CodeCompletionResponseType | undefined
+    projectDirectory: string,
+    projectFile: string,
+}
 
-/* Types of code completion:
-    1. Add to a new file
-    2. Add to an existing file, new function
-    3. Add to an existing file, existing function (refactor)
-*/
 
-//The project directory is /Users
+export interface CodeCompletionResponse {
+    openAiResponse: CompletionResponse,
+    metadata: CodeCompletionResponseMetadata
+}
 
 
 export const handleCodeCompletion = async (req: Request, res: Response) => {
@@ -48,49 +51,33 @@ export const handleCodeCompletion = async (req: Request, res: Response) => {
         const { projectDirectory, refactorExistingCode } = codeDirectory
         const { projectFile, requiredFunctionality } = codeDetails
 
-
-
-        // If the user has providerd the project directory, refactor existing code, project file and required functionality then create the file with the functionality
-
-        let newFile = false
-        let updateFile = false
+        let fileType;
 
         if (projectDirectory && refactorExistingCode === false && projectFile && requiredFunctionality) {
-            newFile = true
+            fileType = CodeCompletionResponseType.newFile
         }
 
         if (projectDirectory && refactorExistingCode === true && projectFile && requiredFunctionality) {
-            updateFile = true
+            fileType = CodeCompletionResponseType.updateFile
         }
 
         const messageStart = await handleUsersDirAndRefactorResponses(req.body as CodeCompletionRequest)
 
-        const response = await createChatCompletion(newFile ? [{
+        const response = await createChatCompletion(fileType === CodeCompletionResponseType.newFile ? [{
             role: ChatUserType.user,
             content: requiredFunctionality
         }] : messageStart)
 
-        if (newFile) {
-            const content = response.choices[0].message?.content ? response.choices[0].message?.content : ""
-            const splitOnQuotes = content.split("```")
-            createFile(projectFile, splitOnQuotes[1], projectDirectory)
-
-            // @ts-ignore
-            response.choices[0].message.content = splitOnQuotes[0]
-
-        }
-
-        if (updateFile) {
-            const content = response.choices[0].message?.content ? response.choices[0].message?.content : ""
-            if (content) {
-                const splitOnQuotes = content.split("```")
-                overwriteFile(projectDirectory + "/" + projectFile, splitOnQuotes[1])
-                // @ts-ignore
-                response.choices[0].message.content = splitOnQuotes[0]
+        const completionResponse: CodeCompletionResponse = {
+            openAiResponse: response,
+            metadata: {
+                type: fileType,
+                projectDirectory,
+                projectFile
             }
         }
 
-        res.status(200).json({ data: response });
+        res.status(200).json({ data: completionResponse });
 
 
         // const response = await refactorFunctionInAFile(requiredFunctionality, projectDirectory + "/" + projectFile, "getTomorrow")
