@@ -4,9 +4,10 @@ import cors from 'cors'
 import bodyParser from 'body-parser';
 import codeSnippetRoutes from './server/api/codeSnippet/codeSnippet.routes';
 import codeFileRoutes from './server/api/codeFile/codeFile.routes';
+import { port} from './utils/envVariable';
 
 const app: Express = express();
-const port = 8081;
+
 
 var corsOptions = {
     origin: '*',
