@@ -11,14 +11,14 @@
     "npm": ">=6"
   },
   "scripts": {
-    "build": "tsc",
     "prestart": "yarn run build",
     "start": "node dist/server.js",
-    "postinstall": "tsc",
     "preserve": "yarn run build",
     "serve": "concurrently \"npx tsc -w\" \"nodemon dist/server.js\"",
     "generate-db-types": "npx supabase gen types typescript --project-id xexjtohvdexqxpomspdb --schema public > types/supabase.ts",
-    "tsc": "tsc"
+    "tsc": "./node_modules/typescript/bin/tsc",
+    "build": "tsc",
+    "postinstall": "npm run build"  
   },
   "dependencies": {
     "@supabase/supabase-js": "^2.10.0",
