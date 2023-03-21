@@ -10,10 +10,10 @@
     "node": "18.x"
   },
   "scripts": {
-    "build": "rimraf dist && npx tsc",
-    "prestart": "npm run build",
+    "build": "rimraf dist && tsc",
+    "prestart": "yarn run build",
     "start": "node dist/server.js",
-    "preserve": "npm run build",
+    "preserve": "yarn run build",
     "serve": "concurrently \"npx tsc -w\" \"nodemon dist/server.js\"",
     "generate-db-types": "npx supabase gen types typescript --project-id xexjtohvdexqxpomspdb --schema public > types/supabase.ts"
   },
