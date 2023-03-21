@@ -17,7 +17,8 @@
     "postinstall": "tsc",
     "preserve": "yarn run build",
     "serve": "concurrently \"npx tsc -w\" \"nodemon dist/server.js\"",
-    "generate-db-types": "npx supabase gen types typescript --project-id xexjtohvdexqxpomspdb --schema public > types/supabase.ts"
+    "generate-db-types": "npx supabase gen types typescript --project-id xexjtohvdexqxpomspdb --schema public > types/supabase.ts",
+    "tsc": "tsc"
   },
   "dependencies": {
     "@supabase/supabase-js": "^2.10.0",
