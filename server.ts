@@ -21,6 +21,6 @@ app.use('/code-snippet', codeSnippetRoutes)
 app.use('/', routes)
 
 
-app.listen(port, () => {
+app.listen(process.env.PORT, () => {
     console.log(`[Server]: Running at https://localhost:${port}`);
 });
