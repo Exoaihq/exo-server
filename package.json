@@ -7,12 +7,14 @@
   "license": "UNLICENSED",
   "private": true,
   "engines": {
-    "node": "18.x"
+    "node": "18.x",
+    "npm": ">=6"
   },
   "scripts": {
-    "build": "rimraf dist && tsc",
+    "build": "tsc",
     "prestart": "yarn run build",
     "start": "node dist/server.js",
+    "postinstall": "tsc",
     "preserve": "yarn run build",
     "serve": "concurrently \"npx tsc -w\" \"nodemon dist/server.js\"",
     "generate-db-types": "npx supabase gen types typescript --project-id xexjtohvdexqxpomspdb --schema public > types/supabase.ts"
