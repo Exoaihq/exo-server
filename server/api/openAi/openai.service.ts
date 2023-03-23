@@ -41,13 +41,14 @@ export async function getChatCompletion(messages: any) {
 
     const availableEngines = await getOpenAiModelsFromDb()
 
-    const gpt4 = availableEngines?.find((engine: any) => {
-        return engine.id === "gpt-4"
-    })
+    //TODO - fix call to db
+    // const gpt4 = availableEngines?.find((engine: any) => {
+    //     return engine.id === "gpt-4"
+    // })
 
     try {
         return await openai.createChatCompletion({
-            model: gpt4 ? gpt4.id : "gpt-3.5-turbo",
+            model: "gpt-4",
             messages,
         });
     } catch (error: any) {
