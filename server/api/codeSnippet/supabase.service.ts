@@ -12,6 +12,13 @@ import { extractFileNameAndPathFromFullPath } from '../../../utils/getFileName';
 // Create a single supabase client for interacting with your database
 const supabase = createClient<Database>(supabaseUrl, supabaseKey)
 
+export async function checkSession(session: {
+    access_token: string;
+    refresh_token: string;
+}){
+    return await supabase.auth.setSession(session)
+} 
+
 function areAnyValuesNull(obj: any) {
     return Object.values(obj).some(x => x === null);
 }
