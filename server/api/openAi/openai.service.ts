@@ -47,12 +47,22 @@ export async function getChatCompletion(messages: any) {
     // })
 
     try {
-        return await openai.createChatCompletion({
+        const res =  await openai.createChatCompletion({
             model: "gpt-4",
             messages,
+            max_tokens: 10000,
         });
+
+        if (res.status === 429) {
+            console.log("Too many requests")
+            setTimeout(() => {
+                getChatCompletion(messages)
+            }, 2000)
+        }
+        return res
     } catch (error: any) {
         console.log(error)
+        console.log(error.message)
         throw error
     }
 }

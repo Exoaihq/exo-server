@@ -1,11 +1,10 @@
 import { ChatMessage, ChatUserType } from "../../../types/chatMessage.type";
 import { parseCodeTypes } from "../../../types/parseCode.types";
 import { addCodeToTheBottonOfFile } from "../../../utils/appendFile";
-import { createFile } from "../../../utils/createfile";
 import { findFileAndReturnContents } from "../../../utils/fileOperations.service";
 import { parseFile } from "../../../utils/treeSitter";
 import { createTextCompletion } from "../openAi/openai.service";
-import { CodeCompletionDetails, CodeCompletionRequest } from "./codeCompletion.controller";
+import { CodeCompletionRequest } from "./codeCompletion.controller";
 const fs = require('fs');
 
 
@@ -16,7 +15,7 @@ export async function handleUsersDirAndRefactorResponses(response: CodeCompletio
 
     const initialDirectoryState = {
         projectDirectory: "",
-        refactorExistingCode: false
+        refactorExistingCode: null
     }
 
     const requiredFunctionalityInitialState = {
@@ -32,7 +31,7 @@ export async function handleUsersDirAndRefactorResponses(response: CodeCompletio
         ${JSON.stringify(initialDirectoryState, null, 2)}
         Here is the conversation so far:
         ${JSON.stringify(messages, null, 2)}
-        When the object is complete, return "done!" and the object.
+        When the object is complete, return "Ok I have all the details. What would you like to do next?" and the object.
         Make sure to put quotes around the values.
         Ask the user questions to complete the object.
     `
@@ -40,7 +39,7 @@ export async function handleUsersDirAndRefactorResponses(response: CodeCompletio
         ${JSON.stringify(requiredFunctionalityInitialState, null, 2)}
         Here is the conversation so far:
         ${JSON.stringify(messages, null, 2)}
-        When the object is complete, return "done!" and the object.
+        When the object is complete, return "Ok I have all the details. Do you want me to make these changes?" and the object.
         Make sure to put quotes around the values.
         Ask the user questions to complete the object
     `

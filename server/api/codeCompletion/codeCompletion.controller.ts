@@ -49,17 +49,13 @@ export const handleCodeCompletion = async (req: Request, res: Response) => {
 
        const { access_token, refresh_token } = req.headers
 
-       if (!access_token || !refresh_token) {
-        res.status(401).json({ message: "You have to be logged in to do that" });
-    }
-
        const access = access_token as string
        const refresh = refresh_token as string
 
         const session = await checkSession({access_token: access, refresh_token: refresh})
         
    
-        if (!session || !session.data?.user) {
+        if (!access_token || !refresh_token ||!session || !session.data?.user) {
             res.status(401).json({ message: "You have to be logged in to do that" });
         }
     
