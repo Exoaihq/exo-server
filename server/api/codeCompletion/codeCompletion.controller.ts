@@ -19,6 +19,7 @@ export interface CodeCompletionRequest {
     messages: ChatMessage[],
     codeDirectory: CodeDirectory
     codeDetails: CodeCompletionDetails
+    codeContent: string
 }
 
 export interface CodeCompletionDetails {
@@ -54,13 +55,11 @@ export const handleCodeCompletion = async (req: Request, res: Response) => {
 
         const session = await checkSession({access_token: access, refresh_token: refresh})
         
-   
         if (!access_token || !refresh_token ||!session || !session.data?.user) {
-            res.status(401).json({ message: "You have to be logged in to do that" });
+            return res.status(401).json({ message: "You have to be logged in to do that" });
         }
     
-
-        const { messages, codeDirectory, codeDetails } = req.body as CodeCompletionRequest
+        const { codeDirectory, codeDetails } = req.body as CodeCompletionRequest
         const { projectDirectory, refactorExistingCode } = codeDirectory
         const { projectFile, requiredFunctionality } = codeDetails
 
@@ -90,7 +89,7 @@ export const handleCodeCompletion = async (req: Request, res: Response) => {
             }
         }
 
-        res.status(200).json({ data: completionResponse });
+        return res.status(200).json({ data: completionResponse });
 
 
         // const response = await refactorFunctionInAFile(requiredFunctionality, projectDirectory + "/" + projectFile, "getTomorrow")

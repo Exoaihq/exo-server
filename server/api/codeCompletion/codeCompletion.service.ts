@@ -11,7 +11,7 @@ const fs = require('fs');
 
 export async function handleUsersDirAndRefactorResponses(response: CodeCompletionRequest): Promise<ChatMessage[]> {
 
-    const { messages, codeDirectory, codeDetails } = response
+    const { messages, codeDirectory, codeDetails, codeContent } = response
 
     const initialDirectoryState = {
         projectDirectory: "",
@@ -50,14 +50,12 @@ export async function handleUsersDirAndRefactorResponses(response: CodeCompletio
 
         if (projectDirectory && refactorExistingCode === true && projectFile && requiredFunctionality) {
 
-            const fileConent = findFileAndReturnContents(projectDirectory + "/" + projectFile)
-
-            if (!fileConent) {
+            if (!codeContent) {
                 return "I can't find the file you want to update"
             }
             const promptForRefactoring = `You an and api chatbot that is helping the user create code. Here is the content of the file the user wants to update:
             '''
-            ${fileConent}
+            ${codeContent}
             '''
             And here is the refactor the user wants to make:
             ${requiredFunctionality}
@@ -71,6 +69,8 @@ export async function handleUsersDirAndRefactorResponses(response: CodeCompletio
             return "I don't know what to do"
         }
     }
+
+    console.log(getReleventPrompt(), codeContent)
 
     const messageStart: ChatMessage[] = [
         {
