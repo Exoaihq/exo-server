@@ -1,176 +1,230 @@
 import { ChatMessage, ChatUserType } from "../../../types/chatMessage.type";
+import { EngineName } from "../../../types/openAiTypes/openAiEngine";
 import { parseCodeTypes } from "../../../types/parseCode.types";
 import { addCodeToTheBottonOfFile } from "../../../utils/appendFile";
 import { findFileAndReturnContents } from "../../../utils/fileOperations.service";
 import { parseFile } from "../../../utils/treeSitter";
-import { createTextCompletion } from "../openAi/openai.service";
-import { CodeCompletionRequest } from "./codeCompletion.controller";
-const fs = require('fs');
+import {
+  createChatCompletion,
+  createTextCompletion,
+} from "../openAi/openai.service";
+import {} from "./codeCompletion.controller";
+import {
+  OpenAiChatCompletionResponse,
+  CodeCompletionRequest,
+  CodeCompletionResponse,
+  CodeCompletionResponseMetadata,
+  CodeOrMessage,
+} from "./codeCompletion.types";
+import { getReleventPrompt, NeededValues } from "./codeCompletion.rules";
+import { basePrompt, refactorCodePrompt } from "./codeCompletion.prompts";
+const fs = require("fs");
 
-
-
-export async function handleUsersDirAndRefactorResponses(response: CodeCompletionRequest): Promise<ChatMessage[]> {
-
-    const { messages, codeDirectory, codeDetails, codeContent } = response
-
-    const initialDirectoryState = {
-        projectDirectory: "",
-        refactorExistingCode: null
-    }
-
-    const requiredFunctionalityInitialState = {
-        projectFile: "",
-        requiredFunctionality: ""
-    }
-
-    const { projectDirectory, refactorExistingCode } = codeDirectory
-    const { projectFile, requiredFunctionality } = codeDetails
-
-    const directoryPrompt = `You an and api chatbot that is helping the user create code.
-        You need to get the use to complete the following object before you can continue:
-        ${JSON.stringify(initialDirectoryState, null, 2)}
-        Here is the conversation so far:
-        ${JSON.stringify(messages, null, 2)}
-        When the object is complete, return "Ok I have all the details. What would you like to do next?" and the object.
-        Make sure to put quotes around the values.
-        Ask the user questions to complete the object.
-    `
-    const requiredFunctionalityPrompt = `You an and api chatbot that is helping the user create code. You need to get the use to complete the following object before you can continue:
-        ${JSON.stringify(requiredFunctionalityInitialState, null, 2)}
-        Here is the conversation so far:
-        ${JSON.stringify(messages, null, 2)}
-        When the object is complete, return "Ok I have all the details. Do you want me to make these changes?" and the object.
-        Make sure to put quotes around the values.
-        Ask the user questions to complete the object
-    `
-
-
-
-    const getReleventPrompt = () => {
-
-        if (projectDirectory && refactorExistingCode === true && projectFile && requiredFunctionality) {
-
-            if (!codeContent) {
-                return "I can't find the file you want to update"
-            }
-            const promptForRefactoring = `You an and api chatbot that is helping the user create code. Here is the content of the file the user wants to update:
-            '''
-            ${codeContent}
-            '''
-            And here is the refactor the user wants to make:
-            ${requiredFunctionality}
-            `
-            return promptForRefactoring
-        } else if (!projectDirectory || (projectDirectory && refactorExistingCode === null)) {
-            return directoryPrompt
-        } else if (codeDirectory.projectDirectory && codeDirectory.refactorExistingCode !== null && (!projectFile || !requiredFunctionality)) {
-            return requiredFunctionalityPrompt
-        } else {
-            return "I don't know what to do"
-        }
-    }
-
-    console.log(getReleventPrompt(), codeContent)
-
-    const messageStart: ChatMessage[] = [
-        {
-            role: ChatUserType.system,
-            content: getReleventPrompt()
-        }
-    ]
-
-    return messageStart
+function addSystemMessage(messages: ChatMessage[], content: string) {
+  return [
+    {
+      role: ChatUserType.system,
+      content,
+    },
+    ...messages,
+  ];
 }
 
+export async function runBaseClassificaitonChatCompletion(
+  messages: ChatMessage[]
+): Promise<OpenAiChatCompletionResponse> {
+  const newMessages = updateBaseClassificationSystemMessage(messages);
+  return await createChatCompletion(newMessages, EngineName.Turbo);
+}
+
+export function updateBaseClassificationSystemMessage(messages: ChatMessage[]) {
+  const prompt = basePrompt();
+
+  const addMessages = addSystemMessage(messages, prompt);
+  return addMessages;
+}
+
+export async function updateCodeCompletionSystemMessage(
+  request: CodeCompletionRequest,
+  metadata: CodeCompletionResponseMetadata
+): Promise<{
+  addMessages: ChatMessage[];
+  model: EngineName;
+  neededValues: NeededValues;
+}> {
+  const { messages } = request;
+  const { prompt, model, neededValues } = getReleventPrompt(request, metadata);
+
+  const addMessages = addSystemMessage(messages, prompt);
+
+  return { addMessages, model, neededValues };
+}
+
+export async function handleWritingNewFile(requiredFunctionality: string) {
+  return await createChatCompletion(
+    [
+      {
+        role: ChatUserType.user,
+        content: requiredFunctionality,
+      },
+    ],
+    EngineName.GPT4
+  );
+}
+
+export async function handleUpdatingExistingCode(
+  requiredFunctionality: string,
+  existingContent: string
+) {
+  return await createChatCompletion(
+    [
+      {
+        role: ChatUserType.user,
+        content: refactorCodePrompt(existingContent, requiredFunctionality),
+      },
+    ],
+    EngineName.GPT4
+  );
+}
+
+export function handleParsingCreatedCode(
+  response: OpenAiChatCompletionResponse,
+  metadata: CodeCompletionResponseMetadata
+): CodeCompletionResponse {
+  const parsedContent = parseReturnedCode(response.choices[0].message?.content);
+
+  const codeCompletionChoiceResponse = [
+    {
+      message: {
+        role: ChatUserType.assistant,
+        content: parsedContent.message,
+      },
+      index: response.choices[0].index,
+      finish_reason: response.choices[0].finish_reason,
+    },
+    {
+      message: {
+        role: ChatUserType.assistant,
+        content:
+          "How does it look? Let me know if you'd like to make any changes.",
+      },
+      index: response.choices[0].index,
+      finish_reason: response.choices[0].finish_reason,
+    },
+  ];
+
+  const completionResponse: CodeCompletionResponse = {
+    choices: codeCompletionChoiceResponse,
+    metadata,
+    completedCode: parsedContent.code,
+  };
+  return completionResponse;
+}
+
+export const parseReturnedCode = (
+  content: string
+): { message: string; code: string } => {
+  let res = {
+    message: "",
+    code: "",
+  };
+
+  if (content.includes("```")) {
+    const split = content.split("```");
+    res.message = split[0];
+    res.code = split[1];
+  } else if (content.includes("'''")) {
+    const split = content.split("'''");
+    res.message = split[0];
+    res.code = split[1];
+  }
+
+  return res;
+};
 
 export function checkForAllValuesInObject(object: any) {
-    for (const key in object) {
-        if (object[key] === "" || object[key] === null || object[key] === undefined) {
-            return false
-        }
+  for (const key in object) {
+    if (
+      object[key] === "" ||
+      object[key] === null ||
+      object[key] === undefined
+    ) {
+      return false;
     }
+  }
 }
 
 function nullCheck(value: string) {
-    return value === "" || value === null || value === undefined
+  return value === "" || value === null || value === undefined;
 }
 
-
 // Takes a file name, parsed the code and uses it to prompt a new function
-export async function refactorFile(
-    prompt: string,
-    filePath: string
-) {
+export async function refactorFile(prompt: string, filePath: string) {
+  const prefix = "Here is a function you can refactor:";
 
-    const prefix = "Here is a function you can refactor:"
+  let response = null;
 
-    let response = null
+  await fs.readFile(filePath, "utf8", async function (err: any, data: any) {
+    if (err) throw err;
 
-    await fs.readFile(filePath, 'utf8', async function (err: any, data: any) {
-        if (err) throw err;
+    const entirePrompt = prefix + (await data) + "\n" + prompt;
+    console.log(">>>>>>>>>>", entirePrompt);
+    const res = await createTextCompletion(entirePrompt, "Refactoring...");
+    if (res.choices[0].text) {
+      addCodeToTheBottonOfFile(filePath, res.choices[0].text);
+    }
+    console.log(res);
+    response = res;
+    return res;
+  });
 
-        const entirePrompt = prefix + await data + "\n" + prompt
-        console.log(">>>>>>>>>>", entirePrompt)
-        const res = await createTextCompletion(entirePrompt, "Refactoring...");
-        if (res.choices[0].text) {
-            addCodeToTheBottonOfFile(filePath, res.choices[0].text);
-
-        }
-        console.log(res)
-        response = res
-        return res
-    });
-
-    return response
-
+  return response;
 }
 
 // This is javascript scecific
 function getNameOfAFunction(fullFunction: string) {
-    const splitFunction = fullFunction.split(" ")
-    const functionOrConst = fullFunction.includes("function") ? "function" : "const"
-    const functionIndex = splitFunction.indexOf(functionOrConst)
-    return splitFunction[functionIndex + 1].replace(/[{()}]/g, '')
+  const splitFunction = fullFunction.split(" ");
+  const functionOrConst = fullFunction.includes("function")
+    ? "function"
+    : "const";
+  const functionIndex = splitFunction.indexOf(functionOrConst);
+  return splitFunction[functionIndex + 1].replace(/[{()}]/g, "");
 }
 
 // Takes a file name, parsed the code and uses it to prompt a new function
 export async function refactorFunctionInAFile(
-    prompt: string,
-    filePath: string,
-    functionName: string
+  prompt: string,
+  filePath: string,
+  functionName: string
 ) {
+  const prefix = "Here is a function you can refactor:";
 
-    const prefix = "Here is a function you can refactor:"
+  let response = null;
 
-    let response = null
+  const fileContents = findFileAndReturnContents(filePath);
 
-    const fileContents = findFileAndReturnContents(filePath)
+  const tree = await parseFile(fileContents);
 
-    const tree = await parseFile(fileContents)
+  for await (const element of tree.rootNode.children) {
+    const { type, text, startPosition, endPosition } = element;
 
-    for await (const element of tree.rootNode.children) {
-        const { type, text, startPosition, endPosition } = element
+    const fullElement = element.text;
+    const namedChild = element.namedChildren;
 
-        const fullElement = element.text
-        const namedChild = element.namedChildren
+    if (
+      parseCodeTypes.find((type) => type.name === element.type && type.parse)
+    ) {
+      const nameOfFunction = getNameOfAFunction(fullElement);
+      const match = functionName.includes(nameOfFunction);
 
-        if (parseCodeTypes.find((type) => type.name === element.type && type.parse)) {
-
-            const nameOfFunction = getNameOfAFunction(fullElement)
-            const match = functionName.includes(nameOfFunction)
-
-            if (match) {
-                console.log(">>>>>>>>>>", fullElement)
-                return fullElement
-            } else {
-                console.log("Function does not exist in file")
-            }
-        }
-
-
+      if (match) {
+        console.log(">>>>>>>>>>", fullElement);
+        return fullElement;
+      } else {
+        console.log("Function does not exist in file");
+      }
     }
+  }
 
-
-    return response
-
+  return response;
 }
