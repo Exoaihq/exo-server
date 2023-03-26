@@ -1,5 +1,3 @@
-
-
 import { createTextCompletion } from "../server/api/openAi/openai.service";
 import { addCodeToTheBottonOfFile } from "./appendFile";
 import { createFile } from "./createfile";
@@ -7,10 +5,11 @@ import { findAllTextAfterStringAndLineBreak } from "./findTextAfterComment";
 import { createTestFileName } from "./generateTestFileName";
 import { findFileName } from "./getFileName";
 import { removeTest } from "./removeTextAfterString";
-const fs = require('fs');
+const fs = require("fs");
 
 const writeATestPrompt = "Write a test in the same file.";
-const writeAFileNamePrompt = "Add a filename in the same file with this format: filename: <filename>.<suffix>";
+const writeAFileNamePrompt =
+  "Add a filename in the same file with this format: filename: <filename>.<suffix>";
 
 function buildPromptWithTestAndFileName(prompt: string) {
   return `${prompt} ${writeATestPrompt} ${writeAFileNamePrompt}`;
@@ -22,7 +21,9 @@ export async function createCodeCompletion(
   loadingMessage: string
 ) {
   return await createTextCompletion(
-    buildPromptWithTestAndFileName(prompt), loadingMessage
+    buildPromptWithTestAndFileName(prompt),
+    1,
+    loadingMessage
   );
 }
 
@@ -32,7 +33,9 @@ export async function createCodeCompletionAddToFiles(
   location: string = "./"
 ) {
   const res = await createTextCompletion(
-    buildPromptWithTestAndFileName(prompt), loadingMessage
+    buildPromptWithTestAndFileName(prompt),
+    1,
+    loadingMessage
   );
   try {
     let generatedCode = await res?.choices[0].text;
@@ -48,10 +51,10 @@ export async function createCodeCompletionAddToFiles(
     }
     createFile(fileName, generatedCode, location);
   } catch (error: any) {
-    console.log(error)
+    console.log(error);
   }
 
-  return res
+  return res;
 }
 
 export async function createCodeCompletionAddToNewNamedFile(
@@ -60,7 +63,7 @@ export async function createCodeCompletionAddToNewNamedFile(
   location: string,
   fileName: string
 ) {
-  const res = await createTextCompletion(prompt, loadingMessage, "chat");
+  const res = await createTextCompletion(prompt, 1, loadingMessage, "chat");
   try {
     let generatedCode = await res?.choices[0].text;
     if (!generatedCode) {
@@ -69,37 +72,31 @@ export async function createCodeCompletionAddToNewNamedFile(
 
     createFile(fileName, generatedCode, location);
   } catch (error: any) {
-    console.log(error)
+    console.log(error);
   }
 
-  return res
+  return res;
 }
 
 // Takes a file name, parsed the code and uses it to prompt a new function
-export async function refactorFile(
-  prompt: string,
-  filePath: string
-) {
+export async function refactorFile(prompt: string, filePath: string) {
+  const prefix = "Here is a function you can refactor:";
 
-  const prefix = "Here is a function you can refactor:"
+  let response = null;
 
-  let response = null
-
-  await fs.readFile(filePath, 'utf8', async function (err: any, data: any) {
+  await fs.readFile(filePath, "utf8", async function (err: any, data: any) {
     if (err) throw err;
 
-    const entirePrompt = prefix + await data + "\n" + prompt
-    console.log(">>>>>>>>>>", entirePrompt)
-    const res = await createTextCompletion(entirePrompt, "Refactoring...");
+    const entirePrompt = prefix + (await data) + "\n" + prompt;
+    console.log(">>>>>>>>>>", entirePrompt);
+    const res = await createTextCompletion(entirePrompt, 1, "Refactoring...");
     if (res.choices[0].text) {
       addCodeToTheBottonOfFile(filePath, res.choices[0].text);
-
     }
-    console.log(res)
-    response = res
-    return res
+    console.log(res);
+    response = res;
+    return res;
   });
 
-  return response
-
+  return response;
 }

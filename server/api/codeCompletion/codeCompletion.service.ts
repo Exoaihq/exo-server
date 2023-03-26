@@ -169,7 +169,7 @@ export async function refactorFile(prompt: string, filePath: string) {
 
     const entirePrompt = prefix + (await data) + "\n" + prompt;
     console.log(">>>>>>>>>>", entirePrompt);
-    const res = await createTextCompletion(entirePrompt, "Refactoring...");
+    const res = await createTextCompletion(entirePrompt, 1, "Refactoring...");
     if (res.choices[0].text) {
       addCodeToTheBottonOfFile(filePath, res.choices[0].text);
     }
