@@ -137,6 +137,32 @@ export interface Database {
           stripe_customer_id?: string | null
         }
       }
+      messages: {
+        Row: {
+          content: string | null
+          created_at: string | null
+          id: string
+          role: Database["public"]["Enums"]["message_role"] | null
+          session_id: string | null
+          user_id: string | null
+        }
+        Insert: {
+          content?: string | null
+          created_at?: string | null
+          id?: string
+          role?: Database["public"]["Enums"]["message_role"] | null
+          session_id?: string | null
+          user_id?: string | null
+        }
+        Update: {
+          content?: string | null
+          created_at?: string | null
+          id?: string
+          role?: Database["public"]["Enums"]["message_role"] | null
+          session_id?: string | null
+          user_id?: string | null
+        }
+      }
       openai_models: {
         Row: {
           created_at: string | null
@@ -253,6 +279,29 @@ export interface Database {
           website?: string | null
         }
       }
+      prompt: {
+        Row: {
+          created_at: string | null
+          id: string
+          input: string | null
+          inputClassificaiton: string | null
+          user_id: string | null
+        }
+        Insert: {
+          created_at?: string | null
+          id: string
+          input?: string | null
+          inputClassificaiton?: string | null
+          user_id?: string | null
+        }
+        Update: {
+          created_at?: string | null
+          id?: string
+          input?: string | null
+          inputClassificaiton?: string | null
+          user_id?: string | null
+        }
+      }
       subscriptions: {
         Row: {
           cancel_at: string | null
@@ -310,6 +359,7 @@ export interface Database {
         Row: {
           avatar_url: string | null
           billing_address: Json | null
+          email: string | null
           full_name: string | null
           id: string
           payment_method: Json | null
@@ -317,6 +367,7 @@ export interface Database {
         Insert: {
           avatar_url?: string | null
           billing_address?: Json | null
+          email?: string | null
           full_name?: string | null
           id: string
           payment_method?: Json | null
@@ -324,6 +375,7 @@ export interface Database {
         Update: {
           avatar_url?: string | null
           billing_address?: Json | null
+          email?: string | null
           full_name?: string | null
           id?: string
           payment_method?: Json | null
@@ -378,6 +430,7 @@ export interface Database {
       }
     }
     Enums: {
+      message_role: "user" | "system" | "assistant"
       pricing_plan_interval: "day" | "week" | "month" | "year"
       pricing_type: "one_time" | "recurring"
       subscription_status:

@@ -1,7 +1,7 @@
 import { Request, Response } from "express";
 import { writeStringToFileAtLocation } from "../../../utils/appendFile";
 import { deserializeJson } from "../../../utils/deserializeJson";
-import { checkSession } from "../codeSnippet/supabase.service";
+import { checkSession, checkSessionOrThrow } from "../supabase.service";
 import {
   createChatCompletion,
   createTextCompletion,
@@ -29,21 +29,7 @@ import {
 
 export const handleCodeCompletion = async (req: Request, res: Response) => {
   try {
-    const { access_token, refresh_token } = req.headers;
-
-    const access = access_token as string;
-    const refresh = refresh_token as string;
-
-    const session = await checkSession({
-      access_token: access,
-      refresh_token: refresh,
-    });
-
-    if (!access_token || !refresh_token || !session || !session.data?.user) {
-      return res
-        .status(401)
-        .json({ message: "You have to be logged in to do that" });
-    }
+    await checkSessionOrThrow(req, res);
 
     const { messages, codeContent, fullFilePathWithName } =
       req.body as CodeCompletionRequest;

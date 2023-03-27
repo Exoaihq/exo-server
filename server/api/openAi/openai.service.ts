@@ -8,7 +8,7 @@ import {
 import { openAiApiKey } from "../../../utils/envVariable";
 
 import { RateLimiter } from "limiter";
-import { getOpenAiModelsFromDb } from "../codeSnippet/supabase.service";
+import { getOpenAiModelsFromDb } from "../supabase.service";
 import { OpenAiChatCompletionResponse } from "../codeCompletion/codeCompletion.types";
 const { Configuration, OpenAIApi } = require("openai");
 const { encode, decode } = require("gpt-3-encoder");

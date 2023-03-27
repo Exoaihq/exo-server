@@ -1,10 +1,8 @@
 import { Request, Response } from "express";
 import { ChatMessage } from "../../../types/chatMessage.type";
-import { addCodeToTheBottonOfFile } from "../../../utils/appendFile";
 import { createFile } from "../../../utils/createfile";
 import {
   createTextCompletion,
-  getChatCompletion,
   getCompletion,
   handlePromptAfterClassification,
 } from "../openAi/openai.service";
