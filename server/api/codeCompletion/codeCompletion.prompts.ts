@@ -82,10 +82,12 @@ export function refactorCodePrompt(
     '''
     ${codeContent}
     '''
-    And here is the refactor I want to make:
-    ${requiredFunctionality}
     Here is some information about the code:
     ${codeMetadata}
+    '''
+    And here is the refactor I want to make:
+    ${requiredFunctionality}
+    '''
     Write the code to make the changes.
     `;
 }

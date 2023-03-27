@@ -1,11 +1,6 @@
 import { Request, Response } from "express";
-import { EngineName } from "../../../types/openAiTypes/openAiEngine";
 import { writeStringToFileAtLocation } from "../../../utils/appendFile";
 import { deserializeJson } from "../../../utils/deserializeJson";
-import {
-  extractFileNameAndPathFromFullPath,
-  getFileSuffix,
-} from "../../../utils/getFileName";
 import { checkSession } from "../codeSnippet/supabase.service";
 import {
   createChatCompletion,
@@ -15,13 +10,10 @@ import {
   creatCodeClassificationPrompt,
   createBaseClassificationPrompt,
 } from "./codeCompletion.classifier";
-import {
-  AllValues,
-  requiredFunctionalityOnlyPrompt,
-} from "./codeCompletion.prompts";
+import { AllValues } from "./codeCompletion.prompts";
 import { whatValuesDoWeNeed } from "./codeCompletion.rules";
 import {
-  addSystemMessage,
+  handleGetFunctionalityWhenFileExists,
   handleParsingCreatedCode,
   handleUpdatingExistingCode,
   handleWritingNewFile,
@@ -86,75 +78,40 @@ export const handleCodeCompletion = async (req: Request, res: Response) => {
       const classifyCodeCreation = await createTextCompletion(
         creatCodeClassificationPrompt(messages)
       );
-
-      console.log("classifyCodeCreation", classifyCodeCreation);
-
-      const messageAndModel = await updateCodeCompletionSystemMessage(
-        req.body as CodeCompletionRequest,
-        metadata
-      );
-
       const json: AllValues = deserializeJson(
         classifyCodeCreation.choices[0].text
           ? classifyCodeCreation.choices[0].text.trim()
           : ""
       );
 
-      // If you have a full file path including name and the code content you can update it
+      console.log("classifyCodeCreation", classifyCodeCreation);
 
       if (codeContent && fullFilePathWithName) {
         if (json && json.requiredFunctionality) {
-          const { fileName, extractedPath } =
-            extractFileNameAndPathFromFullPath(fullFilePathWithName);
-          const fileSuffix = getFileSuffix(fileName);
-
-          response = await handleUpdatingExistingCode(
-            codeContent,
-            json.requiredFunctionality,
-            `The file ${fileName} has the suffix ${fileSuffix}. The update code should be the same type of code as the suffix indicates.`
-          );
-
-          console.log("Updating code:", response);
-
-          metadata = {
-            projectDirectory: extractedPath,
-            projectFile: fileName,
-            newFile: false,
-            requiredFunctionality: "",
-          };
-
-          return res
-            .status(200)
-            .json({ data: handleParsingCreatedCode(response, metadata) });
+          // Run update code
+          return res.status(200).json({
+            data: await handleUpdatingExistingCode(
+              json.requiredFunctionality,
+              codeContent,
+              fullFilePathWithName
+            ),
+          });
         } else {
-          const adaptedMessages = await addSystemMessage(
-            messages,
-            requiredFunctionalityOnlyPrompt(messages)
-          );
-          response = await createChatCompletion(
-            adaptedMessages,
-            EngineName.Turbo
-          );
-
-          const { fileName, extractedPath } =
-            extractFileNameAndPathFromFullPath(fullFilePathWithName);
-
-          metadata = {
-            projectDirectory: extractedPath,
-            projectFile: fileName,
-            newFile: false,
-            requiredFunctionality: "",
-          };
-
-          const completionResponse: CodeCompletionResponse = {
-            choices: response.choices,
-            metadata,
-          };
-
-          console.log("need required functionality", completionResponse);
-          return res.status(200).json({ data: completionResponse });
+          return res.status(200).json({
+            data: await handleGetFunctionalityWhenFileExists(
+              messages,
+              fullFilePathWithName
+            ),
+          });
         }
       }
+
+      const messageAndModel = await updateCodeCompletionSystemMessage(
+        req.body as CodeCompletionRequest,
+        metadata
+      );
+
+      const { addMessages, model } = messageAndModel;
 
       if (json) {
         console.log("json", json);
@@ -170,10 +127,7 @@ export const handleCodeCompletion = async (req: Request, res: Response) => {
           if (json.newFile) {
             response = await handleWritingNewFile(json.requiredFunctionality);
           } else {
-            response = await createChatCompletion(
-              messageAndModel.addMessages,
-              messageAndModel.model
-            );
+            response = await createChatCompletion(addMessages, model);
           }
 
           return res
@@ -181,8 +135,6 @@ export const handleCodeCompletion = async (req: Request, res: Response) => {
             .json({ data: handleParsingCreatedCode(response, metadata) });
         }
       }
-
-      const { addMessages, model } = messageAndModel;
 
       response = await createChatCompletion(addMessages, model);
 

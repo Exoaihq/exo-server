@@ -3,13 +3,21 @@ import { EngineName } from "../../../types/openAiTypes/openAiEngine";
 import { parseCodeTypes } from "../../../types/parseCode.types";
 import { addCodeToTheBottonOfFile } from "../../../utils/appendFile";
 import { findFileAndReturnContents } from "../../../utils/fileOperations.service";
+import {
+  extractFileNameAndPathFromFullPath,
+  getFileSuffix,
+} from "../../../utils/getFileName";
 import { parseFile } from "../../../utils/treeSitter";
 import {
   createChatCompletion,
   createTextCompletion,
 } from "../openAi/openai.service";
 import {} from "./codeCompletion.controller";
-import { basePrompt, refactorCodePrompt } from "./codeCompletion.prompts";
+import {
+  basePrompt,
+  refactorCodePrompt,
+  requiredFunctionalityOnlyPrompt,
+} from "./codeCompletion.prompts";
 import { getReleventPrompt, NeededValues } from "./codeCompletion.rules";
 import {
   CodeCompletionRequest,
@@ -27,6 +35,38 @@ export function addSystemMessage(messages: ChatMessage[], content: string) {
     },
     ...messages,
   ];
+}
+
+export async function handleGetFunctionalityWhenFileExists(
+  messages: ChatMessage[],
+  fullFilePathWithName: string
+) {
+  const adaptedMessages = await addSystemMessage(
+    messages,
+    requiredFunctionalityOnlyPrompt(messages)
+  );
+  const response = await createChatCompletion(
+    adaptedMessages,
+    EngineName.Turbo
+  );
+
+  const { fileName, extractedPath } =
+    extractFileNameAndPathFromFullPath(fullFilePathWithName);
+
+  const metadata = {
+    projectDirectory: extractedPath,
+    projectFile: fileName,
+    newFile: false,
+    requiredFunctionality: "",
+  };
+
+  const completionResponse: CodeCompletionResponse = {
+    choices: response.choices,
+    metadata,
+  };
+
+  console.log("Need required functionality", completionResponse);
+  return completionResponse;
 }
 
 export async function runBaseClassificaitonChatCompletion(
@@ -74,9 +114,22 @@ export async function handleWritingNewFile(requiredFunctionality: string) {
 export async function handleUpdatingExistingCode(
   requiredFunctionality: string,
   existingContent: string,
-  codeMetadata: string
-) {
-  return await createChatCompletion(
+  fullFilePathWithName: string
+): Promise<CodeCompletionResponse> {
+  const { fileName, extractedPath } =
+    extractFileNameAndPathFromFullPath(fullFilePathWithName);
+  const fileSuffix = getFileSuffix(fileName);
+
+  const codeMetadata = `The file ${fileName} has the suffix ${fileSuffix}. The update code should be the same type of code as the suffix indicates.`;
+
+  const metadata = {
+    projectDirectory: extractedPath,
+    projectFile: fileName,
+    newFile: false,
+    requiredFunctionality: "",
+  };
+
+  const response = await createChatCompletion(
     [
       {
         role: ChatUserType.user,
@@ -89,6 +142,7 @@ export async function handleUpdatingExistingCode(
     ],
     EngineName.GPT4
   );
+  return handleParsingCreatedCode(response, metadata);
 }
 
 export function handleParsingCreatedCode(
