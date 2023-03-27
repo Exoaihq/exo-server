@@ -8,6 +8,7 @@ export interface CodeDirectory {
 export interface CodeCompletionRequest {
   messages: ChatMessage[];
   codeContent: string;
+  fullFilePathWithName: string;
 }
 
 export interface CodeCompletionDetails {

@@ -8,7 +8,6 @@ import {
   AllValues,
   directoryOnlyPrompt,
   fileNamePrompt,
-  haveAllTheValuesPrompt,
   newFilePrompt,
   refactorCodePrompt,
   requiredFunctionalityOnlyPrompt,
@@ -60,7 +59,7 @@ export const getReleventPrompt = (
 } => {
   const { codeContent } = response;
   const { requiredFunctionality } = metadata;
-  console.log("code content", codeContent);
+
   const whatDoWeNeed = whatValuesDoWeNeed(metadata);
 
   switch (whatDoWeNeed) {
@@ -98,7 +97,7 @@ export const getReleventPrompt = (
         };
       }
       return {
-        prompt: refactorCodePrompt(codeContent, requiredFunctionality),
+        prompt: refactorCodePrompt(codeContent, requiredFunctionality, ""),
         model: EngineName.GPT4,
         neededValues: "none",
       };

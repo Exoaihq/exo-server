@@ -31,7 +31,7 @@ export function directoryOnlyPrompt(messages: ChatMessage[]) {
     Here is the conversation so far:
     ${JSON.stringify(messages, null, 2)}
     When you know the directory say: "Ok I have the directory. What would you like to create a new file or update an existing one?" 
-    If the directory is not in the conversation ${suffix} the directory.
+    If the directory is not in the conversation ${suffix} the directory. Also mention that the user can use the upload button to select a file or directroy.
 `;
 }
 
@@ -60,7 +60,7 @@ export function requiredFunctionalityOnlyPrompt(messages: ChatMessage[]) {
         You need to get the user to tell you the required functionality you they want to update in the code before you can continue.
         Here is the conversation so far:
         ${JSON.stringify(messages, null, 2)}
-        When you know the functionality repeat it back and ask the user if they want to make these changes now 
+        When you know the required functionality repeat it back and ask the user if they want to make these changes now 
        ${suffix} the required functionality.
     `;
 }
@@ -75,7 +75,8 @@ export function haveAllTheValuesPrompt(messages: ChatMessage[]) {
 
 export function refactorCodePrompt(
   codeContent: string,
-  requiredFunctionality: string
+  requiredFunctionality: string,
+  codeMetadata: string
 ) {
   return `You an and api chatbot that is helping me create code. Here is the content of the file the I want to update:
     '''
@@ -83,6 +84,8 @@ export function refactorCodePrompt(
     '''
     And here is the refactor I want to make:
     ${requiredFunctionality}
+    Here is some information about the code:
+    ${codeMetadata}
     Write the code to make the changes.
     `;
 }

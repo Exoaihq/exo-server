@@ -51,3 +51,8 @@ export function extractFileNameAndPathFromFullPath(path: string): {
   const extractedPath = fileName.slice(0, fileName.length - 1).join("/");
   return { fileName: fileName[fileName.length - 1], extractedPath };
 }
+
+export function getFileSuffix(fileName: string): string {
+  const split = fileName.split(".");
+  return split[split.length - 1];
+}

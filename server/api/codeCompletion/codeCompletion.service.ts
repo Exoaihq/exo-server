@@ -9,18 +9,17 @@ import {
   createTextCompletion,
 } from "../openAi/openai.service";
 import {} from "./codeCompletion.controller";
+import { basePrompt, refactorCodePrompt } from "./codeCompletion.prompts";
+import { getReleventPrompt, NeededValues } from "./codeCompletion.rules";
 import {
-  OpenAiChatCompletionResponse,
   CodeCompletionRequest,
   CodeCompletionResponse,
   CodeCompletionResponseMetadata,
-  CodeOrMessage,
+  OpenAiChatCompletionResponse,
 } from "./codeCompletion.types";
-import { getReleventPrompt, NeededValues } from "./codeCompletion.rules";
-import { basePrompt, refactorCodePrompt } from "./codeCompletion.prompts";
 const fs = require("fs");
 
-function addSystemMessage(messages: ChatMessage[], content: string) {
+export function addSystemMessage(messages: ChatMessage[], content: string) {
   return [
     {
       role: ChatUserType.system,
@@ -74,13 +73,18 @@ export async function handleWritingNewFile(requiredFunctionality: string) {
 
 export async function handleUpdatingExistingCode(
   requiredFunctionality: string,
-  existingContent: string
+  existingContent: string,
+  codeMetadata: string
 ) {
   return await createChatCompletion(
     [
       {
         role: ChatUserType.user,
-        content: refactorCodePrompt(existingContent, requiredFunctionality),
+        content: refactorCodePrompt(
+          existingContent,
+          requiredFunctionality,
+          codeMetadata
+        ),
       },
     ],
     EngineName.GPT4
@@ -139,8 +143,19 @@ export const parseReturnedCode = (
     res.code = split[1];
   }
 
+  // res.code = commentOutProgammingLanguage(res.code);
+
   return res;
 };
+
+export function commentOutProgammingLanguage(code: string) {
+  const refactor = code.split("\n").map((word: string, index: number) => {
+    if (word.includes("typescript")) {
+      return word.replace("typescript", "// typescript");
+    }
+  });
+  return refactor.join("\n");
+}
 
 export function checkForAllValuesInObject(object: any) {
   for (const key in object) {
@@ -152,10 +167,6 @@ export function checkForAllValuesInObject(object: any) {
       return false;
     }
   }
-}
-
-function nullCheck(value: string) {
-  return value === "" || value === null || value === undefined;
 }
 
 // Takes a file name, parsed the code and uses it to prompt a new function
@@ -228,3 +239,7 @@ export async function refactorFunctionInAFile(
 
   return response;
 }
+
+export const hasFileNameAndPath = (filePath: string) => {
+  return filePath.includes("/") && filePath.includes(".");
+};
