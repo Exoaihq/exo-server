@@ -31,7 +31,7 @@ export function directoryOnlyPrompt(messages: ChatMessage[]) {
     Here is the conversation so far:
     ${JSON.stringify(messages, null, 2)}
     When you know the directory say: "Ok I have the directory. What would you like to create a new file or update an existing one?" 
-    If the directory is not in the conversation ${suffix} the directory. Also mention that the user can use the upload button to select a file or directroy.
+    If the directory is not in the conversation ${suffix} the directory or scratch pad. Also say that the user can use the upload button to select a file or directroy or they can use the scratch pad.
 `;
 }
 

@@ -14,6 +14,7 @@ import {
 } from "../openAi/openai.service";
 import {} from "./codeCompletion.controller";
 import {
+  AllValues,
   basePrompt,
   refactorCodePrompt,
   requiredFunctionalityOnlyPrompt,
@@ -35,6 +36,71 @@ export function addSystemMessage(messages: ChatMessage[], content: string) {
     },
     ...messages,
   ];
+}
+
+export async function handleScratchPad(
+  json: AllValues,
+  messages: ChatMessage[],
+  codeContent: string
+) {
+  const metadata = {
+    projectDirectory: "scratch pad",
+    projectFile: "",
+    newFile: false,
+    requiredFunctionality: "",
+  };
+  if (json && json.requiredFunctionality) {
+    if (codeContent) {
+      const latestMessage = messages[messages.length - 1];
+      const content = refactorCodePrompt(
+        codeContent,
+        latestMessage.content,
+        ""
+      );
+
+      const response = await createChatCompletion(
+        [
+          {
+            role: ChatUserType.user,
+            content,
+          },
+        ],
+        EngineName.GPT4
+      );
+      return handleParsingCreatedCode(response, metadata);
+    }
+
+    const response = await handleWritingNewFile(json.requiredFunctionality);
+
+    console.log("Writing code to scratch pad", response);
+
+    return handleParsingCreatedCode(response, metadata);
+  } else {
+    const adaptedMessages = await addSystemMessage(
+      messages,
+      requiredFunctionalityOnlyPrompt(messages)
+    );
+    const response = await createChatCompletion(
+      adaptedMessages,
+      EngineName.Turbo
+    );
+
+    const metadata = {
+      projectDirectory: "scratch pad",
+      projectFile: "",
+      newFile: false,
+      requiredFunctionality: "",
+    };
+
+    const completionResponse: CodeCompletionResponse = {
+      choices: response.choices,
+      metadata,
+      completedCode: undefined,
+    };
+
+    console.log("Need required functionality", completionResponse);
+    return completionResponse;
+  }
 }
 
 export async function handleGetFunctionalityWhenFileExists(
@@ -297,3 +363,7 @@ export async function refactorFunctionInAFile(
 export const hasFileNameAndPath = (filePath: string) => {
   return filePath.includes("/") && filePath.includes(".");
 };
+
+export function textIncludeScratchPad(text: string) {
+  return text.toLowerCase().includes("scratch");
+}

@@ -15,9 +15,11 @@ import { whatValuesDoWeNeed } from "./codeCompletion.rules";
 import {
   handleGetFunctionalityWhenFileExists,
   handleParsingCreatedCode,
+  handleScratchPad,
   handleUpdatingExistingCode,
   handleWritingNewFile,
   runBaseClassificaitonChatCompletion,
+  textIncludeScratchPad,
   updateCodeCompletionSystemMessage,
 } from "./codeCompletion.service";
 import {
@@ -74,20 +76,38 @@ export const handleCodeCompletion = async (req: Request, res: Response) => {
         },
       });
     } else if (baseClassificaiton === "creatingCode") {
-      // TODO - figure out how to extrapolate this functionality into a service
       const classifyCodeCreation = await createTextCompletion(
         creatCodeClassificationPrompt(messages)
       );
+      console.log("Classify Code Creation", classifyCodeCreation);
       const json: AllValues = deserializeJson(
         classifyCodeCreation.choices[0].text
           ? classifyCodeCreation.choices[0].text.trim()
           : ""
       );
+      console.log("json", json);
+      console.log("code content", codeContent);
 
-      console.log("classifyCodeCreation", classifyCodeCreation);
+      if (
+        json &&
+        json.projectDirectory &&
+        textIncludeScratchPad(json.projectDirectory)
+      ) {
+        console.log("scratch pad");
+        const { choices, metadata, completedCode } = await handleScratchPad(
+          json,
+          messages,
+          codeContent
+        );
+
+        return res.status(200).json({
+          data: { choices, metadata, completedCode },
+        });
+      }
 
       if (codeContent && fullFilePathWithName) {
         if (json && json.requiredFunctionality) {
+          console.log("Updaing existing code from file");
           // Run update code
           return res.status(200).json({
             data: await handleUpdatingExistingCode(
@@ -114,7 +134,6 @@ export const handleCodeCompletion = async (req: Request, res: Response) => {
       const { addMessages, model } = messageAndModel;
 
       if (json) {
-        console.log("json", json);
         const neededValues = whatValuesDoWeNeed(json);
 
         console.log("neededValues", neededValues);

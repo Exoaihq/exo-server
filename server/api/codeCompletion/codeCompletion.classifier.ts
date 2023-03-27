@@ -74,6 +74,16 @@ const codeClassificationExamples = [
       newFile: null,
     },
   },
+  {
+    example:
+      "For example if the user says they want the scratch pad the response would be:",
+    response: {
+      projectFile: "",
+      requiredFunctionality: "",
+      projectDirectory: "/scratch_pad",
+      newFile: null,
+    },
+  },
 ];
 
 export function creatCodeClassificationPrompt(messages: ChatMessage[]) {
