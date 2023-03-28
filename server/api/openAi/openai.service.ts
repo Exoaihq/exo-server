@@ -44,13 +44,6 @@ export async function getChatCompletion(
   model: EngineName = EngineName.Turbo,
   temperature: number = 1
 ) {
-  const availableEngines = await getOpenAiModelsFromDb();
-
-  //TODO - fix call to db
-  // const gpt4 = availableEngines?.find((engine: any) => {
-  //     return engine.id === "gpt-4"
-  // })
-
   try {
     const res = await openai.createChatCompletion({
       model,
@@ -202,10 +195,6 @@ export async function createTextCompletion(
   loadingMessage: string = "Loading",
   type: string = "completion"
 ): Promise<CompletionResponse> {
-  const configuration = new Configuration({
-    apiKey: openAiApiKey,
-  });
-
   const interval = commandLineLoading(loadingMessage);
 
   try {

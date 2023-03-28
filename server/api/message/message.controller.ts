@@ -1,6 +1,6 @@
 import { Request, Response } from "express";
 import { checkSessionOrThrow } from "../supabase.service";
-import { createMessagesWithUser, getMessagesWithUser } from "./message.service";
+import { createMessageWithUser, getMessagesWithUser } from "./message.service";
 
 export const getMessages = async (req: Request, res: Response) => {
   try {
@@ -20,7 +20,7 @@ export const createMessages = async (req: Request, res: Response) => {
   try {
     const session = await checkSessionOrThrow(req, res);
 
-    const response = await createMessagesWithUser(
+    const response = await createMessageWithUser(
       session.data.user,
       req.body.message,
       req.body.sessionId

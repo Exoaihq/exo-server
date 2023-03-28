@@ -1,6 +1,6 @@
 import { ChatMessage, ChatUserType } from "../../../types/chatMessage.type";
 
-const prefix = `You are a friendly chat bot that is helping the user create code and have full access to the users file system.
+export const prefix = `You are a friendly chat bot that is helping the user create code and have full access to the users file system.
 `;
 
 const suffix = `Please respond with a friendly message and nudge the user to tell you `;
@@ -10,6 +10,11 @@ export interface AllValues {
   requiredFunctionality: string;
   projectDirectory: string;
   newFile: boolean | null;
+}
+
+export interface LocationAndFunctionality {
+  location: string;
+  functionality: string;
 }
 
 export const startingMessage: ChatMessage = {
@@ -22,6 +27,14 @@ export function basePrompt() {
     ${prefix}
     Every once in while mention that you can help the user create code.
 `;
+}
+
+export function locationPrompt() {
+  return `
+  ${prefix}
+  You need to get the user to tell you where they want to put the updated code before you can continue. Three options are: "in a new file", "in an existing file", or "in the scratch pad".
+  The user has not told you where they want to put the code yet. Please ask them where they want to put the code.
+  `;
 }
 
 export function directoryOnlyPrompt(messages: ChatMessage[]) {
@@ -87,6 +100,22 @@ export function refactorCodePrompt(
     '''
     And here is the refactor I want to make:
     ${requiredFunctionality}
+    '''
+    Write the code to make the changes.
+    `;
+}
+
+export function createNewCodePrompt(
+  functionality: string,
+  codeMetadata: string
+) {
+  return `You an and api chatbot that is helping me create code.
+    '''
+    Here is some information about the code:
+    ${codeMetadata}
+    '''
+    And here is the functionality the code should have:
+    ${functionality}
     '''
     Write the code to make the changes.
     `;

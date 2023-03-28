@@ -9,6 +9,29 @@ export type Json =
 export interface Database {
   public: {
     Tables: {
+      ai_created_code: {
+        Row: {
+          code: string | null
+          created_at: string | null
+          id: string
+          location: string | null
+          session_id: string | null
+        }
+        Insert: {
+          code?: string | null
+          created_at?: string | null
+          id?: string
+          location?: string | null
+          session_id?: string | null
+        }
+        Update: {
+          code?: string | null
+          created_at?: string | null
+          id?: string
+          location?: string | null
+          session_id?: string | null
+        }
+      }
       code_directory: {
         Row: {
           created_at: string
@@ -299,6 +322,41 @@ export interface Database {
           id?: string
           input?: string | null
           inputClassificaiton?: string | null
+          user_id?: string | null
+        }
+      }
+      session: {
+        Row: {
+          created_at: string | null
+          file_name: string | null
+          functionality: string | null
+          id: string
+          location: string | null
+          new_file: boolean | null
+          scratch_pad: boolean | null
+          updated_at: string | null
+          user_id: string | null
+        }
+        Insert: {
+          created_at?: string | null
+          file_name?: string | null
+          functionality?: string | null
+          id: string
+          location?: string | null
+          new_file?: boolean | null
+          scratch_pad?: boolean | null
+          updated_at?: string | null
+          user_id?: string | null
+        }
+        Update: {
+          created_at?: string | null
+          file_name?: string | null
+          functionality?: string | null
+          id?: string
+          location?: string | null
+          new_file?: boolean | null
+          scratch_pad?: boolean | null
+          updated_at?: string | null
           user_id?: string | null
         }
       }

@@ -1,4 +1,4 @@
-import { createClient } from "@supabase/supabase-js";
+import { createClient, PostgrestSingleResponse } from "@supabase/supabase-js";
 import { AddModel } from "../../types/openAiTypes/openAiEngine";
 import {
   Element,
@@ -52,19 +52,78 @@ export async function checkSession(session: {
   return await supabase.auth.setSession(session);
 }
 
-function areAnyValuesNull(obj: any) {
-  return Object.values(obj).some((x) => x === null);
-}
+export const findOrUpdateSession = async (
+  user: Database["public"]["Tables"]["users"]["Row"],
+  sessionId: string
+): Promise<Database["public"]["Tables"]["session"]["Row"]> => {
+  const { data, error } = await supabase
+    .from("session")
+    .select("*")
+    .eq("user_id", user.id)
+    .eq("id", sessionId);
 
-// Use this function to update snippets in the database
-export async function compareAndUpdateSnippet(
-  contents: ParsedCode,
-  snippet: SnippetByFileName
-) {
-  if (areAnyValuesNull(snippet)) {
-    // Update the snippet in the db
+  if (error) {
+    console.log(error);
   }
-}
+
+  if (data && data.length > 0) {
+    return data[0];
+  } else {
+    const { data } = await supabase
+      .from("session")
+      .insert([{ user_id: user.id, id: sessionId }])
+      .select();
+
+    // @ts-ignore
+    return data[0] as Database["public"]["Tables"]["session"]["Row"];
+  }
+};
+
+export const updateSession = async (
+  user: Database["public"]["Tables"]["users"]["Row"],
+  sessionId: string,
+  session: Partial<Database["public"]["Tables"]["session"]["Update"]>
+): Promise<any> => {
+  const { data } = await supabase
+    .from("session")
+    .update({ ...session })
+    .eq("user_id", user.id)
+    .eq("id", sessionId)
+    .select();
+
+  console.log(data);
+};
+
+export const createAiWritenCode = async (
+  sessionId: string,
+  code: string,
+  location: string
+): Promise<Database["public"]["Tables"]["ai_created_code"]["Row"]> => {
+  const { data } = await supabase
+    .from("ai_created_code")
+    .insert([{ code, session_id: sessionId, location }])
+    .select();
+
+  // @ts-ignore
+  return data[0] as Database["public"]["Tables"]["ai_created_code"]["Row"];
+};
+
+export const getAiCodePerSession = async (
+  sessionId: string
+): Promise<Database["public"]["Tables"]["ai_created_code"]["Row"]> => {
+  const { data, error } = await supabase
+    .from("ai_created_code")
+    .select("*")
+    .eq("session_id", sessionId)
+    .order("created_at", { ascending: false });
+
+  if (error) {
+    console.log("Getting code error", error);
+  }
+
+  // @ts-ignore
+  return data[0] as Database["public"]["Tables"]["ai_created_code"]["Row"];
+};
 
 // Use this function to update snippets in the database
 export async function compareAndUpdateSnippets(

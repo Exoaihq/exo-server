@@ -1,38 +1,25 @@
 import { Request, Response } from "express";
 import { writeStringToFileAtLocation } from "../../../utils/appendFile";
-import { deserializeJson } from "../../../utils/deserializeJson";
-import { checkSession, checkSessionOrThrow } from "../supabase.service";
+import { createMessagesWithUser } from "../message/message.service";
+import { createTextCompletion } from "../openAi/openai.service";
+import { checkSessionOrThrow, findOrUpdateSession } from "../supabase.service";
 import {
-  createChatCompletion,
-  createTextCompletion,
-} from "../openAi/openai.service";
-import {
-  creatCodeClassificationPrompt,
   createBaseClassificationPrompt,
-} from "./codeCompletion.classifier";
-import { AllValues } from "./codeCompletion.prompts";
-import { whatValuesDoWeNeed } from "./codeCompletion.rules";
-import {
-  handleGetFunctionalityWhenFileExists,
-  handleParsingCreatedCode,
-  handleScratchPad,
-  handleUpdatingExistingCode,
-  handleWritingNewFile,
   runBaseClassificaitonChatCompletion,
-  textIncludeScratchPad,
-  updateCodeCompletionSystemMessage,
-} from "./codeCompletion.service";
-import {
-  CodeCompletionRequest,
-  CodeCompletionResponse,
-} from "./codeCompletion.types";
+} from "./codeCompletion.classifier";
+import { checkDbSession } from "./codeCompletion.service";
+import { CodeCompletionRequest } from "./codeCompletion.types";
 
 export const handleCodeCompletion = async (req: Request, res: Response) => {
   try {
-    await checkSessionOrThrow(req, res);
+    const session = await checkSessionOrThrow(req, res);
 
-    const { messages, codeContent, fullFilePathWithName } =
+    const { user } = session.data;
+
+    const { messages, fullFilePathWithName, sessionId } =
       req.body as CodeCompletionRequest;
+
+    const dbSession = await findOrUpdateSession(user, sessionId);
 
     const classifyMessage = await createTextCompletion(
       createBaseClassificationPrompt(messages),
@@ -48,13 +35,17 @@ export const handleCodeCompletion = async (req: Request, res: Response) => {
       newFile: null as null | boolean,
       requiredFunctionality: "",
     };
-    let response;
 
     if (baseClassificaiton === "generalChat") {
       const choices = await (
         await runBaseClassificaitonChatCompletion(messages)
       ).choices;
 
+      await createMessagesWithUser(
+        user,
+        choices.map((choice) => choice.message),
+        sessionId
+      );
       return res.status(200).json({
         data: {
           choices,
@@ -62,95 +53,16 @@ export const handleCodeCompletion = async (req: Request, res: Response) => {
         },
       });
     } else if (baseClassificaiton === "creatingCode") {
-      const classifyCodeCreation = await createTextCompletion(
-        creatCodeClassificationPrompt(messages)
-      );
-      console.log("Classify Code Creation", classifyCodeCreation);
-      const json: AllValues = deserializeJson(
-        classifyCodeCreation.choices[0].text
-          ? classifyCodeCreation.choices[0].text.trim()
-          : ""
-      );
-      console.log("json", json);
-      console.log("code content", codeContent);
-
-      if (
-        json &&
-        json.projectDirectory &&
-        textIncludeScratchPad(json.projectDirectory)
-      ) {
-        console.log("scratch pad");
-        const { choices, metadata, completedCode } = await handleScratchPad(
-          json,
-          messages,
-          codeContent
-        );
-
-        return res.status(200).json({
-          data: { choices, metadata, completedCode },
-        });
-      }
-
-      if (codeContent && fullFilePathWithName) {
-        if (json && json.requiredFunctionality) {
-          console.log("Updaing existing code from file");
-          // Run update code
-          return res.status(200).json({
-            data: await handleUpdatingExistingCode(
-              json.requiredFunctionality,
-              codeContent,
-              fullFilePathWithName
-            ),
-          });
-        } else {
-          return res.status(200).json({
-            data: await handleGetFunctionalityWhenFileExists(
-              messages,
-              fullFilePathWithName
-            ),
-          });
-        }
-      }
-
-      const messageAndModel = await updateCodeCompletionSystemMessage(
-        req.body as CodeCompletionRequest,
-        metadata
+      const responseBasedOnDbSession = await checkDbSession(
+        dbSession,
+        messages,
+        user,
+        sessionId
       );
 
-      const { addMessages, model } = messageAndModel;
-
-      if (json) {
-        const neededValues = whatValuesDoWeNeed(json);
-
-        console.log("neededValues", neededValues);
-
-        metadata = { ...json };
-
-        if (neededValues === "none") {
-          console.log("creating code", json.requiredFunctionality);
-
-          if (json.newFile) {
-            response = await handleWritingNewFile(json.requiredFunctionality);
-          } else {
-            response = await createChatCompletion(addMessages, model);
-          }
-
-          return res
-            .status(200)
-            .json({ data: handleParsingCreatedCode(response, metadata) });
-        }
-      }
-
-      response = await createChatCompletion(addMessages, model);
-
-      const completionResponse: CodeCompletionResponse = {
-        choices: response.choices,
-        metadata,
-      };
-
-      console.log("completionResponse", completionResponse);
-
-      return res.status(200).json({ data: completionResponse });
+      return res.status(200).json({
+        data: responseBasedOnDbSession,
+      });
     } else {
       res
         .status(500)

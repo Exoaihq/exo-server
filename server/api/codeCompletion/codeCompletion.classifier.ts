@@ -1,5 +1,18 @@
 import { ChatMessage } from "../../../types/chatMessage.type";
-import { AllValues } from "./codeCompletion.prompts";
+import { EngineName } from "../../../types/openAiTypes/openAiEngine";
+import { deserializeJson } from "../../../utils/deserializeJson";
+import {
+  createChatCompletion,
+  createTextCompletion,
+} from "../openAi/openai.service";
+import {
+  AllValues,
+  basePrompt,
+  LocationAndFunctionality,
+  prefix,
+} from "./codeCompletion.prompts";
+import { addSystemMessage } from "./codeCompletion.service";
+import { OpenAiChatCompletionResponse } from "./codeCompletion.types";
 
 const all: AllValues = {
   projectFile: "",
@@ -86,17 +99,38 @@ const codeClassificationExamples = [
   },
 ];
 
-export function creatCodeClassificationPrompt(messages: ChatMessage[]) {
+export function createCodeClassificationPrompt(
+  messages: ChatMessage[],
+  sessionDetails: LocationAndFunctionality
+) {
   const examples = codeClassificationExamples.map((example) => {
     return `${example.example.trim()}: ${example.response}`;
   });
 
-  return `Here are the messages so far:
-      ${JSON.stringify(messages)}
+  return `${prefix}
+     
       You need the following information to continue:
-      ${JSON.stringify(all, null, 2)}
-      ${examples}
-      Respond with the object based on the information you have:
+      '''
+      location - The location where we will be writing the code. This has can be the "scratch pad", a "new file", or an "existing file"
+      requiredFunctionality - The required functionality the user wants to add
+      '''
+      Here is what you know so far:
+      {
+      location: "${sessionDetails.location}"
+      requiredFunctionality: "${sessionDetails.functionality}"
+      }
+      '''
+      Here are the messages so far:
+      ${JSON.stringify(messages)}
+      '''
+      This is the format you need to respond with:
+      {
+        "location": {location},
+        "functionality": {functionality}
+      }
+      Respond with a json object based on the information you have so far. The updated json object is
+      
+      
   `;
 }
 
@@ -129,4 +163,52 @@ export function createBaseClassificationPrompt(messages: ChatMessage[]) {
         Respond with the classification either "generalChat" or "creatingCode":
        "
     `;
+}
+
+export async function runCodeClassificaiton(
+  whatWeKnow: LocationAndFunctionality,
+  sessionMessages: ChatMessage[]
+): Promise<LocationAndFunctionality> {
+  const classificationPrompt = createCodeClassificationPrompt(
+    sessionMessages,
+    whatWeKnow
+  );
+
+  const response = await createTextCompletion(classificationPrompt, 0.1);
+
+  const classification = response.choices[0].text;
+
+  const base = {
+    location: "",
+    functionality: "",
+  };
+
+  if (classification) {
+    const json: LocationAndFunctionality = deserializeJson(
+      classification ? classification.trim() : ""
+    );
+    if (json) {
+      return json;
+    } else {
+      console.log("Classification conversion to json failed", classification);
+      return base;
+    }
+  } else {
+    console.log("No classification found", classification);
+    return base;
+  }
+}
+
+export async function runBaseClassificaitonChatCompletion(
+  messages: ChatMessage[]
+): Promise<OpenAiChatCompletionResponse> {
+  const newMessages = updateBaseClassificationSystemMessage(messages);
+  return await createChatCompletion(newMessages, EngineName.Turbo);
+}
+
+export function updateBaseClassificationSystemMessage(messages: ChatMessage[]) {
+  const prompt = basePrompt();
+
+  const addMessages = addSystemMessage(messages, prompt);
+  return addMessages;
 }

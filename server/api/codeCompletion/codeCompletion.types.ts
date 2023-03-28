@@ -9,6 +9,7 @@ export interface CodeCompletionRequest {
   messages: ChatMessage[];
   codeContent: string;
   fullFilePathWithName: string;
+  sessionId: string;
 }
 
 export interface CodeCompletionDetails {
