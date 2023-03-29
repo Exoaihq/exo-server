@@ -1,9 +1,8 @@
 import { Request, Response } from "express";
-import { checkSessionOrThrow } from "../supabase.service";
+import { checkSessionOrThrow } from "../supabase/supabase.service";
 import {
   createMessageWithUser,
   getMessagesByUserAndSession,
-  getMessagesWithUser,
 } from "./message.service";
 
 export const getMessages = async (req: Request, res: Response) => {

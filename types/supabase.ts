@@ -9,6 +9,23 @@ export type Json =
 export interface Database {
   public: {
     Tables: {
+      account: {
+        Row: {
+          created_at: string | null
+          id: string
+          user_id: string | null
+        }
+        Insert: {
+          created_at?: string | null
+          id?: string
+          user_id?: string | null
+        }
+        Update: {
+          created_at?: string | null
+          id?: string
+          user_id?: string | null
+        }
+      }
       ai_created_code: {
         Row: {
           code: string | null
@@ -34,6 +51,7 @@ export interface Database {
       }
       code_directory: {
         Row: {
+          account_id: string | null
           created_at: string
           directory_explaination: string | null
           directory_explaination_embedding: unknown | null
@@ -43,6 +61,7 @@ export interface Database {
           updated_at: string | null
         }
         Insert: {
+          account_id?: string | null
           created_at?: string
           directory_explaination?: string | null
           directory_explaination_embedding?: unknown | null
@@ -52,6 +71,7 @@ export interface Database {
           updated_at?: string | null
         }
         Update: {
+          account_id?: string | null
           created_at?: string
           directory_explaination?: string | null
           directory_explaination_embedding?: unknown | null

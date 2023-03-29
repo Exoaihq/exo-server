@@ -18,7 +18,7 @@ import {
   createAiWritenCode,
   getAiCodePerSession,
   updateSession,
-} from "../supabase.service";
+} from "../supabase/supabase.service";
 import { runCodeClassificaiton } from "./codeCompletion.classifier";
 import {} from "./codeCompletion.controller";
 import {

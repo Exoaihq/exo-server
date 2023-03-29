@@ -3,11 +3,13 @@ import { EngineName } from "../../../../types/openAiTypes/openAiEngine";
 import { Database } from "../../../../types/supabase";
 import {
   extractFileNameAndPathFromFullPath,
+  getDirectoryNameFromPath,
   getFileSuffix,
 } from "../../../../utils/getFileName";
 import { createMessagesWithUser } from "../../message/message.service";
 import { createChatCompletion } from "../../openAi/openai.service";
-import { updateSession } from "../../supabase.service";
+import { createCodeDirectory } from "../../codeDirectory/codeDirectory.service";
+import { updateSession } from "../../supabase/supabase.service";
 import {
   refactorCodePrompt,
   requiredFunctionalityOnlyPrompt,
@@ -39,6 +41,14 @@ export async function handleGetFunctionalityWhenFileExists(
   const { fileName, extractedPath } =
     extractFileNameAndPathFromFullPath(fullFilePathWithName);
 
+  // Adds the directory to the account so that it can be use for future code completion
+
+  await createCodeDirectory(
+    user,
+    extractedPath,
+    getDirectoryNameFromPath(extractedPath)
+  );
+
   const metadata = {
     projectDirectory: extractedPath,
     projectFile: fileName,
@@ -64,8 +74,6 @@ export async function handleGetFunctionalityWhenFileExists(
     new_file: false,
     code_content: codeContent,
   });
-
-  console.log("Need required functionality", completionResponse);
   return completionResponse;
 }
 

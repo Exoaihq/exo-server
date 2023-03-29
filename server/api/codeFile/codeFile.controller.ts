@@ -10,7 +10,7 @@ import { parseCode } from "../../../utils/treeSitter";
 import {
   addCodeToSupabase,
   findFileByExplainationEmbedding,
-} from "../supabase.service";
+} from "../supabase/supabase.service";
 import { createEmbeddings } from "../openAi/openai.service";
 
 const supabase = createClient(supabaseUrl, supabaseKey);

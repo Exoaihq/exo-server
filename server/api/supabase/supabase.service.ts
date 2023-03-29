@@ -1,5 +1,5 @@
 import { createClient, PostgrestSingleResponse } from "@supabase/supabase-js";
-import { AddModel } from "../../types/openAiTypes/openAiEngine";
+import { AddModel } from "../../../types/openAiTypes/openAiEngine";
 import {
   Element,
   ParseCode,
@@ -7,16 +7,16 @@ import {
   ParsedDirectory,
   ParsedFile,
   SnippetByFileName,
-} from "../../types/parseCode.types";
-import { Database } from "../../types/supabase";
-import { supabaseKey, supabaseUrl } from "../../utils/envVariable";
-import { extractFileNameAndPathFromFullPath } from "../../utils/getFileName";
-import { getSubstringFromMultilineCode } from "../../utils/getSubstringFromMultilineCode";
-import { parseFile } from "../../utils/treeSitter";
+} from "../../../types/parseCode.types";
+import { Database } from "../../../types/supabase";
+import { supabaseKey, supabaseUrl } from "../../../utils/envVariable";
+import { extractFileNameAndPathFromFullPath } from "../../../utils/getFileName";
+import { getSubstringFromMultilineCode } from "../../../utils/getSubstringFromMultilineCode";
+import { parseFile } from "../../../utils/treeSitter";
 import {
   createEmbeddings,
   createTextCompletion,
-} from "./openAi/openai.service";
+} from "../openAi/openai.service";
 import { Request, Response } from "express";
 
 // Create a single supabase client for interacting with your database
@@ -90,8 +90,6 @@ export const updateSession = async (
     .eq("user_id", user.id)
     .eq("id", sessionId)
     .select();
-
-  console.log(data);
 };
 
 export const createAiWritenCode = async (

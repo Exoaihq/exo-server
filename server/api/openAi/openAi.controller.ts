@@ -1,6 +1,6 @@
 import { getOpenAiModels } from "./openai.service";
 import { Request, Response } from "express";
-import { updateOpenAiModels } from "../supabase.service";
+import { updateOpenAiModels } from "../supabase/supabase.service";
 
 export const getModels = async (req: Request, res: Response) => {
   try {

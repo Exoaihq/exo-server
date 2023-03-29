@@ -2,7 +2,7 @@ import * as fs from "fs";
 import {
   compareAndUpdateSnippets,
   findSnippetByFileName,
-} from "../server/api/supabase.service";
+} from "../server/api/supabase/supabase.service";
 
 const foldersToExclude = [
   "node_modules",

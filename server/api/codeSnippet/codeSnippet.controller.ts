@@ -26,7 +26,7 @@ import {
   findFileId,
   findFilesWithoutExplaination,
   findSnippetsWithoutFilesAndAssignFiles,
-} from "../supabase.service";
+} from "../supabase/supabase.service";
 
 // Create a single supabase client for interacting with your database
 const supabase = createClient(supabaseUrl, supabaseKey);

@@ -1,5 +1,5 @@
 import { Router } from "express";
-import { addToSpecificFileLocation } from "../codeCompletion/codeCompletion.controller";
+
 import {
   addAllFilesToDb,
   assignSnippetToFile,
@@ -33,7 +33,5 @@ codeFileRoutes.get(
 );
 
 codeFileRoutes.get("/find-and-update", findAndUpdateFiles);
-
-codeFileRoutes.get("/specific", addToSpecificFileLocation);
 
 export default codeFileRoutes;
