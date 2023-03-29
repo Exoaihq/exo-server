@@ -1,14 +1,9 @@
-import { text } from "body-parser";
 import { ChatMessage, ChatUserType } from "../../../types/chatMessage.type";
 import { EngineName } from "../../../types/openAiTypes/openAiEngine";
 import { parseCodeTypes } from "../../../types/parseCode.types";
 import { Database } from "../../../types/supabase";
 import { addCodeToTheBottonOfFile } from "../../../utils/appendFile";
 import { findFileAndReturnContents } from "../../../utils/fileOperations.service";
-import {
-  extractFileNameAndPathFromFullPath,
-  getFileSuffix,
-} from "../../../utils/getFileName";
 import { parseFile } from "../../../utils/treeSitter";
 import {
   createMessagesWithUser,
@@ -24,14 +19,10 @@ import {
   getAiCodePerSession,
   updateSession,
 } from "../supabase.service";
-import {
-  createCodeClassificationPrompt,
-  runCodeClassificaiton,
-} from "./codeCompletion.classifier";
+import { runCodeClassificaiton } from "./codeCompletion.classifier";
 import {} from "./codeCompletion.controller";
 import {
   AllValues,
-  basePrompt,
   createNewCodePrompt,
   LocationAndFunctionality,
   locationPrompt,
@@ -45,6 +36,7 @@ import {
   CodeCompletionResponseMetadata,
   OpenAiChatCompletionResponse,
 } from "./codeCompletion.types";
+import { handleUpdatingExistingCode } from "./scenerios/codeCompletion.updateExisting";
 const fs = require("fs");
 
 export const codeCompletionResponse: CodeCompletionResponse = {
@@ -78,17 +70,36 @@ export async function checkDbSession(
     location: dbSession.location || "",
     functionality: dbSession.functionality || "",
   };
+  const { location, code_content, file_name, file_path } = dbSession;
 
   const classification: LocationAndFunctionality = await runCodeClassificaiton(
     whatWeKnowAboutTheSession,
     dbMessagesToChatMessages(sessionMessages)
   );
 
-  if (dbSession.location) {
-    if (
-      classification.functionality &&
-      textIncludeScratchPad(dbSession.location)
-    ) {
+  console.log("classification", classification);
+
+  if (location === "existingFile" && classification.functionality) {
+    const latestMessage = messages[messages.length - 1];
+    const codeCompletionResponse = await handleUpdatingExistingCode(
+      latestMessage.content,
+      code_content || "",
+      file_path + "/" + file_name,
+      sessionId,
+      location,
+      user
+    );
+
+    await createMessagesWithUser(
+      user,
+      codeCompletionResponse.choices.map((choice) => choice.message),
+      sessionId
+    );
+    return await codeCompletionResponse;
+  }
+
+  if (location) {
+    if (classification.functionality && textIncludeScratchPad(location)) {
       console.log("Writing to the scratch pad");
       const latestMessage = messages[messages.length - 1];
 
@@ -125,7 +136,7 @@ export async function checkDbSession(
         response,
         metadata,
         sessionId,
-        dbSession.location,
+        location,
         user
       );
     }
@@ -151,6 +162,10 @@ export async function checkDbSession(
           0.1
         );
         codeCompletionResponse.choices = response.choices;
+      }
+
+      if (classification.location === "existingFile") {
+        // Update existing file
       }
     } else {
       const adaptedMessages = await addSystemMessage(
@@ -239,38 +254,6 @@ export async function handleScratchPad(
   }
 }
 
-export async function handleGetFunctionalityWhenFileExists(
-  messages: ChatMessage[],
-  fullFilePathWithName: string
-) {
-  const adaptedMessages = await addSystemMessage(
-    messages,
-    requiredFunctionalityOnlyPrompt(messages)
-  );
-  const response = await createChatCompletion(
-    adaptedMessages,
-    EngineName.Turbo
-  );
-
-  const { fileName, extractedPath } =
-    extractFileNameAndPathFromFullPath(fullFilePathWithName);
-
-  const metadata = {
-    projectDirectory: extractedPath,
-    projectFile: fileName,
-    newFile: false,
-    requiredFunctionality: "",
-  };
-
-  const completionResponse: CodeCompletionResponse = {
-    choices: response.choices,
-    metadata,
-  };
-
-  console.log("Need required functionality", completionResponse);
-  return completionResponse;
-}
-
 export async function updateCodeCompletionSystemMessage(
   request: CodeCompletionRequest,
   metadata: CodeCompletionResponseMetadata
@@ -299,47 +282,13 @@ export async function handleWritingNewFile(requiredFunctionality: string) {
   );
 }
 
-export async function handleUpdatingExistingCode(
-  requiredFunctionality: string,
-  existingContent: string,
-  fullFilePathWithName: string
-): Promise<CodeCompletionResponse> {
-  const { fileName, extractedPath } =
-    extractFileNameAndPathFromFullPath(fullFilePathWithName);
-  const fileSuffix = getFileSuffix(fileName);
-
-  const codeMetadata = `The file ${fileName} has the suffix ${fileSuffix}. The update code should be the same type of code as the suffix indicates.`;
-
-  const metadata = {
-    projectDirectory: extractedPath,
-    projectFile: fileName,
-    newFile: false,
-    requiredFunctionality: "",
-  };
-
-  const response = await createChatCompletion(
-    [
-      {
-        role: ChatUserType.user,
-        content: refactorCodePrompt(
-          existingContent,
-          requiredFunctionality,
-          codeMetadata
-        ),
-      },
-    ],
-    EngineName.GPT4
-  );
-
-  return handleParsingCreatedCode(response, metadata);
-}
-
 export function handleParsingCreatedCode(
   response: OpenAiChatCompletionResponse,
   metadata: CodeCompletionResponseMetadata,
   sessionId?: string,
   location?: string,
-  user?: Database["public"]["Tables"]["users"]["Row"]
+  user?: Database["public"]["Tables"]["users"]["Row"],
+  functionality?: string
 ): CodeCompletionResponse {
   const parsedContent = parseReturnedCode(response.choices[0].message?.content);
 
@@ -371,6 +320,12 @@ export function handleParsingCreatedCode(
         codeCompletionChoiceResponse.map((choice) => choice.message),
         sessionId
       );
+
+      updateSession(user, sessionId, {
+        location,
+        code_content: parsedContent.code,
+        functionality,
+      });
     }
   }
 

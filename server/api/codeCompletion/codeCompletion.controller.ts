@@ -9,9 +9,11 @@ import {
 } from "./codeCompletion.classifier";
 import { checkDbSession } from "./codeCompletion.service";
 import { CodeCompletionRequest } from "./codeCompletion.types";
+import { handleGetFunctionalityWhenFileExists } from "./scenerios/codeCompletion.updateExisting";
 
 export const handleCodeCompletion = async (req: Request, res: Response) => {
   try {
+    console.log("here");
     const session = await checkSessionOrThrow(req, res);
 
     const { user } = session.data;
@@ -68,6 +70,34 @@ export const handleCodeCompletion = async (req: Request, res: Response) => {
         .status(500)
         .json({ message: "Something went wrong with the classification" });
     }
+  } catch (error: any) {
+    console.log(error);
+    res.status(500).json({ message: error.message });
+  }
+};
+
+export const handleFileUpload = async (req: Request, res: Response) => {
+  try {
+    const session = await checkSessionOrThrow(req, res);
+
+    const { user } = session.data;
+
+    const { messages, fullFilePathWithName, sessionId, codeContent } =
+      req.body as CodeCompletionRequest;
+
+    const dbSession = await findOrUpdateSession(user, sessionId);
+
+    const response = await handleGetFunctionalityWhenFileExists(
+      messages,
+      fullFilePathWithName,
+      user,
+      sessionId,
+      codeContent
+    );
+
+    return res.status(200).json({
+      data: response,
+    });
   } catch (error: any) {
     console.log(error);
     res.status(500).json({ message: error.message });

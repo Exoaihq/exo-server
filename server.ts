@@ -1,11 +1,12 @@
-import express, { Express, Request, Response } from "express";
-import routes from "./routes/routes";
-import cors from "cors";
 import bodyParser from "body-parser";
-import codeSnippetRoutes from "./server/api/codeSnippet/codeSnippet.routes";
+import cors from "cors";
+import express, { Express } from "express";
+import routes from "./routes/routes";
+import codeCompletionRoutes from "./server/api/codeCompletion/codeCompletion.routes";
 import codeFileRoutes from "./server/api/codeFile/codeFile.routes";
-import { port } from "./utils/envVariable";
+import codeSnippetRoutes from "./server/api/codeSnippet/codeSnippet.routes";
 import messageRoutes from "./server/api/message/message.routes";
+import { port } from "./utils/envVariable";
 
 const app: Express = express();
 
@@ -19,6 +20,7 @@ app.use(cors(corsOptions));
 app.use("/code-file", codeFileRoutes);
 app.use("/code-snippet", codeSnippetRoutes);
 app.use("/messages", messageRoutes);
+app.use("/code", codeCompletionRoutes);
 app.use("/", routes);
 
 app.listen(process.env.PORT, () => {

@@ -327,35 +327,38 @@ export interface Database {
       }
       session: {
         Row: {
+          code_content: string | null
           created_at: string | null
           file_name: string | null
+          file_path: string | null
           functionality: string | null
           id: string
           location: string | null
           new_file: boolean | null
-          scratch_pad: boolean | null
           updated_at: string | null
           user_id: string | null
         }
         Insert: {
+          code_content?: string | null
           created_at?: string | null
           file_name?: string | null
+          file_path?: string | null
           functionality?: string | null
           id: string
           location?: string | null
           new_file?: boolean | null
-          scratch_pad?: boolean | null
           updated_at?: string | null
           user_id?: string | null
         }
         Update: {
+          code_content?: string | null
           created_at?: string | null
           file_name?: string | null
+          file_path?: string | null
           functionality?: string | null
           id?: string
           location?: string | null
           new_file?: boolean | null
-          scratch_pad?: boolean | null
           updated_at?: string | null
           user_id?: string | null
         }

@@ -123,6 +123,11 @@ export function createCodeClassificationPrompt(
       Here are the messages so far:
       ${JSON.stringify(messages)}
       '''
+      '''
+      scratch pad should be returned as "scratchPad"
+      new file should be returned as "newFile"
+      existing file should be returned as "existingFile"
+      '''
       This is the format you need to respond with:
       {
         "location": {location},

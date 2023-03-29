@@ -1,12 +1,23 @@
 import { Request, Response } from "express";
 import { checkSessionOrThrow } from "../supabase.service";
-import { createMessageWithUser, getMessagesWithUser } from "./message.service";
+import {
+  createMessageWithUser,
+  getMessagesByUserAndSession,
+  getMessagesWithUser,
+} from "./message.service";
 
 export const getMessages = async (req: Request, res: Response) => {
   try {
     const session = await checkSessionOrThrow(req, res);
 
-    const messages = await getMessagesWithUser(session.data.user);
+    const { session_id } = req.headers;
+
+    const sessionId = session_id as string;
+
+    const messages = await getMessagesByUserAndSession(
+      session.data.user,
+      sessionId
+    );
 
     return res.status(200).json({
       data: messages,
