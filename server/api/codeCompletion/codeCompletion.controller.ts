@@ -15,7 +15,6 @@ import { handleGetFunctionalityWhenFileExists } from "./scenerios/codeCompletion
 
 export const handleCodeCompletion = async (req: Request, res: Response) => {
   try {
-    console.log("here");
     const session = await checkSessionOrThrow(req, res);
 
     const { user } = session.data;

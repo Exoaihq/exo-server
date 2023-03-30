@@ -37,6 +37,23 @@ export function locationPrompt() {
   `;
 }
 
+export function useChooseFile() {
+  return `
+  ${prefix}
+  The user wants to update an existing file. Tell them to use the choose file button that is the located in the scratch pad to select the file they wish to upload.
+  `;
+}
+
+export function useChooseDirectory() {
+  return `
+  ${prefix}
+  If the user wants to create a new file you should tell them to use the choose directory button to select the location where they would like to create the file.
+  This is an example of how you can help the user:
+  "Ok you want to create a new file. Use the choose directory button to select the location where you would like to create the file."
+  For example if the users says they want to create a new file then you would respond with: "Ok you want to create a new file. Use the choose directory button to select the location where you would like to create the file."
+  `;
+}
+
 export function directoryOnlyPrompt(messages: ChatMessage[]) {
   return `
     ${prefix}

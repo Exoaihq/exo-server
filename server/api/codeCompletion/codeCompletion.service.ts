@@ -28,6 +28,8 @@ import {
   locationPrompt,
   refactorCodePrompt,
   requiredFunctionalityOnlyPrompt,
+  useChooseDirectory,
+  useChooseFile,
 } from "./codeCompletion.prompts";
 import { getReleventPrompt, NeededValues } from "./codeCompletion.rules";
 import {
@@ -165,7 +167,40 @@ export async function checkDbSession(
       }
 
       if (classification.location === "existingFile") {
-        // Update existing file
+        const adaptedMessages = addSystemMessage(messages, useChooseFile());
+        const response = await createChatCompletion(
+          adaptedMessages,
+          EngineName.Turbo,
+          0.3
+        );
+        codeCompletionResponse.choices = response.choices;
+        codeCompletionResponse.metadata = {
+          projectDirectory: "",
+          projectFile: "",
+          newFile: false,
+          requiredFunctionality: "",
+        };
+      }
+
+      if (classification.location === "newFile") {
+        console.log("new file");
+        const adaptedMessages = addSystemMessage(
+          messages,
+          useChooseDirectory()
+        );
+        const response = await createChatCompletion(
+          adaptedMessages,
+          EngineName.Turbo,
+          0.3,
+          400
+        );
+        codeCompletionResponse.choices = response.choices;
+        codeCompletionResponse.metadata = {
+          projectDirectory: "",
+          projectFile: "",
+          newFile: true,
+          requiredFunctionality: "",
+        };
       }
     } else {
       const adaptedMessages = await addSystemMessage(

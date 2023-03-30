@@ -42,13 +42,14 @@ export async function getOpenAiModels() {
 export async function getChatCompletion(
   messages: ChatMessage[],
   model: EngineName = EngineName.Turbo,
-  temperature: number = 1
+  temperature: number = 1,
+  maxTokens: number = 2048
 ) {
   try {
     const res = await openai.createChatCompletion({
       model,
       messages,
-      max_tokens: 2048,
+      max_tokens: maxTokens,
       temperature,
     });
     if (res.status === 429) {
@@ -225,14 +226,15 @@ export async function createTextCompletion(
 export async function createChatCompletion(
   messages: ChatMessage[],
   model?: EngineName,
-  temperature: number = 1
+  temperature: number = 1,
+  maxTokens: number = 2048
 ): Promise<OpenAiChatCompletionResponse> {
   const interval = commandLineLoading("Loading");
 
   try {
     const remainingRequests = await limiter.removeTokens(1);
     const res = model
-      ? await getChatCompletion(messages, model, temperature)
+      ? await getChatCompletion(messages, model, temperature, maxTokens)
       : await getChatCompletion(messages);
     const data: OpenAiChatCompletionResponse = res.data;
     clearLoading(interval, `${raisingHands} Query completed ${raisingHands}`);
