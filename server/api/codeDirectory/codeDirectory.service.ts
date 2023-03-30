@@ -9,7 +9,8 @@ const supabase = createClient<Database>(supabaseUrl, supabaseKey);
 export const createCodeDirectory = async (
   user: Database["public"]["Tables"]["users"]["Row"],
   filePath: string,
-  directoryName: string
+  directoryName: string,
+  saved: boolean
 ): Promise<Database["public"]["Tables"]["code_directory"]["Insert"]> => {
   const account = await findOrUpdateAccount(user);
 
@@ -20,12 +21,13 @@ export const createCodeDirectory = async (
         file_path: filePath,
         directory_name: directoryName,
         account_id: account ? account.id : null,
+        saved,
       },
     ])
     .select();
 
   // @ts-ignore
-  return data[0] as Database["public"]["Tables"]["ai_created_code"]["Row"];
+  return data[0] as Database["public"]["Tables"]["code_directory"]["Row"];
 };
 
 export const getCodeDirectories = async (

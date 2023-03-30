@@ -58,6 +58,8 @@ export interface Database {
           directory_name: string | null
           file_path: string | null
           id: number
+          indexed_at: string | null
+          saved: boolean | null
           updated_at: string | null
         }
         Insert: {
@@ -68,6 +70,8 @@ export interface Database {
           directory_name?: string | null
           file_path?: string | null
           id?: number
+          indexed_at?: string | null
+          saved?: boolean | null
           updated_at?: string | null
         }
         Update: {
@@ -78,6 +82,8 @@ export interface Database {
           directory_name?: string | null
           file_path?: string | null
           id?: number
+          indexed_at?: string | null
+          saved?: boolean | null
           updated_at?: string | null
         }
       }

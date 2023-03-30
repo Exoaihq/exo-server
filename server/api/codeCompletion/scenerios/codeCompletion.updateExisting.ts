@@ -46,7 +46,8 @@ export async function handleGetFunctionalityWhenFileExists(
   await createCodeDirectory(
     user,
     extractedPath,
-    getDirectoryNameFromPath(extractedPath)
+    getDirectoryNameFromPath(extractedPath),
+    false
   );
 
   const metadata = {
