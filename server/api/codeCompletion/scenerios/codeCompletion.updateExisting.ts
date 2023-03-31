@@ -6,11 +6,12 @@ import {
   getDirectoryNameFromPath,
   getFileSuffix,
 } from "../../../../utils/getFileName";
-import { createMessagesWithUser } from "../../message/message.service";
-import { createChatCompletion } from "../../openAi/openai.service";
 import { createCodeDirectory } from "../../codeDirectory/codeDirectory.service";
+import { createMessageWithUser } from "../../message/message.service";
+import { createChatCompletion } from "../../openAi/openai.service";
 import { updateSession } from "../../supabase/supabase.service";
 import {
+  fileUploadPromp,
   refactorCodePrompt,
   requiredFunctionalityOnlyPrompt,
 } from "../codeCompletion.prompts";
@@ -28,15 +29,14 @@ export async function handleGetFunctionalityWhenFileExists(
   sessionId: string,
   codeContent: string
 ) {
-  const adaptedMessages = await addSystemMessage(
-    messages,
-    requiredFunctionalityOnlyPrompt(messages)
-  );
+  const adaptedMessages = await addSystemMessage(messages, fileUploadPromp());
 
   const response = await createChatCompletion(
     adaptedMessages,
     EngineName.Turbo
   );
+
+  console.log("response", response.choices[0]);
 
   const { fileName, extractedPath } =
     extractFileNameAndPathFromFullPath(fullFilePathWithName);
@@ -61,11 +61,13 @@ export async function handleGetFunctionalityWhenFileExists(
     choices: response.choices,
     metadata,
   };
-  await createMessagesWithUser(
-    user,
-    codeCompletionResponse.choices.map((choice) => choice.message),
-    sessionId
-  );
+  if (completionResponse && completionResponse?.choices[0]) {
+    await createMessageWithUser(
+      user,
+      codeCompletionResponse.choices[0].message,
+      sessionId
+    );
+  }
 
   updateSession(user, sessionId, {
     location: "existingFile",

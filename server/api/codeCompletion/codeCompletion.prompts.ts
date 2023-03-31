@@ -85,6 +85,13 @@ export function fileNamePrompt(messages: ChatMessage[]) {
   `;
 }
 
+export function fileUploadPromp() {
+  return `${prefix}
+       The user just uploaded a file that you can help refactor.
+      Ask the user to tel you the required refactor they want to make.
+    `;
+}
+
 export function requiredFunctionalityOnlyPrompt(messages: ChatMessage[]) {
   return `${prefix}
         You need to get the user to tell you the required functionality you they want to update in the code before you can continue.

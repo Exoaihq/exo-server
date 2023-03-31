@@ -30,6 +30,33 @@ export const getMessagesByUserAndSession = async (
   return data || [];
 };
 
+export const getOnlyRoleAndContentMessagesByUserAndSession = async (
+  user: Database["public"]["Tables"]["users"]["Row"],
+  sessionId: string
+): Promise<ChatMessage[]> => {
+  const { data, error } = await supabase
+    .from("messages")
+    .select("role, content, created_at, session_id")
+    .order("created_at", { ascending: false })
+    .eq("user_id", user.id)
+    .eq("session_id", sessionId)
+    .limit(5);
+
+  let response = [] as ChatMessage[];
+
+  if (data) {
+    // @ts-ignore
+    response = data.map((message) => {
+      return {
+        role: message.role,
+        content: message.content,
+      };
+    });
+  }
+
+  return response?.reverse() as ChatMessage[];
+};
+
 export const createMessageWithUser = async (
   user: Database["public"]["Tables"]["users"]["Row"],
   message: Database["public"]["Tables"]["messages"]["Insert"],

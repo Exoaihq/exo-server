@@ -1,5 +1,8 @@
 import { Request, Response } from "express";
-import { createMessagesWithUser } from "../message/message.service";
+import {
+  createMessagesWithUser,
+  getOnlyRoleAndContentMessagesByUserAndSession,
+} from "../message/message.service";
 import { createTextCompletion } from "../openAi/openai.service";
 import {
   checkSessionOrThrow,
@@ -19,12 +22,17 @@ export const handleCodeCompletion = async (req: Request, res: Response) => {
 
     const { user } = session.data;
 
-    const { messages, sessionId } = req.body as CodeCompletionRequest;
+    const { sessionId } = req.body as CodeCompletionRequest;
+
+    const sessionMessages = await getOnlyRoleAndContentMessagesByUserAndSession(
+      user,
+      sessionId
+    );
 
     const dbSession = await findOrUpdateSession(user, sessionId);
 
     const classifyMessage = await createTextCompletion(
-      createBaseClassificationPrompt(messages),
+      createBaseClassificationPrompt(sessionMessages),
       0.2
     );
 
@@ -40,7 +48,7 @@ export const handleCodeCompletion = async (req: Request, res: Response) => {
 
     if (baseClassificaiton === "generalChat") {
       const choices = await (
-        await runBaseClassificaitonChatCompletion(messages)
+        await runBaseClassificaitonChatCompletion(sessionMessages)
       ).choices;
 
       await createMessagesWithUser(
@@ -57,7 +65,7 @@ export const handleCodeCompletion = async (req: Request, res: Response) => {
     } else if (baseClassificaiton === "creatingCode") {
       const responseBasedOnDbSession = await checkDbSession(
         dbSession,
-        messages,
+        sessionMessages,
         user,
         sessionId
       );
@@ -82,13 +90,18 @@ export const handleFileUpload = async (req: Request, res: Response) => {
 
     const { user } = session.data;
 
-    const { messages, fullFilePathWithName, sessionId, codeContent } =
+    const { fullFilePathWithName, sessionId, codeContent } =
       req.body as CodeCompletionRequest;
+
+    const sessionMessages = await getOnlyRoleAndContentMessagesByUserAndSession(
+      user,
+      sessionId
+    );
 
     await findOrUpdateSession(user, sessionId);
 
     const response = await handleGetFunctionalityWhenFileExists(
-      messages,
+      sessionMessages,
       fullFilePathWithName,
       user,
       sessionId,

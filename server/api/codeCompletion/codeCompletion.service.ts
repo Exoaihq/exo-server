@@ -7,6 +7,7 @@ import { findFileAndReturnContents } from "../../../utils/fileOperations.service
 import { parseFile } from "../../../utils/treeSitter";
 import {
   createMessagesWithUser,
+  createMessageWithUser,
   dbMessagesToChatMessages,
   getMessagesByUserAndSession,
 } from "../message/message.service";
@@ -82,7 +83,9 @@ export async function checkDbSession(
   console.log("classification", classification);
 
   if (location === "existingFile" && classification.functionality) {
-    const latestMessage = messages[messages.length - 1];
+    const userMessages = messages.filter((message) => message.role === "user");
+    const latestMessage = userMessages[userMessages.length - 1];
+
     const codeCompletionResponse = await handleUpdatingExistingCode(
       latestMessage.content,
       code_content || "",
@@ -92,9 +95,9 @@ export async function checkDbSession(
       user
     );
 
-    await createMessagesWithUser(
+    await createMessageWithUser(
       user,
-      codeCompletionResponse.choices.map((choice) => choice.message),
+      codeCompletionResponse.choices[0].message,
       sessionId
     );
     return await codeCompletionResponse;
@@ -103,7 +106,12 @@ export async function checkDbSession(
   if (location) {
     if (classification.functionality && textIncludeScratchPad(location)) {
       console.log("Writing to the scratch pad");
-      const latestMessage = messages[messages.length - 1];
+      const userMessages = messages.filter(
+        (message) => message.role === "user"
+      );
+      const latestMessage = userMessages[userMessages.length - 1];
+
+      console.log(latestMessage);
 
       const existingCode = await getAiCodePerSession(sessionId);
 
@@ -114,6 +122,8 @@ export async function checkDbSession(
           ? refactorCodePrompt(existingCode.code, latestMessage.content, "")
           : createNewCodePrompt(latestMessage.content, "");
 
+      console.log("new functionality", content);
+
       const response = await createChatCompletion(
         [
           {
@@ -123,6 +133,8 @@ export async function checkDbSession(
         ],
         EngineName.GPT4
       );
+
+      console.log("gpt response", response);
       const metadata = {
         projectDirectory: "scratch pad",
         projectFile: "",
@@ -216,77 +228,12 @@ export async function checkDbSession(
     }
   }
 
-  await createMessagesWithUser(
+  await createMessageWithUser(
     user,
-    codeCompletionResponse.choices.map((choice) => choice.message),
+    codeCompletionResponse.choices[0].message,
     sessionId
   );
   return await codeCompletionResponse;
-}
-
-export async function handleScratchPad(
-  json: AllValues,
-  messages: ChatMessage[],
-  codeContent: string
-) {
-  const metadata = {
-    projectDirectory: "scratch pad",
-    projectFile: "",
-    newFile: false,
-    requiredFunctionality: "",
-  };
-  if (json && json.requiredFunctionality) {
-    if (codeContent) {
-      const latestMessage = messages[messages.length - 1];
-      const content = refactorCodePrompt(
-        codeContent,
-        latestMessage.content,
-        ""
-      );
-
-      const response = await createChatCompletion(
-        [
-          {
-            role: ChatUserType.user,
-            content,
-          },
-        ],
-        EngineName.GPT4
-      );
-      return handleParsingCreatedCode(response, metadata);
-    }
-
-    const response = await handleWritingNewFile(json.requiredFunctionality);
-
-    console.log("Writing code to scratch pad", response);
-
-    return handleParsingCreatedCode(response, metadata);
-  } else {
-    const adaptedMessages = await addSystemMessage(
-      messages,
-      requiredFunctionalityOnlyPrompt(messages)
-    );
-    const response = await createChatCompletion(
-      adaptedMessages,
-      EngineName.Turbo
-    );
-
-    const metadata = {
-      projectDirectory: "scratch pad",
-      projectFile: "",
-      newFile: false,
-      requiredFunctionality: "",
-    };
-
-    const completionResponse: CodeCompletionResponse = {
-      choices: response.choices,
-      metadata,
-      completedCode: undefined,
-    };
-
-    console.log("Need required functionality", completionResponse);
-    return completionResponse;
-  }
 }
 
 export async function updateCodeCompletionSystemMessage(
@@ -317,15 +264,16 @@ export async function handleWritingNewFile(requiredFunctionality: string) {
   );
 }
 
-export function handleParsingCreatedCode(
+export async function handleParsingCreatedCode(
   response: OpenAiChatCompletionResponse,
   metadata: CodeCompletionResponseMetadata,
   sessionId?: string,
   location?: string,
   user?: Database["public"]["Tables"]["users"]["Row"],
   functionality?: string
-): CodeCompletionResponse {
+): Promise<CodeCompletionResponse> {
   const parsedContent = parseReturnedCode(response.choices[0].message?.content);
+  console.log("parsed content", parsedContent);
 
   const codeCompletionChoiceResponse = [
     {
@@ -350,7 +298,7 @@ export function handleParsingCreatedCode(
   if (sessionId && location) {
     createAiWritenCode(sessionId, parsedContent.code, location);
     if (user) {
-      createMessagesWithUser(
+      await createMessagesWithUser(
         user,
         codeCompletionChoiceResponse.map((choice) => choice.message),
         sessionId
@@ -369,6 +317,8 @@ export function handleParsingCreatedCode(
     metadata,
     completedCode: parsedContent.code,
   };
+
+  console.log("completion response", completionResponse);
   return completionResponse;
 }
 
