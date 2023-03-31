@@ -10,11 +10,7 @@ import { createCodeDirectory } from "../../codeDirectory/codeDirectory.service";
 import { createMessageWithUser } from "../../message/message.service";
 import { createChatCompletion } from "../../openAi/openai.service";
 import { updateSession } from "../../supabase/supabase.service";
-import {
-  fileUploadPromp,
-  refactorCodePrompt,
-  requiredFunctionalityOnlyPrompt,
-} from "../codeCompletion.prompts";
+import { fileUploadPromp, refactorCodePrompt } from "../codeCompletion.prompts";
 import {
   addSystemMessage,
   codeCompletionResponse,
@@ -36,7 +32,10 @@ export async function handleGetFunctionalityWhenFileExists(
     EngineName.Turbo
   );
 
-  console.log("response", response.choices[0]);
+  console.log(
+    "I have the file but need the functionality response",
+    response.choices[0]
+  );
 
   const { fileName, extractedPath } =
     extractFileNameAndPathFromFullPath(fullFilePathWithName);

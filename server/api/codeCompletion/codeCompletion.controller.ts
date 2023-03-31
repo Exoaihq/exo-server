@@ -12,9 +12,11 @@ import {
   createBaseClassificationPrompt,
   runBaseClassificaitonChatCompletion,
 } from "./codeCompletion.classifier";
-import { checkDbSession } from "./codeCompletion.service";
+import {
+  checkDbSession,
+  handleFileUploadWithSession,
+} from "./codeCompletion.service";
 import { CodeCompletionRequest } from "./codeCompletion.types";
-import { handleGetFunctionalityWhenFileExists } from "./scenerios/codeCompletion.updateExisting";
 
 export const handleCodeCompletion = async (req: Request, res: Response) => {
   try {
@@ -37,7 +39,8 @@ export const handleCodeCompletion = async (req: Request, res: Response) => {
     );
 
     const baseClassificaiton = classifyMessage.choices[0].text?.trim();
-    console.log("baseClassificaiton", baseClassificaiton);
+
+    console.log("Base classificaiton", baseClassificaiton);
 
     let metadata = {
       projectDirectory: "",
@@ -97,15 +100,15 @@ export const handleFileUpload = async (req: Request, res: Response) => {
       user,
       sessionId
     );
+    const dbSession = await findOrUpdateSession(user, sessionId);
 
-    await findOrUpdateSession(user, sessionId);
-
-    const response = await handleGetFunctionalityWhenFileExists(
+    const response = await handleFileUploadWithSession(
       sessionMessages,
       fullFilePathWithName,
       user,
       sessionId,
-      codeContent
+      codeContent,
+      dbSession
     );
 
     return res.status(200).json({

@@ -40,7 +40,7 @@ export function locationPrompt() {
 export function useChooseFile() {
   return `
   ${prefix}
-  The user wants to update an existing file. Tell them to use the choose file button that is the located in the scratch pad to select the file they wish to upload.
+  The user wants to update an existing file. You have full access to the file system. Ask them to use the choose file button that is the located in the scratch pad to select the file they wish to upload.
   `;
 }
 
@@ -88,7 +88,7 @@ export function fileNamePrompt(messages: ChatMessage[]) {
 export function fileUploadPromp() {
   return `${prefix}
        The user just uploaded a file that you can help refactor.
-      Ask the user to tel you the required refactor they want to make.
+      Ask the user to tell you the required refactor they want to make.
     `;
 }
 
@@ -143,4 +143,73 @@ export function createNewCodePrompt(
     '''
     Write the code to make the changes.
     `;
+}
+
+export function fileUploadClassificaitonPrompt(
+  messages: ChatMessage[],
+  functionality: string
+) {
+  const userMessages = messages.filter((message) => message.role === "user");
+  return `
+   ${prefix}
+    '''
+    The user just uploaded a file. I need to know if the system has the functionality the user needs to update the file.
+    '''
+    Here is the functionality stored in the database:
+    ${functionality}
+    '''
+    Here are the messages so far:
+    ${JSON.stringify(messages, null, 2)}
+    '''
+    This is the most recent message:
+    ${userMessages[userMessages.length - 1]}
+    '''
+    This is the format you need to respond with:
+    {
+      "functionality": {functionality}
+    }
+    Respond with a json object based on the information you have so far. The updated json object is
+
+    `;
+}
+
+export function createCodeClassificationPrompt(
+  messages: ChatMessage[],
+  sessionDetails: LocationAndFunctionality
+) {
+  const userMessages = messages.filter((message) => message.role === "user");
+
+  return `${prefix}
+     
+      You need the following information to continue:
+      '''
+      location - The location where we will be writing the code. This has can be the "scratch pad", a "new file", or an "existing file"
+      functionality - The required functionality the user wants to add
+      '''
+      Here is what you know so far:
+      {
+      location: "${sessionDetails.location}"
+      functionality: "${sessionDetails.functionality}"
+      }
+      '''
+      Here are the messages so far:
+      ${JSON.stringify(messages)}
+      '''
+      This is the most recent message:
+      ${userMessages[userMessages.length - 1]}
+      If this message defines functionality it should be returned as "functionality"
+      If this message defines the location it should be returned as "location"
+      '''
+      scratch pad should be returned as "scratchPad"
+      new file should be returned as "newFile"
+      existing file should be returned as "existingFile"
+      '''
+      This is the format you need to respond with:
+      {
+        "location": {location},
+        "functionality": {functionality}
+      }
+      Respond with a json object based on the information you have so far. The updated json object is
+    
+  `;
 }

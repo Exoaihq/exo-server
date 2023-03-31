@@ -1,8 +1,7 @@
 import { ChatMessage, ChatUserType } from "../../../types/chatMessage.type";
 import { EngineName } from "../../../types/openAiTypes/openAiEngine";
 import { parseCodeTypes } from "../../../types/parseCode.types";
-import { Database } from "../../../types/supabase";
-import { addCodeToTheBottonOfFile } from "../../../utils/appendFile";
+import { Database, Json } from "../../../types/supabase";
 import { findFileAndReturnContents } from "../../../utils/fileOperations.service";
 import { parseFile } from "../../../utils/treeSitter";
 import {
@@ -11,26 +10,19 @@ import {
   dbMessagesToChatMessages,
   getMessagesByUserAndSession,
 } from "../message/message.service";
-import {
-  createChatCompletion,
-  createTextCompletion,
-} from "../openAi/openai.service";
+import { createChatCompletion } from "../openAi/openai.service";
 import {
   createAiWritenCode,
-  getAiCodePerSession,
   updateSession,
 } from "../supabase/supabase.service";
-import { runCodeClassificaiton } from "./codeCompletion.classifier";
+import {
+  runCodeClassificaiton,
+  runFileUploadClassificaiton,
+} from "./codeCompletion.classifier";
 import {} from "./codeCompletion.controller";
 import {
-  AllValues,
-  createNewCodePrompt,
   LocationAndFunctionality,
   locationPrompt,
-  refactorCodePrompt,
-  requiredFunctionalityOnlyPrompt,
-  useChooseDirectory,
-  useChooseFile,
 } from "./codeCompletion.prompts";
 import { getReleventPrompt, NeededValues } from "./codeCompletion.rules";
 import {
@@ -39,7 +31,12 @@ import {
   CodeCompletionResponseMetadata,
   OpenAiChatCompletionResponse,
 } from "./codeCompletion.types";
-import { handleUpdatingExistingCode } from "./scenerios/codeCompletion.updateExisting";
+import {
+  handleExistingFileUpdate,
+  handleScratchPadUpdate,
+} from "./scenerios/codeCompletion.knowFuncAndLoc";
+import { handleKNnowLocButNotFunc } from "./scenerios/codeCompletion.knowLocNotFunc";
+import { handleGetFunctionalityWhenFileExists } from "./scenerios/codeCompletion.updateExisting";
 const fs = require("fs");
 
 export const codeCompletionResponse: CodeCompletionResponse = {
@@ -73,160 +70,72 @@ export async function checkDbSession(
     location: dbSession.location || "",
     functionality: dbSession.functionality || "",
   };
-  const { location, code_content, file_name, file_path } = dbSession;
+  const { code_content, file_name, file_path } = dbSession;
 
   const classification: LocationAndFunctionality = await runCodeClassificaiton(
     whatWeKnowAboutTheSession,
     dbMessagesToChatMessages(sessionMessages)
   );
 
-  console.log("classification", classification);
+  console.log("Code classification", classification);
 
-  if (location === "existingFile" && classification.functionality) {
-    const userMessages = messages.filter((message) => message.role === "user");
-    const latestMessage = userMessages[userMessages.length - 1];
-
-    const codeCompletionResponse = await handleUpdatingExistingCode(
-      latestMessage.content,
-      code_content || "",
-      file_path + "/" + file_name,
-      sessionId,
-      location,
-      user
-    );
-
-    await createMessageWithUser(
-      user,
-      codeCompletionResponse.choices[0].message,
-      sessionId
-    );
-    return await codeCompletionResponse;
-  }
-
-  if (location) {
-    if (classification.functionality && textIncludeScratchPad(location)) {
-      console.log("Writing to the scratch pad");
-      const userMessages = messages.filter(
-        (message) => message.role === "user"
-      );
-      const latestMessage = userMessages[userMessages.length - 1];
-
-      console.log(latestMessage);
-
-      const existingCode = await getAiCodePerSession(sessionId);
-
-      console.log(existingCode);
-
-      const content =
-        existingCode && existingCode.code
-          ? refactorCodePrompt(existingCode.code, latestMessage.content, "")
-          : createNewCodePrompt(latestMessage.content, "");
-
-      console.log("new functionality", content);
-
-      const response = await createChatCompletion(
-        [
-          {
-            role: ChatUserType.user,
-            content,
-          },
-        ],
-        EngineName.GPT4
-      );
-
-      console.log("gpt response", response);
-      const metadata = {
-        projectDirectory: "scratch pad",
-        projectFile: "",
-        newFile: false,
-        requiredFunctionality: "",
-      };
-
-      updateSession(user, sessionId, {
-        location: classification.location,
-        functionality: classification.functionality,
-      });
-      return handleParsingCreatedCode(
-        response,
-        metadata,
-        sessionId,
-        location,
-        user
-      );
-    }
-  }
-
-  if (!dbSession.location) {
-    if (classification.location) {
-      const updatedSession = updateSession(user, sessionId, {
-        location: classification.location,
-        functionality: classification.functionality,
-      });
-
-      if (textIncludeScratchPad(classification.location)) {
-        // Write to the scratch pad
-
-        const adaptedMessages = await addSystemMessage(
-          messages,
-          requiredFunctionalityOnlyPrompt(messages)
-        );
-        const response = await createChatCompletion(
-          adaptedMessages,
-          EngineName.Turbo,
-          0.1
-        );
-        codeCompletionResponse.choices = response.choices;
-      }
-
-      if (classification.location === "existingFile") {
-        const adaptedMessages = addSystemMessage(messages, useChooseFile());
-        const response = await createChatCompletion(
-          adaptedMessages,
-          EngineName.Turbo,
-          0.3
-        );
-        codeCompletionResponse.choices = response.choices;
-        codeCompletionResponse.metadata = {
-          projectDirectory: "",
-          projectFile: "",
-          newFile: false,
-          requiredFunctionality: "",
-        };
-      }
-
-      if (classification.location === "newFile") {
-        console.log("new file");
-        const adaptedMessages = addSystemMessage(
-          messages,
-          useChooseDirectory()
-        );
-        const response = await createChatCompletion(
-          adaptedMessages,
-          EngineName.Turbo,
-          0.3,
-          400
-        );
-        codeCompletionResponse.choices = response.choices;
-        codeCompletionResponse.metadata = {
-          projectDirectory: "",
-          projectFile: "",
-          newFile: true,
-          requiredFunctionality: "",
-        };
-      }
-    } else {
-      const adaptedMessages = await addSystemMessage(
+  // Handle know both
+  if (classification.location && classification.functionality) {
+    if (classification.location === "existingFile") {
+      return handleExistingFileUpdate(
         messages,
-        locationPrompt()
+        classification,
+        user,
+        sessionId,
+        code_content,
+        file_name || "",
+        file_path || ""
       );
-      const response = await createChatCompletion(
-        adaptedMessages,
-        EngineName.Turbo,
-        0.1
+    }
+
+    if (classification.location === "newFile") {
+    }
+
+    if (classification.location === "scratchPad") {
+      return await handleScratchPadUpdate(
+        messages,
+        classification,
+        user,
+        sessionId,
+        classification.location
       );
-      codeCompletionResponse.choices = response.choices;
     }
   }
+
+  // Handle know location but not functionality
+  if (classification.location && !classification.functionality) {
+    return await handleKNnowLocButNotFunc(
+      messages,
+      user,
+      sessionId,
+      classification
+    );
+  }
+
+  // Handle know functionality but not location - write to scratch pad
+  if (classification.functionality && !classification.location) {
+    return await handleScratchPadUpdate(
+      messages,
+      classification,
+      user,
+      sessionId,
+      "scratchPad"
+    );
+  }
+
+  // Handle know nothing - this is the default case
+  const adaptedMessages = await addSystemMessage(messages, locationPrompt());
+  const response = await createChatCompletion(
+    adaptedMessages,
+    EngineName.Turbo,
+    0.1
+  );
+  codeCompletionResponse.choices = response.choices;
 
   await createMessageWithUser(
     user,
@@ -234,6 +143,58 @@ export async function checkDbSession(
     sessionId
   );
   return await codeCompletionResponse;
+}
+
+export async function handleFileUploadWithSession(
+  sessionMessages: ChatMessage[],
+  fullFilePathWithName: string,
+  user: {
+    avatar_url: string | null;
+    billing_address: Json;
+    email: string | null;
+    full_name: string | null;
+    id: string;
+    payment_method: Json;
+  },
+  sessionId: string,
+  codeContent: string,
+  dbSession: {
+    code_content: string | null;
+    created_at: string | null;
+    file_name: string | null;
+    file_path: string | null;
+    functionality: string | null;
+    id: string;
+    location: string | null;
+    new_file: boolean | null;
+    updated_at: string | null;
+    user_id: string | null;
+  }
+): Promise<CodeCompletionResponse> {
+  const classification = await runFileUploadClassificaiton(
+    sessionMessages,
+    dbSession
+  );
+
+  if (classification.functionality) {
+    return await handleExistingFileUpdate(
+      sessionMessages,
+      classification,
+      user,
+      sessionId,
+      codeContent,
+      dbSession.file_name || "",
+      dbSession.file_path || ""
+    );
+  } else {
+    return await handleGetFunctionalityWhenFileExists(
+      sessionMessages,
+      fullFilePathWithName,
+      user,
+      sessionId,
+      codeContent
+    );
+  }
 }
 
 export async function updateCodeCompletionSystemMessage(
@@ -344,50 +305,6 @@ export const parseReturnedCode = (
 
   return res;
 };
-
-export function commentOutProgammingLanguage(code: string) {
-  const refactor = code.split("\n").map((word: string, index: number) => {
-    if (word.includes("typescript")) {
-      return word.replace("typescript", "// typescript");
-    }
-  });
-  return refactor.join("\n");
-}
-
-export function checkForAllValuesInObject(object: any) {
-  for (const key in object) {
-    if (
-      object[key] === "" ||
-      object[key] === null ||
-      object[key] === undefined
-    ) {
-      return false;
-    }
-  }
-}
-
-// Takes a file name, parsed the code and uses it to prompt a new function
-export async function refactorFile(prompt: string, filePath: string) {
-  const prefix = "Here is a function you can refactor:";
-
-  let response = null;
-
-  await fs.readFile(filePath, "utf8", async function (err: any, data: any) {
-    if (err) throw err;
-
-    const entirePrompt = prefix + (await data) + "\n" + prompt;
-    console.log(">>>>>>>>>>", entirePrompt);
-    const res = await createTextCompletion(entirePrompt, 1, "Refactoring...");
-    if (res.choices[0].text) {
-      addCodeToTheBottonOfFile(filePath, res.choices[0].text);
-    }
-    console.log(res);
-    response = res;
-    return res;
-  });
-
-  return response;
-}
 
 // This is javascript scecific
 function getNameOfAFunction(fullFunction: string) {

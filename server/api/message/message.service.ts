@@ -69,7 +69,6 @@ export const createMessageWithUser = async (
     .from("messages")
     // @ts-ignore
     .insert([message]);
-  console.log(res);
 
   return res;
 };

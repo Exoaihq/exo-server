@@ -62,8 +62,8 @@ export const findOrUpdateSession = async (
     .eq("user_id", user.id)
     .eq("id", sessionId);
 
-  if (error) {
-    console.log(error);
+  if (data) {
+    console.log("Session created. ID:", data && data[0] && data[0].id);
   }
 
   if (data && data.length > 0) {
@@ -73,6 +73,8 @@ export const findOrUpdateSession = async (
       .from("session")
       .insert([{ user_id: user.id, id: sessionId }])
       .select();
+
+    console.log("Session created. ID:", data && data[0].id);
 
     // @ts-ignore
     return data[0] as Database["public"]["Tables"]["session"]["Row"];
