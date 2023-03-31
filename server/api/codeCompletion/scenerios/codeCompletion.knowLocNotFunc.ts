@@ -83,7 +83,7 @@ export async function handleKNnowLocButNotFunc(
         requiredFunctionality: "",
       },
     };
-  } else (classification.location === "scratchPad") {
+  } else {
     // Write to the scratch pad
 
     const adaptedMessages = await addSystemMessage(
