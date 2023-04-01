@@ -17,7 +17,7 @@ import {
 } from "../codeCompletion.service";
 import { runUpdateExistingOrCreateNewClassificaiton } from "../codeCompletion.classifier";
 import {
-  getAiCodeBySession,
+  getAiCodeBySessionCodeNotNull,
   updateAiWritenCode,
 } from "../../aiCreatedCode/aiCreatedCode.service";
 
@@ -135,8 +135,7 @@ export async function handleScratchPadUpdate(
 
   console.log("Functionality for writing to scratch pad", functionality);
 
-  const existingCode = await getAiCodeBySession(sessionId);
-  console.log(existingCode);
+  const existingCode = await getAiCodeBySessionCodeNotNull(sessionId);
 
   const content =
     res.where === "existing" && existingCode && existingCode.code

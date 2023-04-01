@@ -6,6 +6,22 @@ const supabase = createClient<Database>(supabaseUrl, supabaseKey);
 
 export const getAiCodeBySession = async (
   sessionId: string
+): Promise<Database["public"]["Tables"]["ai_created_code"]["Row"][]> => {
+  const { data, error } = await supabase
+    .from("ai_created_code")
+    .select("*")
+    .eq("session_id", sessionId)
+    .order("created_at", { ascending: false });
+
+  if (error) {
+    console.log("Getting code error", error);
+  }
+
+  return data as Database["public"]["Tables"]["ai_created_code"]["Row"][];
+};
+
+export const getAiCodeBySessionCodeNotNull = async (
+  sessionId: string
 ): Promise<Database["public"]["Tables"]["ai_created_code"]["Row"]> => {
   const { data, error } = await supabase
     .from("ai_created_code")

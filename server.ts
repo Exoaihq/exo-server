@@ -2,6 +2,7 @@ import bodyParser from "body-parser";
 import cors from "cors";
 import express, { Express } from "express";
 import routes from "./routes/routes";
+import aiCreatedCode from "./server/api/aiCreatedCode/aiCreatedCode.routes";
 import codeCompletionRoutes from "./server/api/codeCompletion/codeCompletion.routes";
 import codeDirectoryRoutes from "./server/api/codeDirectory/codeDirectory.routes";
 import codeFileRoutes from "./server/api/codeFile/codeFile.routes";
@@ -18,6 +19,7 @@ var corsOptions = {
 app.use(bodyParser.json());
 app.use(cors(corsOptions));
 
+app.use("/ai-completed-code", aiCreatedCode);
 app.use("/code-directory", codeDirectoryRoutes);
 app.use("/code-file", codeFileRoutes);
 app.use("/code-snippet", codeSnippetRoutes);

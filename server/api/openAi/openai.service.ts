@@ -60,8 +60,7 @@ export async function getChatCompletion(
     }
     return res;
   } catch (error: any) {
-    console.log(error);
-    console.log("Error message >>>>>>>>>>>", error.message);
+    console.log(">>>>>>>>>>>>>>error", error);
     throw error;
   }
 }

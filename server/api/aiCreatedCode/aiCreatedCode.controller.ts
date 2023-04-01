@@ -20,7 +20,7 @@ export const getAiCompletedCode = async (req: Request, res: Response) => {
     const aiCreatedCode = await getAiCodeBySession(sessionId);
 
     return res.status(200).json({
-      data: aiCreatedCode,
+      data: [...aiCreatedCode],
     });
   } catch (error: any) {
     console.log(error);
