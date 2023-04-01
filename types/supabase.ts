@@ -29,21 +29,27 @@ export interface Database {
       ai_created_code: {
         Row: {
           code: string | null
+          completed_at: string | null
           created_at: string | null
+          functionality: string | null
           id: string
           location: string | null
           session_id: string | null
         }
         Insert: {
           code?: string | null
+          completed_at?: string | null
           created_at?: string | null
+          functionality?: string | null
           id?: string
           location?: string | null
           session_id?: string | null
         }
         Update: {
           code?: string | null
+          completed_at?: string | null
           created_at?: string | null
+          functionality?: string | null
           id?: string
           location?: string | null
           session_id?: string | null
@@ -190,6 +196,7 @@ export interface Database {
         Row: {
           content: string | null
           created_at: string | null
+          created_location: string | null
           id: string
           role: Database["public"]["Enums"]["message_role"] | null
           session_id: string | null
@@ -198,6 +205,7 @@ export interface Database {
         Insert: {
           content?: string | null
           created_at?: string | null
+          created_location?: string | null
           id?: string
           role?: Database["public"]["Enums"]["message_role"] | null
           session_id?: string | null
@@ -206,6 +214,7 @@ export interface Database {
         Update: {
           content?: string | null
           created_at?: string | null
+          created_location?: string | null
           id?: string
           role?: Database["public"]["Enums"]["message_role"] | null
           session_id?: string | null

@@ -1,19 +1,12 @@
-import { createClient } from "@supabase/supabase-js";
 import { Request, Response } from "express";
-import {
-  rootProjectDirectory,
-  supabaseKey,
-  supabaseUrl,
-} from "../../../utils/envVariable";
+import { rootProjectDirectory } from "../../../utils/envVariable";
 import { iterateOverFolderAndHandleAndUpdateFileContents } from "../../../utils/iterateOverFolders";
 import { parseCode } from "../../../utils/treeSitter";
+import { createEmbeddings } from "../openAi/openai.service";
 import {
   addCodeToSupabase,
   findFileByExplainationEmbedding,
 } from "../supabase/supabase.service";
-import { createEmbeddings } from "../openAi/openai.service";
-
-const supabase = createClient(supabaseUrl, supabaseKey);
 
 export const findCodeFile = async (req: Request, res: Response) => {
   try {

@@ -1,6 +1,7 @@
 import { ChatMessage } from "../../../../types/chatMessage.type";
 import { EngineName } from "../../../../types/openAiTypes/openAiEngine";
 import { Json } from "../../../../types/supabase";
+import { createMessageWithUser } from "../../message/message.service";
 import { createChatCompletion } from "../../openAi/openai.service";
 import { updateSession } from "../../supabase/supabase.service";
 import {
@@ -95,6 +96,9 @@ export async function handleKNnowLocButNotFunc(
       EngineName.Turbo,
       0.1
     );
+
+    await createMessageWithUser(user, response.choices[0].message, sessionId);
+
     return {
       choices: response.choices,
       metadata: {

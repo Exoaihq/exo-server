@@ -1,0 +1,76 @@
+import { createClient } from "@supabase/supabase-js";
+import { Database } from "../../../types/supabase";
+import { supabaseKey, supabaseUrl } from "../../../utils/envVariable";
+
+const supabase = createClient<Database>(supabaseUrl, supabaseKey);
+
+export const getAiCodeBySession = async (
+  sessionId: string
+): Promise<Database["public"]["Tables"]["ai_created_code"]["Row"]> => {
+  const { data, error } = await supabase
+    .from("ai_created_code")
+    .select("*")
+    .eq("session_id", sessionId)
+    .not("code", "is", null)
+    .order("created_at", { ascending: false });
+
+  if (error) {
+    console.log("Getting code error", error);
+  }
+
+  // @ts-ignore
+  return data[0] as Database["public"]["Tables"]["ai_created_code"]["Row"];
+};
+
+export const findOrCreateAiWritenCode = async (
+  sessionId: string,
+  values?: Partial<Database["public"]["Tables"]["ai_created_code"]["Update"]>
+): Promise<Database["public"]["Tables"]["ai_created_code"]["Row"]> => {
+  const { data, error } = await supabase
+    .from("ai_created_code")
+    .select("*")
+    .eq("session_id", sessionId);
+
+  if (data) {
+    console.log("Write code object found. ID:", data && data[0] && data[0].id);
+  }
+
+  // Create a new object if the object was already created
+  if (data && data.length > 0 && data[0] && !data[0].completed_at) {
+    return data[0];
+  } else {
+    const { data } = await supabase
+      .from("ai_created_code")
+      .insert([{ session_id: sessionId, ...values }])
+      .select();
+
+    // @ts-ignore
+    return data[0] as Database["public"]["Tables"]["ai_created_code"]["Row"];
+  }
+};
+
+export const createAiWritenCode = async (
+  sessionId: string,
+  code: string,
+  location: string
+): Promise<Database["public"]["Tables"]["ai_created_code"]["Row"]> => {
+  const { data } = await supabase
+    .from("ai_created_code")
+    .insert([{ code, session_id: sessionId, location }])
+    .select();
+
+  // @ts-ignore
+  return data[0] as Database["public"]["Tables"]["ai_created_code"]["Row"];
+};
+
+export const updateAiWritenCode = async (
+  id: string,
+  values?: Partial<Database["public"]["Tables"]["ai_created_code"]["Update"]>
+): Promise<void> => {
+  const { data, error } = await supabase
+    .from("ai_created_code")
+    .update({ ...values })
+    .eq("id", id);
+
+  console.log("Updated code", data, error);
+};

@@ -3,7 +3,7 @@ import { getDirectoryNameFromPath } from "../../../utils/getFileName";
 import { findOrUpdateAccount } from "../supabase/account.service";
 import {
   checkSessionOrThrow,
-  findOrUpdateSession,
+  findOrCreateSession,
 } from "../supabase/supabase.service";
 import {
   createCodeDirectory,
@@ -23,7 +23,7 @@ export const getCodeDirectoriesByAccount = async (
 
     const sessionId = session_id as string;
 
-    await findOrUpdateSession(user, sessionId);
+    await findOrCreateSession(user, sessionId);
 
     const account = await findOrUpdateAccount(user);
 
@@ -53,7 +53,7 @@ export const createDirectoryByAccount = async (req: Request, res: Response) => {
 
     const sessionId = session_id as string;
 
-    await findOrUpdateSession(user, sessionId);
+    await findOrCreateSession(user, sessionId);
 
     const account = await findOrUpdateAccount(user);
 

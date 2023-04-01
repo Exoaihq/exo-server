@@ -62,9 +62,10 @@ export const createMessageWithUser = async (
   message: Database["public"]["Tables"]["messages"]["Insert"],
   sessionId: string
 ): Promise<PostgrestSingleResponse<null>> => {
-  message.user_id = user.id;
-  message.session_id = sessionId;
+  message["user_id"] = user.id;
+  message["session_id"] = sessionId;
 
+  console.log(message);
   const res = await supabase
     .from("messages")
     // @ts-ignore

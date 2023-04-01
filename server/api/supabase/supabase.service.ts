@@ -1,4 +1,5 @@
-import { createClient, PostgrestSingleResponse } from "@supabase/supabase-js";
+import { createClient } from "@supabase/supabase-js";
+import { Request, Response } from "express";
 import { AddModel } from "../../../types/openAiTypes/openAiEngine";
 import {
   Element,
@@ -17,7 +18,6 @@ import {
   createEmbeddings,
   createTextCompletion,
 } from "../openAi/openai.service";
-import { Request, Response } from "express";
 
 // Create a single supabase client for interacting with your database
 const supabase = createClient<Database>(supabaseUrl, supabaseKey);
@@ -52,7 +52,7 @@ export async function checkSession(session: {
   return await supabase.auth.setSession(session);
 }
 
-export const findOrUpdateSession = async (
+export const findOrCreateSession = async (
   user: Database["public"]["Tables"]["users"]["Row"],
   sessionId: string
 ): Promise<Database["public"]["Tables"]["session"]["Row"]> => {
@@ -63,7 +63,7 @@ export const findOrUpdateSession = async (
     .eq("id", sessionId);
 
   if (data) {
-    console.log("Session created. ID:", data && data[0] && data[0].id);
+    console.log("Session found. ID:", data && data[0] && data[0].id);
   }
 
   if (data && data.length > 0) {
@@ -92,37 +92,6 @@ export const updateSession = async (
     .eq("user_id", user.id)
     .eq("id", sessionId)
     .select();
-};
-
-export const createAiWritenCode = async (
-  sessionId: string,
-  code: string,
-  location: string
-): Promise<Database["public"]["Tables"]["ai_created_code"]["Row"]> => {
-  const { data } = await supabase
-    .from("ai_created_code")
-    .insert([{ code, session_id: sessionId, location }])
-    .select();
-
-  // @ts-ignore
-  return data[0] as Database["public"]["Tables"]["ai_created_code"]["Row"];
-};
-
-export const getAiCodePerSession = async (
-  sessionId: string
-): Promise<Database["public"]["Tables"]["ai_created_code"]["Row"]> => {
-  const { data, error } = await supabase
-    .from("ai_created_code")
-    .select("*")
-    .eq("session_id", sessionId)
-    .order("created_at", { ascending: false });
-
-  if (error) {
-    console.log("Getting code error", error);
-  }
-
-  // @ts-ignore
-  return data[0] as Database["public"]["Tables"]["ai_created_code"]["Row"];
 };
 
 // Use this function to update snippets in the database

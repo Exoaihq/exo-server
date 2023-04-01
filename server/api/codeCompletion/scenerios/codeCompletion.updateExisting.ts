@@ -60,12 +60,9 @@ export async function handleGetFunctionalityWhenFileExists(
     choices: response.choices,
     metadata,
   };
+
   if (completionResponse && completionResponse?.choices[0]) {
-    await createMessageWithUser(
-      user,
-      codeCompletionResponse.choices[0].message,
-      sessionId
-    );
+    await createMessageWithUser(user, response.choices[0].message, sessionId);
   }
 
   updateSession(user, sessionId, {

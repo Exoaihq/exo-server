@@ -3,7 +3,12 @@ import { EngineName } from "../../../types/openAiTypes/openAiEngine";
 import { parseCodeTypes } from "../../../types/parseCode.types";
 import { Database, Json } from "../../../types/supabase";
 import { findFileAndReturnContents } from "../../../utils/fileOperations.service";
+import { extractFileNameAndPathFromFullPath } from "../../../utils/getFileName";
 import { parseFile } from "../../../utils/treeSitter";
+import {
+  findOrCreateAiWritenCode,
+  updateAiWritenCode,
+} from "../aiCreatedCode/aiCreatedCode.service";
 import {
   createMessagesWithUser,
   createMessageWithUser,
@@ -11,10 +16,7 @@ import {
   getMessagesByUserAndSession,
 } from "../message/message.service";
 import { createChatCompletion } from "../openAi/openai.service";
-import {
-  createAiWritenCode,
-  updateSession,
-} from "../supabase/supabase.service";
+import { updateSession } from "../supabase/supabase.service";
 import {
   runCodeClassificaiton,
   runFileUploadClassificaiton,
@@ -66,11 +68,14 @@ export async function checkDbSession(
   sessionId: string
 ): Promise<CodeCompletionResponse> {
   const sessionMessages = await getMessagesByUserAndSession(user, sessionId);
+
+  const writeCodeObject = await findOrCreateAiWritenCode(sessionId);
+
   const whatWeKnowAboutTheSession: LocationAndFunctionality = {
     location: dbSession.location || "",
     functionality: dbSession.functionality || "",
   };
-  const { code_content, file_name, file_path } = dbSession;
+  const { code_content, file_name, file_path, location } = dbSession;
 
   const classification: LocationAndFunctionality = await runCodeClassificaiton(
     whatWeKnowAboutTheSession,
@@ -78,6 +83,29 @@ export async function checkDbSession(
   );
 
   console.log("Code classification", classification);
+
+  if (
+    location === "existingFile" &&
+    code_content &&
+    !writeCodeObject.completed_at &&
+    classification.functionality
+  ) {
+    // We have code but we have not udpated it yet
+
+    console.log("We have code but we have not udpated it yet");
+    if (classification.functionality) {
+      return await handleExistingFileUpdate(
+        messages,
+        classification,
+        user,
+        sessionId,
+        code_content,
+        file_name || "",
+        file_path || "",
+        writeCodeObject
+      );
+    }
+  }
 
   // Handle know both
   if (classification.location && classification.functionality) {
@@ -89,7 +117,8 @@ export async function checkDbSession(
         sessionId,
         code_content,
         file_name || "",
-        file_path || ""
+        file_path || "",
+        writeCodeObject
       );
     }
 
@@ -102,7 +131,8 @@ export async function checkDbSession(
         classification,
         user,
         sessionId,
-        classification.location
+        classification.location,
+        writeCodeObject
       );
     }
   }
@@ -124,7 +154,8 @@ export async function checkDbSession(
       classification,
       user,
       sessionId,
-      "scratchPad"
+      "scratchPad",
+      writeCodeObject
     );
   }
 
@@ -176,6 +207,13 @@ export async function handleFileUploadWithSession(
     dbSession
   );
 
+  const writeCodeObject = await findOrCreateAiWritenCode(sessionId);
+
+  console.log("File upload classification", classification);
+
+  const { fileName, extractedPath } =
+    extractFileNameAndPathFromFullPath(fullFilePathWithName);
+
   if (classification.functionality) {
     return await handleExistingFileUpdate(
       sessionMessages,
@@ -183,8 +221,9 @@ export async function handleFileUploadWithSession(
       user,
       sessionId,
       codeContent,
-      dbSession.file_name || "",
-      dbSession.file_path || ""
+      fileName ? fileName : dbSession.file_name || "",
+      extractedPath ? extractedPath : dbSession.file_path || "",
+      writeCodeObject
     );
   } else {
     return await handleGetFunctionalityWhenFileExists(
@@ -231,7 +270,10 @@ export async function handleParsingCreatedCode(
   sessionId?: string,
   location?: string,
   user?: Database["public"]["Tables"]["users"]["Row"],
-  functionality?: string
+  functionality?: string,
+  writeCodeObject?: Partial<
+    Database["public"]["Tables"]["ai_created_code"]["Row"]
+  >
 ): Promise<CodeCompletionResponse> {
   const parsedContent = parseReturnedCode(response.choices[0].message?.content);
   console.log("parsed content", parsedContent);
@@ -256,8 +298,17 @@ export async function handleParsingCreatedCode(
     },
   ];
 
+  if (writeCodeObject && writeCodeObject.id) {
+    updateAiWritenCode(writeCodeObject.id, {
+      functionality,
+      code: parsedContent.code,
+      // @ts-ignore
+      completed_at: new Date(),
+      location,
+    });
+  }
+
   if (sessionId && location) {
-    createAiWritenCode(sessionId, parsedContent.code, location);
     if (user) {
       await createMessagesWithUser(
         user,

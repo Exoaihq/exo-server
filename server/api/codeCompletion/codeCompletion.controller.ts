@@ -6,7 +6,8 @@ import {
 import { createTextCompletion } from "../openAi/openai.service";
 import {
   checkSessionOrThrow,
-  findOrUpdateSession,
+  findOrCreateSession,
+  updateSession,
 } from "../supabase/supabase.service";
 import {
   createBaseClassificationPrompt,
@@ -31,7 +32,7 @@ export const handleCodeCompletion = async (req: Request, res: Response) => {
       sessionId
     );
 
-    const dbSession = await findOrUpdateSession(user, sessionId);
+    const dbSession = await findOrCreateSession(user, sessionId);
 
     const classifyMessage = await createTextCompletion(
       createBaseClassificationPrompt(sessionMessages),
@@ -83,6 +84,7 @@ export const handleCodeCompletion = async (req: Request, res: Response) => {
     }
   } catch (error: any) {
     console.log(error);
+
     res.status(500).json({ message: error.message });
   }
 };
@@ -100,7 +102,11 @@ export const handleFileUpload = async (req: Request, res: Response) => {
       user,
       sessionId
     );
-    const dbSession = await findOrUpdateSession(user, sessionId);
+    const dbSession = await findOrCreateSession(user, sessionId);
+
+    updateSession(user, sessionId, {
+      code_content: codeContent,
+    });
 
     const response = await handleFileUploadWithSession(
       sessionMessages,

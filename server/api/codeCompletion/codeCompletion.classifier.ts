@@ -10,6 +10,7 @@ import {
   AllValues,
   basePrompt,
   createCodeClassificationPrompt,
+  createUpdateExistingOrCreateNewPrompt,
   fileUploadClassificaitonPrompt,
   LocationAndFunctionality,
 } from "./codeCompletion.prompts";
@@ -53,8 +54,9 @@ const baseClassificaitonExamples = [
 ];
 
 export function createBaseClassificationPrompt(messages: ChatMessage[]) {
-  return `Here are the messages so far:
-        ${JSON.stringify(messages, null, 2)}
+  const userMessages = messages.filter((message) => message.role === "user");
+  return `Here is the most recent message:
+        ${userMessages[userMessages.length - 1].content}
        Please classifiy the most recent message as one of the following:
        generalChat - The user is asking a general question that doesn't relate to creating code
        creatingCode - The user is asking for help creating code or responding to a request to help create code
@@ -74,6 +76,8 @@ export async function runCodeClassificaiton(
     whatWeKnow
   );
 
+  console.log("Code classification prompt", classificationPrompt);
+
   const response = await createTextCompletion(classificationPrompt, 0.1);
 
   const classification = response.choices[0].text;
@@ -87,6 +91,36 @@ export async function runCodeClassificaiton(
     const json: LocationAndFunctionality = deserializeJson(
       classification ? classification.trim() : ""
     );
+    if (json) {
+      return json;
+    } else {
+      console.log("Classification conversion to json failed", classification);
+      return base;
+    }
+  } else {
+    console.log("No classification found", classification);
+    return base;
+  }
+}
+
+export async function runUpdateExistingOrCreateNewClassificaiton(
+  lastMessage: string
+): Promise<{ where: "existing" | "new" | string }> {
+  const classificationPrompt =
+    createUpdateExistingOrCreateNewPrompt(lastMessage);
+
+  const response = await createTextCompletion(classificationPrompt, 0.1);
+
+  const classification = response.choices[0].text;
+
+  const base = {
+    where: "",
+  };
+
+  if (classification) {
+    const json: {
+      where: "existing" | "new";
+    } = deserializeJson(classification ? classification.trim() : "");
     if (json) {
       return json;
     } else {

@@ -145,6 +145,17 @@ export function createNewCodePrompt(
     `;
 }
 
+const functionalityExamples = [
+  { input: "I want to create a new file", functionality: "" },
+  { input: "I want to update a file", functionality: "" },
+  {
+    input: "I want create a react login component",
+    functionality: "I want create a react login component",
+  },
+  { input: "I want to create a new file", functionality: "" },
+  { input: "I want to update a file", functionality: "" },
+];
+
 export function fileUploadClassificaitonPrompt(
   messages: ChatMessage[],
   functionality: string
@@ -164,6 +175,14 @@ export function fileUploadClassificaitonPrompt(
     This is the most recent message:
     ${userMessages[userMessages.length - 1]}
     '''
+    '''
+    Here are some examples of the functionality the user might want to add:
+    ${JSON.stringify(functionalityExamples, null, 2)}
+    '''
+   If the user says they "want to upload a file" or "want to update a file" the functionality should be empty.
+   {
+    "functionality": ""
+    }
     This is the format you need to respond with:
     {
       "functionality": {functionality}
@@ -186,23 +205,18 @@ export function createCodeClassificationPrompt(
       location - The location where we will be writing the code. This has can be the "scratch pad", a "new file", or an "existing file"
       functionality - The required functionality the user wants to add
       '''
-      Here is what you know so far:
-      {
-      location: "${sessionDetails.location}"
-      functionality: "${sessionDetails.functionality}"
-      }
-      '''
-      Here are the messages so far:
-      ${JSON.stringify(messages)}
-      '''
       This is the most recent message:
-      ${userMessages[userMessages.length - 1]}
+      ${userMessages[userMessages.length - 1].content}
       If this message defines functionality it should be returned as "functionality"
       If this message defines the location it should be returned as "location"
       '''
       scratch pad should be returned as "scratchPad"
       new file should be returned as "newFile"
       existing file should be returned as "existingFile"
+      '''
+      '''
+      Here are some examples of the functionality the user might want to add:
+      ${JSON.stringify(functionalityExamples, null, 2)}
       '''
       This is the format you need to respond with:
       {
@@ -213,3 +227,33 @@ export function createCodeClassificationPrompt(
     
   `;
 }
+
+const updateOrNewExamples = [
+  {
+    input: "Can you also count the number of numbers in the string?",
+    where: "existing",
+  },
+  { input: "Can you write a new function", functionality: "new" },
+];
+
+export const createUpdateExistingOrCreateNewPrompt = (lastMessage: string) => {
+  return `
+  ${prefix}
+  You need to know if the user wants to update existing code or create new code.
+  Here are some examples:
+  ${JSON.stringify(updateOrNewExamples, null, 2)}
+  Here is the last message:
+  ${lastMessage}
+  '''
+  If the user wants to update existing code return 
+  {
+    "where": "existing"
+  }
+  If the user wants to create new code return
+  {
+    "where": "new"
+  }
+  '''
+  The response is 
+  `;
+};

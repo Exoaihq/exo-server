@@ -55,13 +55,13 @@ export async function getChatCompletion(
     if (res.status === 429) {
       console.log("Too many requests");
       setTimeout(() => {
-        getChatCompletion(messages);
+        getChatCompletion(messages, model, temperature, maxTokens);
       }, 2000);
     }
     return res;
   } catch (error: any) {
     console.log(error);
-    console.log(error.message);
+    console.log("Error message >>>>>>>>>>>", error.message);
     throw error;
   }
 }
@@ -241,7 +241,7 @@ export async function createChatCompletion(
     return data;
   } catch (error: any) {
     if (error.response) {
-      clearLoading(interval, `Error status: ${error.response.status}`);
+      clearLoading(interval, `Error status >>>>>: ${error.response.status}`);
       console.log(error.response.data);
     } else {
       clearLoading(interval, `Error status: ${error.message}`);
