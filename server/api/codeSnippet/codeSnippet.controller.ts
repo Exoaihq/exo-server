@@ -13,10 +13,7 @@ import {
   iterateOverFolderAndHandleFileContents,
 } from "../../../utils/iterateOverFolders";
 import { parseCode } from "../../../utils/treeSitter";
-import {
-  createEmbeddings,
-  createTextCompletion,
-} from "../openAi/openai.service";
+import { createTextCompletion } from "../openAi/openai.service";
 import {
   addCodeToSupabase,
   addFileToSupabase,
@@ -27,6 +24,7 @@ import {
   findFilesWithoutExplaination,
   findSnippetsWithoutFilesAndAssignFiles,
 } from "../supabase/supabase.service";
+import { codeSnippetSearch } from "./codeSnippet.service";
 
 // Create a single supabase client for interacting with your database
 const supabase = createClient(supabaseUrl, supabaseKey);
@@ -169,19 +167,9 @@ export const testGpt4 = async (req: Request, res: Response) => {
 
 export const searchCodeEmbeddings = async (req: Request, res: Response) => {
   try {
-    const code =
-      "const express = require('express'); const app = express(); const port = 3000; app.get('/', (req, res) => res.send('Hello World!')); app.listen(port, () => console.log(`Example app listening at http://localhost:${port}`));";
+    const { code } = req.body;
 
-    const code_embedding = await createEmbeddings([code]);
-
-    const query = {
-      query_embedding: code_embedding,
-      similarity_threshold: 0.8,
-      match_count: 10,
-    };
-
-    const { data, error } = await supabase.rpc("match_code", query);
-    console.log(data, error);
+    const data = await codeSnippetSearch(code);
 
     res.status(200).json({ data });
   } catch (error: any) {

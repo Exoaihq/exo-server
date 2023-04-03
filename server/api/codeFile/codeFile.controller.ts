@@ -1,28 +1,45 @@
 import { Request, Response } from "express";
+import { ParseCode } from "../../../types/parseCode.types";
 import { rootProjectDirectory } from "../../../utils/envVariable";
 import { iterateOverFolderAndHandleAndUpdateFileContents } from "../../../utils/iterateOverFolders";
 import { parseCode } from "../../../utils/treeSitter";
-import { createEmbeddings } from "../openAi/openai.service";
+import { updateCodeDirectory } from "../codeDirectory/codeDirectory.service";
+import { findCodeByQuery } from "../codeSnippet/codeSnippet.service";
+import { findOrUpdateAccount } from "../supabase/account.service";
 import {
   addCodeToSupabase,
-  findFileByExplainationEmbedding,
+  checkSessionOrThrow,
+  findOrCreateSession,
 } from "../supabase/supabase.service";
+import { handleAndFilesToDb } from "./codeFile.service";
 
 export const findCodeFile = async (req: Request, res: Response) => {
   try {
-    const query = "I need to find the files that handle command line loading";
+    const session = await checkSessionOrThrow(req, res);
 
-    const queryEmbedding = await createEmbeddings([query]);
+    const { user } = session.data;
 
-    const response = await findFileByExplainationEmbedding(queryEmbedding);
+    const { sessionId } = req.body;
 
-    res.status(200).json({ data: "done" });
+    const { query } = req.body;
+
+    const account = await findOrUpdateAccount(user);
+    if (!account) {
+      return res.status(404).json({ message: "Can't find the user account" });
+    }
+
+    const response = await findCodeByQuery(query, account.id);
+
+    res.status(200).json({ data: response });
   } catch (error: any) {
     res.status(500).json({ message: error.message });
   }
 };
 
-export const findAndUpdateFiles = async (req: Request, res: Response) => {
+export const findAndUpdateFilesFromServerFileSys = async (
+  req: Request,
+  res: Response
+) => {
   try {
     // /Users/kg/Repos/code-gen-server
     const serverDirectory = rootProjectDirectory;
@@ -37,6 +54,50 @@ export const findAndUpdateFiles = async (req: Request, res: Response) => {
     );
 
     res.status(200).json({ data: "done" });
+  } catch (error: any) {
+    res.status(500).json({ message: error.message });
+  }
+};
+
+export interface CreateFilesRequest {
+  files: ParseCode[];
+  directoryId: string;
+  baseApiUrl: string;
+  session: any;
+  sessionId: string;
+}
+
+export const findAndUpdateFilesFromClient = async (
+  req: Request,
+  res: Response
+) => {
+  try {
+    const session = await checkSessionOrThrow(req, res);
+
+    const { user } = session.data;
+
+    const { session_id } = req.headers;
+
+    const sessionId = session_id as string;
+
+    await findOrCreateSession(user, sessionId);
+
+    const account = await findOrUpdateAccount(user);
+
+    if (!account) {
+      return res.status(404).json({ message: "Can't find the user account" });
+    }
+
+    const { files, directoryId } = req.body as CreateFilesRequest;
+
+    await updateCodeDirectory(directoryId, {
+      updated_at: new Date().toISOString(),
+    });
+
+    const response = await handleAndFilesToDb(files, account);
+    console.log(response);
+
+    return res.status(200).json({ data: "done" });
   } catch (error: any) {
     res.status(500).json({ message: error.message });
   }

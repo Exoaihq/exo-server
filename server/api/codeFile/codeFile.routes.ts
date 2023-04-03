@@ -8,13 +8,18 @@ import {
   findAllSnippetsWithoutFiles,
   findFileById,
 } from "../codeSnippet/codeSnippet.controller";
-import { findAndUpdateFiles } from "./codeFile.controller";
+import {
+  findAndUpdateFilesFromClient,
+  findAndUpdateFilesFromServerFileSys,
+} from "./codeFile.controller";
 
 export const routes = Router();
 
 const codeFileRoutes = Router();
 
 // Base route: /code-file
+
+codeFileRoutes.post("/", findAndUpdateFilesFromClient);
 
 codeFileRoutes.get("/add", addAllFilesToDb);
 codeFileRoutes.get("/assign-snippet", assignSnippetToFile);
@@ -32,6 +37,6 @@ codeFileRoutes.get(
   findAllFilesWithoutExplainationsAndAddThem
 );
 
-codeFileRoutes.get("/find-and-update", findAndUpdateFiles);
+codeFileRoutes.get("/find-and-update", findAndUpdateFilesFromServerFileSys);
 
 export default codeFileRoutes;

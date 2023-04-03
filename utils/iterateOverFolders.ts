@@ -166,8 +166,9 @@ export const iterateOverFolderAndHandleAndUpdateFileContents = async (
             const { updateCount, matchedCount, notFound } =
               await compareAndUpdateSnippets(
                 { filePath, contents },
-                snippets,
-                printTotalsOnly
+                printTotalsOnly,
+                "",
+                snippets
               );
 
             totalUpdateCount += updateCount;

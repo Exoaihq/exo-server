@@ -1,12 +1,10 @@
-
-
 export enum ChatUserType {
-    system = "system",
-    user = "user",
-    assistant = "assistant"
+  system = "system",
+  user = "user",
+  assistant = "assistant",
 }
 
 export interface ChatMessage {
-    role: ChatUserType;
-    content: string;
+  role: ChatUserType;
+  content: string;
 }

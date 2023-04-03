@@ -16,7 +16,11 @@ var corsOptions = {
   origin: "*",
 };
 
-app.use(bodyParser.json());
+app.use(
+  bodyParser.json({
+    limit: "50mb",
+  })
+);
 app.use(cors(corsOptions));
 
 app.use("/ai-completed-code", aiCreatedCode);

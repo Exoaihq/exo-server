@@ -8,7 +8,6 @@ import {
 import { openAiApiKey } from "../../../utils/envVariable";
 
 import { RateLimiter } from "limiter";
-import { getOpenAiModelsFromDb } from "../supabase/supabase.service";
 import { OpenAiChatCompletionResponse } from "../codeCompletion/codeCompletion.types";
 const { Configuration, OpenAIApi } = require("openai");
 const { encode, decode } = require("gpt-3-encoder");
@@ -60,7 +59,7 @@ export async function getChatCompletion(
     }
     return res;
   } catch (error: any) {
-    console.log(">>>>>>>>>>>>>>error", error);
+    console.log(">>>>>>>>>>>>>>error", error.reponse);
     throw error;
   }
 }

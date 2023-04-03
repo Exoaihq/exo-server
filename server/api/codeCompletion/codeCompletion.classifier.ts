@@ -51,6 +51,13 @@ const baseClassificaitonExamples = [
   {
     creatingCode: "existing file",
   },
+  {
+    search: "Can you help me find the file that handles login",
+  },
+  {
+    search:
+      "Im looking for the component that handles the state for the scratch pad",
+  },
 ];
 
 export function createBaseClassificationPrompt(messages: ChatMessage[]) {
@@ -59,10 +66,12 @@ export function createBaseClassificationPrompt(messages: ChatMessage[]) {
         ${userMessages[userMessages.length - 1].content}
        Please classifiy the most recent message as one of the following:
        generalChat - The user is asking a general question that doesn't relate to creating code
-       creatingCode - The user is asking for help creating code or responding to a request to help create code
+       creatingCode - The user is asking for help creating code or 
+       responding to a request to help create code
+       search - The user is asking for help searching for code
        Examples:
        ${JSON.stringify(baseClassificaitonExamples)}
-        Respond with the classification either "generalChat" or "creatingCode":
+        Respond with the classification either "generalChat",  "creatingCode" or "search":
        "
     `;
 }

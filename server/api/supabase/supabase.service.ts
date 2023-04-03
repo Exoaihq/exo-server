@@ -97,8 +97,9 @@ export const updateSession = async (
 // Use this function to update snippets in the database
 export async function compareAndUpdateSnippets(
   contents: ParseCode,
-  snippets: SnippetByFileName[],
-  printTotalsOnly: boolean = false
+  printTotalsOnly: boolean = false,
+  accountId: string,
+  snippets?: SnippetByFileName[] | null
 ) {
   const tree = await parseFile(contents.contents);
   const lines = contents.contents.split("\n");
@@ -121,9 +122,9 @@ export async function compareAndUpdateSnippets(
       endPosition.column
     );
 
-    const found = snippets.find(
-      (snippet) => snippet.code_string === codeSnippet
-    );
+    const found =
+      snippets &&
+      snippets.find((snippet) => snippet.code_string === codeSnippet);
 
     if (found) {
       if (
@@ -149,6 +150,7 @@ export async function compareAndUpdateSnippets(
                 fileName,
               },
             },
+            accountId,
             found.id
           );
         }
@@ -156,15 +158,18 @@ export async function compareAndUpdateSnippets(
     } else {
       notFound++;
       if (!printTotalsOnly) {
-        await addCodeToSupabase({
-          code: codeSnippet,
-          metadata: {
-            element,
-            filePath: extractedPath,
-            type,
-            fileName,
+        await addCodeToSupabase(
+          {
+            code: codeSnippet,
+            metadata: {
+              element,
+              filePath: extractedPath,
+              type,
+              fileName,
+            },
           },
-        });
+          accountId
+        );
       }
     }
   }
@@ -174,11 +179,15 @@ export async function compareAndUpdateSnippets(
 
 export async function addCodeToSupabase(
   snippet: ParsedCode,
+  accountId: string,
   dbSnippetId?: number
 ) {
+  console.log("snippet", snippet);
   const codeExplaination = await createTextCompletion(
     "What does this code do:" + snippet.code
   );
+
+  console.log("codeExplaination", codeExplaination);
 
   const code_embedding = await createEmbeddings([snippet.code]);
 
@@ -217,6 +226,7 @@ export async function addCodeToSupabase(
     end_column: snippet.metadata.element.endPosition.column,
     file_name: snippet.metadata.fileName,
     code_file_id: fileId,
+    account_id: accountId,
   };
 
   if (dbSnippetId) {
@@ -487,25 +497,6 @@ export async function assignExplainationsForFilesWhereNull(
 
     console.log(data, error);
   }
-}
-
-export async function findFileByExplainationEmbedding(embedding: number[]) {
-  const query = {
-    query_embedding: embedding,
-    similarity_threshold: 0.5,
-    match_count: 10,
-  };
-
-  const { data, error } = await supabase.rpc("match_code_file", query);
-
-  if (error) {
-    console.log(error);
-    return null;
-  }
-  if (!data) {
-    return null;
-  }
-  return data;
 }
 
 export async function updateOpenAiModels(models: AddModel[]) {

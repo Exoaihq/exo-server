@@ -18,6 +18,7 @@ import {
   handleFileUploadWithSession,
 } from "./codeCompletion.service";
 import { CodeCompletionRequest } from "./codeCompletion.types";
+import { handleSearch } from "./scenerios/codeCompletion.search";
 
 export const handleCodeCompletion = async (req: Request, res: Response) => {
   try {
@@ -77,6 +78,10 @@ export const handleCodeCompletion = async (req: Request, res: Response) => {
       return res.status(200).json({
         data: responseBasedOnDbSession,
       });
+    } else if (baseClassificaiton === "search") {
+      return res
+        .status(200)
+        .json(await handleSearch(sessionMessages, user, sessionId));
     } else {
       res
         .status(500)

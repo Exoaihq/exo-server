@@ -49,3 +49,15 @@ export const getCodeDirectories = async (
     return data;
   }
 };
+
+export const updateCodeDirectory = async (
+  id: string,
+  values?: Partial<Database["public"]["Tables"]["code_directory"]["Update"]>
+): Promise<void> => {
+  const { data, error } = await supabase
+    .from("code_directory")
+    .update({ ...values })
+    .eq("id", id);
+
+  console.log("Updated directory", data, error);
+};
