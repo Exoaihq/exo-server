@@ -95,6 +95,7 @@ export interface Database {
       }
       code_file: {
         Row: {
+          account_id: string | null
           code_directory_id: number | null
           created_at: string
           file_explaination: string | null
@@ -105,6 +106,7 @@ export interface Database {
           updated_at: string | null
         }
         Insert: {
+          account_id?: string | null
           code_directory_id?: number | null
           created_at?: string
           file_explaination?: string | null
@@ -115,6 +117,7 @@ export interface Database {
           updated_at?: string | null
         }
         Update: {
+          account_id?: string | null
           code_directory_id?: number | null
           created_at?: string
           file_explaination?: string | null
@@ -127,6 +130,7 @@ export interface Database {
       }
       code_snippet: {
         Row: {
+          account_id: string | null
           code_embedding: unknown | null
           code_explaination: string | null
           code_explaination_embedding: unknown | null
@@ -144,6 +148,7 @@ export interface Database {
           updated_at: string | null
         }
         Insert: {
+          account_id?: string | null
           code_embedding?: unknown | null
           code_explaination?: string | null
           code_explaination_embedding?: unknown | null
@@ -161,6 +166,7 @@ export interface Database {
           updated_at?: string | null
         }
         Update: {
+          account_id?: string | null
           code_embedding?: unknown | null
           code_explaination?: string | null
           code_explaination_embedding?: unknown | null
@@ -507,6 +513,24 @@ export interface Database {
           file_explaination: string
           file_name: string
           file_path: string
+          similarity: number
+        }[]
+      }
+      match_code_snippet_explaination: {
+        Args: {
+          accountid: string
+          query_embedding: unknown
+          similarity_threshold: number
+          match_count: number
+        }
+        Returns: {
+          id: number
+          code_explaination: string
+          code_string: string
+          file_name: string
+          relative_file_path: string
+          created_at: string
+          account_id: string
           similarity: number
         }[]
       }

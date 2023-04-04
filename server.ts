@@ -1,6 +1,7 @@
 import bodyParser from "body-parser";
 import cors from "cors";
 import express, { Express } from "express";
+import { runScheduledTasks } from "./cron";
 import routes from "./routes/routes";
 import aiCreatedCode from "./server/api/aiCreatedCode/aiCreatedCode.routes";
 import codeCompletionRoutes from "./server/api/codeCompletion/codeCompletion.routes";
@@ -30,6 +31,8 @@ app.use("/code-snippet", codeSnippetRoutes);
 app.use("/messages", messageRoutes);
 app.use("/code", codeCompletionRoutes);
 app.use("/", routes);
+
+runScheduledTasks();
 
 app.listen(process.env.PORT, () => {
   console.log(`[Server]: Running at https://localhost:${port}`);

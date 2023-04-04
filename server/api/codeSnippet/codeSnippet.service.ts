@@ -1,7 +1,13 @@
 import { createClient } from "@supabase/supabase-js";
 import { Database } from "../../../types/supabase";
 import { supabaseKey, supabaseUrl } from "../../../utils/envVariable";
+import { createCodeFile } from "../codeFile/codeFile.service";
 import { createEmbeddings } from "../openAi/openai.service";
+import {
+  assignCodeSnippetToFile,
+  findAllSnippetWithoutFiles,
+  findFileId,
+} from "../supabase/supabase.service";
 
 const supabase = createClient(supabaseUrl, supabaseKey);
 
@@ -84,4 +90,39 @@ export async function findSnippetByExplainationEmbedding(
     return [];
   }
   return data;
+}
+
+export async function findSnippetsWithoutFilesAndAssignFiles() {
+  const snippets = await findAllSnippetWithoutFiles();
+
+  if (!snippets) {
+    return;
+  }
+  for (let i = 0; i < snippets.length; i++) {
+    const snippet = snippets[i];
+    if (!snippet.file_name || !snippet.id) {
+      continue;
+    }
+    const fileId = await findFileId(snippet.file_name);
+    if (!fileId) {
+      // Create file
+      if (!snippet.account_id) {
+        continue;
+      }
+      const file = await createCodeFile(
+        snippet.account_id ? snippet.account_id : "",
+        {
+          file_name: snippet.file_name,
+          file_path: snippet.relative_file_path,
+          updated_at: new Date().toISOString(),
+        }
+      );
+      if (!file || !file.id) {
+        continue;
+      }
+      await assignCodeSnippetToFile(file.id, snippet.id);
+    } else {
+      await assignCodeSnippetToFile(fileId, snippet.id);
+    }
+  }
 }

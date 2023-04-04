@@ -41,9 +41,7 @@ export async function handleExistingFileUpdate(
   >
 ): Promise<CodeCompletionResponse> {
   const userMessages = messages.filter((message) => message.role === "user");
-  const functionality = classification.functionality
-    ? classification.functionality
-    : userMessages[userMessages.length - 1].content;
+  const functionality = userMessages[userMessages.length - 1].content;
 
   if (!file_name || !file_path) {
     console.log(

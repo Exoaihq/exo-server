@@ -13,6 +13,7 @@ import {
   iterateOverFolderAndHandleFileContents,
 } from "../../../utils/iterateOverFolders";
 import { parseCode } from "../../../utils/treeSitter";
+import { findFilesWithoutExplaination } from "../codeFile/codeFile.service";
 import { createTextCompletion } from "../openAi/openai.service";
 import {
   addCodeToSupabase,
@@ -21,10 +22,11 @@ import {
   assignExplainationsForFilesWhereNull,
   findAllSnippetWithoutFiles,
   findFileId,
-  findFilesWithoutExplaination,
-  findSnippetsWithoutFilesAndAssignFiles,
 } from "../supabase/supabase.service";
-import { codeSnippetSearch } from "./codeSnippet.service";
+import {
+  codeSnippetSearch,
+  findSnippetsWithoutFilesAndAssignFiles,
+} from "./codeSnippet.service";
 
 // Create a single supabase client for interacting with your database
 const supabase = createClient(supabaseUrl, supabaseKey);
@@ -266,6 +268,7 @@ export const findAllFilesWithoutExplainationsAndAddThem = async (
     //file name = generateCode.ts
     const response = await findFilesWithoutExplaination();
     console.log(response);
+    // @ts-ignore
     const assign = assignExplainationsForFilesWhereNull(response);
 
     res.status(200).json({ data: "done" });

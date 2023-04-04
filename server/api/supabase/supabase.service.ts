@@ -304,11 +304,11 @@ interface SnippetWithoutFiles {
 }
 
 export async function findAllSnippetWithoutFiles(): Promise<
-  SnippetWithoutFiles[] | null
+  Partial<Database["public"]["Tables"]["code_snippet"]["Row"]>[] | null
 > {
   const { data, error } = await supabase
     .from("code_snippet")
-    .select("file_name, id")
+    .select("*")
     .is("code_file_id", null);
 
   if (error) {
@@ -355,43 +355,6 @@ export async function assignCodeSnippetToFile(
     .eq("id", codeSnippetId);
 
   console.log(data, error);
-}
-
-export async function findSnippetsWithoutFilesAndAssignFiles() {
-  const snippets = await findAllSnippetWithoutFiles();
-
-  if (!snippets) {
-    return;
-  }
-  for (let i = 0; i < snippets.length; i++) {
-    const snippet = snippets[i];
-    if (!snippet.file_name) {
-      continue;
-    }
-    const fileId = await findFileId(snippet.file_name);
-    if (!fileId) {
-      continue;
-    }
-    await assignCodeSnippetToFile(fileId, snippet.id);
-  }
-}
-
-export async function findFilesWithoutExplaination() {
-  const { data, error } = await supabase
-    .from("code_file")
-    .select(
-      "id, file_name, code_snippet(id, file_name, code_explaination, parsed_code_type, code_string)"
-    )
-    .is("file_explaination", null);
-
-  if (error) {
-    console.log(error);
-    return null;
-  }
-  if (!data) {
-    return null;
-  }
-  return data;
 }
 
 export interface CodeSnippet {

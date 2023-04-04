@@ -188,6 +188,26 @@ export async function createEmbeddings(
   return embedding;
 }
 
+export async function summarizeCodeExplaination(
+  text: string,
+  model?: string
+): Promise<any> {
+  const interval = commandLineLoading("Summarizing code");
+  try {
+    const remainingRequests = await limiter.removeTokens(1);
+    const response = await getCompletion(
+      `Summarize this explain of code into a paragraph: ${text}`,
+      0.2
+    );
+    const res = response.data.choices[0].text;
+    clearLoading(interval, `${raisingHands} Query completed ${raisingHands}`);
+    return res;
+  } catch (error: any) {
+    clearLoading(interval, `${raisingHands} Query completed ${raisingHands}`);
+    console.log(error);
+  }
+}
+
 export async function createTextCompletion(
   prompt: string,
   temperature: number = 1,

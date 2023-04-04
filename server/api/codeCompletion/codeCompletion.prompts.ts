@@ -173,7 +173,7 @@ export function fileUploadClassificaitonPrompt(
     ${JSON.stringify(messages, null, 2)}
     '''
     This is the most recent message:
-    ${userMessages[userMessages.length - 1]}
+
     '''
     '''
     Here are some examples of the functionality the user might want to add:
