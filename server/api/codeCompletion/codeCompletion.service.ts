@@ -26,9 +26,7 @@ import {
   LocationAndFunctionality,
   locationPrompt,
 } from "./codeCompletion.prompts";
-import { getReleventPrompt, NeededValues } from "./codeCompletion.rules";
 import {
-  CodeCompletionRequest,
   CodeCompletionResponse,
   CodeCompletionResponseMetadata,
   OpenAiChatCompletionResponse,
@@ -70,6 +68,8 @@ export async function checkDbSession(
   const sessionMessages = await getMessagesByUserAndSession(user, sessionId);
 
   const writeCodeObject = await findOrCreateAiWritenCode(sessionId);
+
+  console.log("Write code object", writeCodeObject);
 
   const whatWeKnowAboutTheSession: LocationAndFunctionality = {
     location: dbSession.location || "",
@@ -126,7 +126,7 @@ export async function checkDbSession(
     }
 
     if (classification.location === "scratchPad") {
-      return await handleScratchPadUpdate(
+      handleScratchPadUpdate(
         messages,
         classification,
         user,
@@ -134,6 +134,32 @@ export async function checkDbSession(
         classification.location,
         writeCodeObject
       );
+
+      const userMessages = messages.filter(
+        (message) => message.role === "user"
+      );
+
+      await createMessageWithUser(
+        user,
+        {
+          content: `I have add your request to the queue:\n
+            "${userMessages[userMessages.length - 1].content}". \n
+            Once completed it will be added to the scratch pad.`,
+          role: ChatUserType.assistant,
+        },
+        sessionId
+      );
+
+      return {
+        choices: [],
+        metadata: {
+          projectDirectory: "",
+          projectFile: "",
+          newFile: null,
+          requiredFunctionality: "",
+        },
+        completedCode: "",
+      };
     }
   }
 
@@ -149,7 +175,7 @@ export async function checkDbSession(
 
   // Handle know functionality but not location - write to scratch pad
   if (classification.functionality && !classification.location) {
-    return await handleScratchPadUpdate(
+    handleScratchPadUpdate(
       messages,
       classification,
       user,
@@ -157,6 +183,30 @@ export async function checkDbSession(
       "scratchPad",
       writeCodeObject
     );
+
+    const userMessages = messages.filter((message) => message.role === "user");
+
+    await createMessageWithUser(
+      user,
+      {
+        content: `I have add your request to the queue:\n
+        "${userMessages[userMessages.length - 1].content}". \n
+        Once completed it will be added to the scratch pad.`,
+        role: ChatUserType.assistant,
+      },
+      sessionId
+    );
+
+    return {
+      choices: [],
+      metadata: {
+        projectDirectory: "",
+        projectFile: "",
+        newFile: null,
+        requiredFunctionality: "",
+      },
+      completedCode: "",
+    };
   }
 
   // Handle know nothing - this is the default case
@@ -207,12 +257,15 @@ export async function handleFileUploadWithSession(
     dbSession
   );
 
-  const writeCodeObject = await findOrCreateAiWritenCode(sessionId);
-
-  console.log("File upload classification", classification);
-
   const { fileName, extractedPath } =
     extractFileNameAndPathFromFullPath(fullFilePathWithName);
+
+  const writeCodeObject = await findOrCreateAiWritenCode(sessionId, {
+    file_name: fileName,
+    path: extractedPath,
+  });
+
+  console.log("File upload classification", classification);
 
   if (classification.functionality) {
     return await handleExistingFileUpdate(
@@ -236,34 +289,6 @@ export async function handleFileUploadWithSession(
   }
 }
 
-export async function updateCodeCompletionSystemMessage(
-  request: CodeCompletionRequest,
-  metadata: CodeCompletionResponseMetadata
-): Promise<{
-  addMessages: ChatMessage[];
-  model: EngineName;
-  neededValues: NeededValues;
-}> {
-  const { messages } = request;
-  const { prompt, model, neededValues } = getReleventPrompt(request, metadata);
-
-  const addMessages = addSystemMessage(messages, prompt);
-
-  return { addMessages, model, neededValues };
-}
-
-export async function handleWritingNewFile(requiredFunctionality: string) {
-  return await createChatCompletion(
-    [
-      {
-        role: ChatUserType.user,
-        content: requiredFunctionality,
-      },
-    ],
-    EngineName.GPT4
-  );
-}
-
 export async function handleParsingCreatedCode(
   response: OpenAiChatCompletionResponse,
   metadata: CodeCompletionResponseMetadata,
@@ -276,7 +301,7 @@ export async function handleParsingCreatedCode(
   >
 ): Promise<CodeCompletionResponse> {
   const parsedContent = parseReturnedCode(response.choices[0].message?.content);
-  console.log("parsed content", parsedContent);
+  console.log("parsed content", parsedContent.code);
 
   const codeCompletionChoiceResponse = [
     {
@@ -297,6 +322,8 @@ export async function handleParsingCreatedCode(
       finish_reason: response.choices[0].finish_reason,
     },
   ];
+
+  console.log("write code object", writeCodeObject);
 
   if (writeCodeObject && writeCodeObject.id) {
     updateAiWritenCode(writeCodeObject.id, {
@@ -330,7 +357,6 @@ export async function handleParsingCreatedCode(
     completedCode: parsedContent.code,
   };
 
-  console.log("completion response", completionResponse);
   return completionResponse;
 }
 

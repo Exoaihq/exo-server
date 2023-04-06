@@ -183,6 +183,7 @@ export async function addCodeToSupabase(
   dbSnippetId?: number
 ) {
   console.log("snippet", snippet);
+
   const codeExplaination = await createTextCompletion(
     "What does this code do:" + snippet.code
   );

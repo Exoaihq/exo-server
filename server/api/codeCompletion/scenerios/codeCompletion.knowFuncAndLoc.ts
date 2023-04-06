@@ -85,26 +85,37 @@ export async function handleExistingFileUpdate(
 
   console.log("Functionality for existing file", functionality);
 
-  const codeCompletionResponse = await handleUpdatingExistingCode(
+  handleUpdatingExistingCode(
     functionality,
     code_content || "",
     file_path + "/" + file_name,
     sessionId,
     classification.location || "",
-    user
+    user,
+    writeCodeObject
   );
 
-  if (writeCodeObject && writeCodeObject.id) {
-    updateAiWritenCode(writeCodeObject.id, {
-      functionality,
-      code: codeCompletionResponse.completedCode,
-      // @ts-ignore
-      completed_at: new Date(),
-      location: file_path + "/" + file_name,
-    });
-  }
+  await createMessageWithUser(
+    user,
+    {
+      content: `I have add your request to the queue:\n
+        "${userMessages[userMessages.length - 1].content}". \n
+        Once completed it will be added to your file.`,
+      role: ChatUserType.assistant,
+    },
+    sessionId
+  );
 
-  return codeCompletionResponse;
+  return {
+    choices: [],
+    metadata: {
+      projectDirectory: "",
+      projectFile: "",
+      newFile: null,
+      requiredFunctionality: "",
+    },
+    completedCode: "",
+  };
 }
 
 export async function handleScratchPadUpdate(

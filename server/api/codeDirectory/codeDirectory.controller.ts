@@ -1,5 +1,6 @@
 import { Request, Response } from "express";
 import { getDirectoryNameFromPath } from "../../../utils/getFileName";
+import { createMessageWithUser } from "../message/message.service";
 import { findOrUpdateAccount } from "../supabase/account.service";
 import {
   checkSessionOrThrow,
@@ -66,6 +67,15 @@ export const createDirectoryByAccount = async (req: Request, res: Response) => {
       directory,
       getDirectoryNameFromPath(directory),
       true
+    );
+
+    await createMessageWithUser(
+      user,
+      {
+        content: `Created directory ${directory}. You can now index the files in this directory by clicking the "Index" button in the Saved Repos section. Then you can search and update the files in this directory!`,
+        role: "assistant",
+      },
+      sessionId
     );
 
     return res.status(200).json({

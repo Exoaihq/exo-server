@@ -90,14 +90,14 @@ export const findAndUpdateFilesFromClient = async (
 
     const { files, directoryId } = req.body as CreateFilesRequest;
 
-    await updateCodeDirectory(directoryId, {
+    const updated = await updateCodeDirectory(directoryId, {
       updated_at: new Date().toISOString(),
+      indexed_at: new Date().toISOString(),
     });
 
-    const response = await handleAndFilesToDb(files, account);
-    console.log(response);
+    handleAndFilesToDb(files, account);
 
-    return res.status(200).json({ data: "done" });
+    return res.status(200).json({ data: updated });
   } catch (error: any) {
     res.status(500).json({ message: error.message });
   }

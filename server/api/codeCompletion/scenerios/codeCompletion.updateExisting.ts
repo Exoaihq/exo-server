@@ -6,14 +6,16 @@ import {
   getDirectoryNameFromPath,
   getFileSuffix,
 } from "../../../../utils/getFileName";
-import { createCodeDirectory } from "../../codeDirectory/codeDirectory.service";
+import {
+  createCodeDirectory,
+  createDirectoryIfNotExists,
+} from "../../codeDirectory/codeDirectory.service";
 import { createMessageWithUser } from "../../message/message.service";
 import { createChatCompletion } from "../../openAi/openai.service";
 import { updateSession } from "../../supabase/supabase.service";
 import { fileUploadPromp, refactorCodePrompt } from "../codeCompletion.prompts";
 import {
   addSystemMessage,
-  codeCompletionResponse,
   handleParsingCreatedCode,
 } from "../codeCompletion.service";
 import { CodeCompletionResponse } from "../codeCompletion.types";
@@ -42,7 +44,7 @@ export async function handleGetFunctionalityWhenFileExists(
 
   // Adds the directory to the account so that it can be use for future code completion
 
-  await createCodeDirectory(
+  await createDirectoryIfNotExists(
     user,
     extractedPath,
     getDirectoryNameFromPath(extractedPath),
@@ -82,7 +84,10 @@ export async function handleUpdatingExistingCode(
   fullFilePathWithName: string,
   sessionId: string,
   location: string,
-  user: Database["public"]["Tables"]["users"]["Row"]
+  user: Database["public"]["Tables"]["users"]["Row"],
+  writeCodeObject: Partial<
+    Database["public"]["Tables"]["ai_created_code"]["Row"]
+  >
 ): Promise<CodeCompletionResponse> {
   const { fileName, extractedPath } =
     extractFileNameAndPathFromFullPath(fullFilePathWithName);
@@ -97,15 +102,17 @@ export async function handleUpdatingExistingCode(
     requiredFunctionality: "",
   };
 
+  const refactorPrompt = refactorCodePrompt(
+    existingContent,
+    requiredFunctionality,
+    codeMetadata
+  );
+
   const response = await createChatCompletion(
     [
       {
         role: ChatUserType.user,
-        content: refactorCodePrompt(
-          existingContent,
-          requiredFunctionality,
-          codeMetadata
-        ),
+        content: refactorPrompt,
       },
     ],
     EngineName.GPT4
@@ -117,6 +124,7 @@ export async function handleUpdatingExistingCode(
     sessionId,
     location,
     user,
-    requiredFunctionality
+    requiredFunctionality,
+    writeCodeObject
   );
 }

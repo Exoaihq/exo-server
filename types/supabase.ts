@@ -31,28 +31,37 @@ export interface Database {
           code: string | null
           completed_at: string | null
           created_at: string | null
+          file_name: string | null
           functionality: string | null
           id: string
           location: string | null
+          path: string | null
           session_id: string | null
+          writen_to_file_at: string | null
         }
         Insert: {
           code?: string | null
           completed_at?: string | null
           created_at?: string | null
+          file_name?: string | null
           functionality?: string | null
           id?: string
           location?: string | null
+          path?: string | null
           session_id?: string | null
+          writen_to_file_at?: string | null
         }
         Update: {
           code?: string | null
           completed_at?: string | null
           created_at?: string | null
+          file_name?: string | null
           functionality?: string | null
           id?: string
           location?: string | null
+          path?: string | null
           session_id?: string | null
+          writen_to_file_at?: string | null
         }
       }
       code_directory: {
@@ -531,6 +540,7 @@ export interface Database {
           relative_file_path: string
           created_at: string
           account_id: string
+          parsed_code_type: string
           similarity: number
         }[]
       }
