@@ -18,6 +18,7 @@ import {
   handleFileUploadWithSession,
 } from "./codeCompletion.service";
 import { CodeCompletionRequest } from "./codeCompletion.types";
+import { handleKnownNextAction } from "./scenerios/codeCompletion.knownNextAction";
 import { handleSearch } from "./scenerios/codeCompletion.search";
 
 export const handleCodeCompletion = async (req: Request, res: Response) => {
@@ -34,6 +35,16 @@ export const handleCodeCompletion = async (req: Request, res: Response) => {
     );
 
     const dbSession = await findOrCreateSession(user, sessionId);
+
+    if (dbSession.expected_next_action) {
+      return await handleKnownNextAction(
+        sessionMessages,
+        dbSession,
+        user,
+        sessionId,
+        res
+      );
+    }
 
     const classifyMessage = await createTextCompletion(
       createBaseClassificationPrompt(sessionMessages),
@@ -79,9 +90,7 @@ export const handleCodeCompletion = async (req: Request, res: Response) => {
         data: responseBasedOnDbSession,
       });
     } else if (baseClassificaiton === "search") {
-      return res
-        .status(200)
-        .json(await handleSearch(sessionMessages, user, sessionId));
+      return res.status(200).json(await handleSearch(user, sessionId));
     } else {
       res
         .status(500)

@@ -69,7 +69,7 @@ export const findOrCreateSession = async (
   if (data && data.length > 0) {
     return data[0];
   } else {
-    const { data } = await supabase
+    const { data, error } = await supabase
       .from("session")
       .insert([{ user_id: user.id, id: sessionId }])
       .select();

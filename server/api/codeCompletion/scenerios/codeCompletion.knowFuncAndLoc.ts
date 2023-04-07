@@ -175,13 +175,22 @@ export async function handleScratchPadUpdate(
     location: classification.location,
     functionality: classification.functionality,
   });
+
+  if (writeCodeObject && writeCodeObject.id) {
+    updateAiWritenCode(writeCodeObject.id, {
+      functionality,
+      code: response.choices[0].message?.content,
+      completed_at: new Date().toISOString(),
+      location,
+    });
+  }
+
   return handleParsingCreatedCode(
     response,
     metadata,
     sessionId,
     location,
     user,
-    functionality,
-    writeCodeObject
+    functionality
   );
 }

@@ -3,6 +3,7 @@ import cors from "cors";
 import express, { Express } from "express";
 import { runScheduledTasks } from "./cron";
 import routes from "./routes/routes";
+import agentRouter from "./server/api/agent/agent.routes";
 import aiCreatedCode from "./server/api/aiCreatedCode/aiCreatedCode.routes";
 import codeCompletionRoutes from "./server/api/codeCompletion/codeCompletion.routes";
 import codeDirectoryRoutes from "./server/api/codeDirectory/codeDirectory.routes";
@@ -30,6 +31,7 @@ app.use("/code-file", codeFileRoutes);
 app.use("/code-snippet", codeSnippetRoutes);
 app.use("/messages", messageRoutes);
 app.use("/code", codeCompletionRoutes);
+app.use("/agent", agentRouter);
 app.use("/", routes);
 
 runScheduledTasks();

@@ -257,3 +257,55 @@ export const createUpdateExistingOrCreateNewPrompt = (lastMessage: string) => {
   The response is 
   `;
 };
+
+export function doesMessageAnswerExpectedNextActionPrompt(
+  messages: ChatMessage[],
+  expectedNextAction: string
+) {
+  const userMessages = messages.filter((message) => message.role === "user");
+
+  return `${prefix}
+     
+    You expect ${expectedNextAction}. Here is the most recent message: ${
+    userMessages[userMessages.length - 1].content
+  }
+  If this message answers the expected next action return a json object:  
+  
+  {
+    "answer": true,
+    "reason": null,
+    "remedy": null
+  }
+
+  If not return a json object: 
+  {
+    "answer": false,
+    "reason": {reason},
+    "remedy": {remedy}
+  } 
+  and the reason why. For example:
+  {
+    "answer": false,
+    "reason": "The message does not answer the expected next action because it does not include the file name",
+    "remedy": "Can you include the file name?"
+  }
+
+  Begin:
+  `;
+}
+
+export const getFileNameAndFunctionalityPrompt = (lastMessage: string) => {
+  return `
+  ${prefix}
+ This message contains the file name and functionality the user wants to add to the file:
+  ${lastMessage}
+  '''
+ Please parse this message and return a json object with the file name and functionality:
+ {
+  "fileName": {fileName},
+  "functionality": {functionality}
+ }
+  '''
+Begin: 
+  `;
+};

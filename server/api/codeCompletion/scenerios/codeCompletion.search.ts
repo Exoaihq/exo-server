@@ -1,20 +1,19 @@
-import { Json } from "../../../../types/supabase";
+import { Database } from "../../../../types/supabase";
 import { findCodeByQuery } from "../../codeSnippet/codeSnippet.service";
-import { createMessageWithUser } from "../../message/message.service";
+import {
+  createMessageWithUser,
+  getOnlyRoleAndContentMessagesSession,
+} from "../../message/message.service";
 import { findOrUpdateAccount } from "../../supabase/account.service";
 
 export async function handleSearch(
-  sessionMessages: any[],
-  user: {
-    avatar_url: string | null;
-    billing_address: Json;
-    email: string | null;
-    full_name: string | null;
-    id: string;
-    payment_method: Json;
-  },
+  user: Database["public"]["Tables"]["users"]["Row"],
   sessionId: string
 ) {
+  const sessionMessages = await getOnlyRoleAndContentMessagesSession(sessionId);
+
+  if (!user) throw new Error("User not found");
+
   const userMessages = sessionMessages.filter(
     (message) => message.role === "user"
   );

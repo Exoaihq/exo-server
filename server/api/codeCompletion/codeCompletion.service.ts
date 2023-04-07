@@ -250,6 +250,7 @@ export async function handleFileUploadWithSession(
     new_file: boolean | null;
     updated_at: string | null;
     user_id: string | null;
+    expected_next_action: string | null;
   }
 ): Promise<CodeCompletionResponse> {
   const classification = await runFileUploadClassificaiton(
@@ -295,10 +296,7 @@ export async function handleParsingCreatedCode(
   sessionId?: string,
   location?: string,
   user?: Database["public"]["Tables"]["users"]["Row"],
-  functionality?: string,
-  writeCodeObject?: Partial<
-    Database["public"]["Tables"]["ai_created_code"]["Row"]
-  >
+  functionality?: string
 ): Promise<CodeCompletionResponse> {
   const parsedContent = parseReturnedCode(response.choices[0].message?.content);
   console.log("parsed content", parsedContent.code);
@@ -322,18 +320,6 @@ export async function handleParsingCreatedCode(
       finish_reason: response.choices[0].finish_reason,
     },
   ];
-
-  console.log("write code object", writeCodeObject);
-
-  if (writeCodeObject && writeCodeObject.id) {
-    updateAiWritenCode(writeCodeObject.id, {
-      functionality,
-      code: parsedContent.code,
-      // @ts-ignore
-      completed_at: new Date(),
-      location,
-    });
-  }
 
   if (sessionId && location) {
     if (user) {

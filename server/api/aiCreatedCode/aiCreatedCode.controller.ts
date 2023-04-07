@@ -33,14 +33,10 @@ export const getAiCompletedCode = async (req: Request, res: Response) => {
 
 export const updateAiCompletedCode = async (req: Request, res: Response) => {
   try {
-    const { values, id } = req.body;
+    const { values, id, sessionId } = req.body;
     const session = await checkSessionOrThrow(req, res);
 
     const { user } = session.data;
-
-    const { session_id } = req.headers;
-
-    const sessionId = session_id as string;
 
     await findOrCreateSession(user, sessionId);
 

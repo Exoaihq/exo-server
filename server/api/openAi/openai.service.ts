@@ -29,6 +29,27 @@ const configuration = new Configuration({
 
 const openai = new OpenAIApi(configuration);
 
+export async function chatAgent(prompt: string, stopPattern: string[]) {
+  const res = await openai.createChatCompletion({
+    messages: [
+      {
+        content: prompt,
+        role: ChatUserType.user,
+      },
+    ],
+    max_tokens: 2048,
+    temperature: 1,
+    model: "gpt-3.5-turbo",
+    stop: stopPattern,
+  });
+
+  if (res.data.error) {
+    console.log(">>>>>>>>>>>>>>error", res.data.error);
+  }
+
+  return res.data.choices[0].message.content;
+}
+
 export async function getOpenAiModels() {
   try {
     return await openai.listEngines();
@@ -64,7 +85,11 @@ export async function getChatCompletion(
   }
 }
 
-export async function getCompletion(prompt: string, temperature: number = 1) {
+export async function getCompletion(
+  prompt: string,
+  temperature: number = 1,
+  stop: string[] | null = null
+) {
   // const availableEngines = await getOpenAiModelsFromDb();
 
   // const gpt4 = availableEngines?.find((engine: any) => {
@@ -77,6 +102,7 @@ export async function getCompletion(prompt: string, temperature: number = 1) {
       prompt: truncateStringTokens(prompt, 2048),
       max_tokens: 2048,
       temperature,
+      stop,
     });
   } catch (error: any) {
     console.log(error);

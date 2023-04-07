@@ -6,10 +6,8 @@ import {
   getDirectoryNameFromPath,
   getFileSuffix,
 } from "../../../../utils/getFileName";
-import {
-  createCodeDirectory,
-  createDirectoryIfNotExists,
-} from "../../codeDirectory/codeDirectory.service";
+import { updateAiWritenCode } from "../../aiCreatedCode/aiCreatedCode.service";
+import { createDirectoryIfNotExists } from "../../codeDirectory/codeDirectory.service";
 import { createMessageWithUser } from "../../message/message.service";
 import { createChatCompletion } from "../../openAi/openai.service";
 import { updateSession } from "../../supabase/supabase.service";
@@ -118,13 +116,23 @@ export async function handleUpdatingExistingCode(
     EngineName.GPT4
   );
 
+  if (writeCodeObject && writeCodeObject.id) {
+    updateAiWritenCode(writeCodeObject.id, {
+      functionality: requiredFunctionality,
+      code: response.choices[0].message?.content,
+      completed_at: new Date().toISOString(),
+      location,
+      path: extractedPath,
+      file_name: fileName,
+    });
+  }
+
   return handleParsingCreatedCode(
     response,
     metadata,
     sessionId,
     location,
     user,
-    requiredFunctionality,
-    writeCodeObject
+    requiredFunctionality
   );
 }

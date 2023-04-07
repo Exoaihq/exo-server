@@ -1,8 +1,75 @@
 import { createClient } from "@supabase/supabase-js";
+import { ChatUserType } from "../../../types/chatMessage.type";
+import { EngineName } from "../../../types/openAiTypes/openAiEngine";
 import { Database } from "../../../types/supabase";
+import { deserializeJson } from "../../../utils/deserializeJson";
 import { supabaseKey, supabaseUrl } from "../../../utils/envVariable";
+import { getFileNameAndFunctionalityPrompt } from "../codeCompletion/codeCompletion.prompts";
+import {
+  createChatCompletion,
+  createTextCompletion,
+} from "../openAi/openai.service";
+import { updateSession } from "../supabase/supabase.service";
 
 const supabase = createClient<Database>(supabaseUrl, supabaseKey);
+
+export const createAiCodeFromNewFilePrompt = async (
+  user: Database["public"]["Tables"]["users"]["Row"],
+  content: string,
+  sessionId: string,
+  path: string
+) => {
+  // Parse the content into file name and functionality
+
+  const fileNameAndFunc = await createTextCompletion(
+    getFileNameAndFunctionalityPrompt(content),
+    0.2
+  );
+  if (!fileNameAndFunc.choices[0].text) {
+    throw new Error("Could not parse file name and functionality");
+  }
+  const { fileName, functionality } = deserializeJson(
+    fileNameAndFunc.choices[0].text
+  );
+
+  if (!fileName || !functionality) {
+    throw new Error("Could not parse file name and functionality");
+  }
+  console.log("fileNameAndFunc", fileNameAndFunc, fileName, functionality);
+  // Create the code
+  const response = await createChatCompletion(
+    [
+      {
+        role: ChatUserType.user,
+        content: functionality,
+      },
+    ],
+    EngineName.GPT4
+  );
+
+  const code = response.choices[0].message?.content;
+
+  updateSession(user, sessionId, {
+    code_content: code,
+    file_name: fileName,
+    file_path: path,
+    new_file: false,
+    location: "existingFile",
+    expected_next_action: null,
+  });
+
+  // Add it to ai created code
+
+  createAiWritenCode({
+    code,
+    functionality,
+    session_id: sessionId,
+    location: "newFile",
+    completed_at: new Date().toISOString(),
+    path,
+    file_name: fileName,
+  });
+};
 
 export const getAiCodeBySession = async (
   sessionId: string
@@ -66,6 +133,18 @@ export const findOrCreateAiWritenCode = async (
 };
 
 export const createAiWritenCode = async (
+  values: Partial<Database["public"]["Tables"]["ai_created_code"]["Update"]>
+): Promise<Database["public"]["Tables"]["ai_created_code"]["Row"]> => {
+  const { data } = await supabase
+    .from("ai_created_code")
+    .insert([{ ...values }])
+    .select();
+
+  // @ts-ignore
+  return data[0] as Database["public"]["Tables"]["ai_created_code"]["Row"];
+};
+
+export const createAiWritenCodeWithSessionLocationAndCode = async (
   sessionId: string,
   code: string,
   location: string
