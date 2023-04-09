@@ -6,8 +6,8 @@ import { findFileAndReturnContents } from "../../../utils/fileOperations.service
 import { extractFileNameAndPathFromFullPath } from "../../../utils/getFileName";
 import { parseFile } from "../../../utils/treeSitter";
 import {
+  createAiWritenCode,
   findOrCreateAiWritenCode,
-  updateAiWritenCode,
 } from "../aiCreatedCode/aiCreatedCode.service";
 import {
   createMessagesWithUser,
@@ -16,7 +16,6 @@ import {
   getMessagesByUserAndSession,
 } from "../message/message.service";
 import { createChatCompletion } from "../openAi/openai.service";
-import { updateSession } from "../supabase/supabase.service";
 import {
   runCodeClassificaiton,
   runFileUploadClassificaiton,
@@ -261,33 +260,39 @@ export async function handleFileUploadWithSession(
   const { fileName, extractedPath } =
     extractFileNameAndPathFromFullPath(fullFilePathWithName);
 
-  const writeCodeObject = await findOrCreateAiWritenCode(sessionId, {
+  const writeCodeObject = await createAiWritenCode({
+    session_id: sessionId,
     file_name: fileName,
     path: extractedPath,
+    location: "existingFile",
   });
+
+  console.log(writeCodeObject);
 
   console.log("File upload classification", classification);
 
-  if (classification.functionality) {
-    return await handleExistingFileUpdate(
-      sessionMessages,
-      classification,
-      user,
-      sessionId,
-      codeContent,
-      fileName ? fileName : dbSession.file_name || "",
-      extractedPath ? extractedPath : dbSession.file_path || "",
-      writeCodeObject
-    );
-  } else {
-    return await handleGetFunctionalityWhenFileExists(
-      sessionMessages,
-      fullFilePathWithName,
-      user,
-      sessionId,
-      codeContent
-    );
-  }
+  // This was supposed to handle the case where we had the existing file and were waiting on the functionality. I'm not sure if this is still needed.
+
+  // if (classification.functionality) {
+  //   return await handleExistingFileUpdate(
+  //     sessionMessages,
+  //     classification,
+  //     user,
+  //     sessionId,
+  //     codeContent,
+  //     fileName ? fileName : dbSession.file_name || "",
+  //     extractedPath ? extractedPath : dbSession.file_path || "",
+  //     writeCodeObject
+  //   );
+  // } else {
+  return await handleGetFunctionalityWhenFileExists(
+    sessionMessages,
+    fullFilePathWithName,
+    user,
+    sessionId,
+    codeContent
+  );
+  // }
 }
 
 export async function handleParsingCreatedCode(
@@ -305,16 +310,7 @@ export async function handleParsingCreatedCode(
     {
       message: {
         role: ChatUserType.assistant,
-        content: parsedContent.message,
-      },
-      index: response.choices[0].index,
-      finish_reason: response.choices[0].finish_reason,
-    },
-    {
-      message: {
-        role: ChatUserType.assistant,
-        content:
-          "How does it look? Let me know if you'd like to make any changes.",
+        content: `${parsedContent.message} How does it look? Let me know if you'd like to make any changes.`,
       },
       index: response.choices[0].index,
       finish_reason: response.choices[0].finish_reason,
@@ -328,12 +324,6 @@ export async function handleParsingCreatedCode(
         codeCompletionChoiceResponse.map((choice) => choice.message),
         sessionId
       );
-
-      updateSession(user, sessionId, {
-        location,
-        code_content: parsedContent.code,
-        functionality,
-      });
     }
   }
 

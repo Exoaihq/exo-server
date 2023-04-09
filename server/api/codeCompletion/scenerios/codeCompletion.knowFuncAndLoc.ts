@@ -91,8 +91,7 @@ export async function handleExistingFileUpdate(
     file_path + "/" + file_name,
     sessionId,
     classification.location || "",
-    user,
-    writeCodeObject
+    user
   );
 
   await createMessageWithUser(

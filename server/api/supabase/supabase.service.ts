@@ -126,6 +126,17 @@ export async function compareAndUpdateSnippets(
       snippets &&
       snippets.find((snippet) => snippet.code_string === codeSnippet);
 
+    if (
+      type === "ERROR" ||
+      type === "=" ||
+      type === "(" ||
+      type === ")" ||
+      type === ">" ||
+      type === "<"
+    ) {
+      continue;
+    }
+
     if (found) {
       if (
         startPosition.row === found.start_row &&

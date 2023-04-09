@@ -118,10 +118,6 @@ export const handleFileUpload = async (req: Request, res: Response) => {
     );
     const dbSession = await findOrCreateSession(user, sessionId);
 
-    updateSession(user, sessionId, {
-      code_content: codeContent,
-    });
-
     const response = await handleFileUploadWithSession(
       sessionMessages,
       fullFilePathWithName,

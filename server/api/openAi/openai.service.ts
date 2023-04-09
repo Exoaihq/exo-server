@@ -200,16 +200,14 @@ export async function handlePromptAfterClassification(messages: ChatMessage[]) {
   }
 }
 
-export async function createEmbeddings(
-  documents: Array<any>,
-  model?: string
-): Promise<any> {
+export async function createEmbeddings(documents: Array<any>): Promise<any> {
   const response = await openai.createEmbedding({
-    model: model || "text-embedding-ada-002",
+    model: "text-embedding-ada-002",
     input: documents.map((d) =>
       truncateStringTokens(d.replace("\n", " "), 8191)
     ),
   });
+  console.log(response.data);
   const [{ embedding }] = response?.data?.data;
   return embedding;
 }

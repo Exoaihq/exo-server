@@ -3,16 +3,17 @@ import { ParseCode, SnippetByFileName } from "../../../types/parseCode.types";
 import { Database } from "../../../types/supabase";
 import { supabaseKey, supabaseUrl } from "../../../utils/envVariable";
 import { extractFileNameAndPathFromFullPath } from "../../../utils/getFileName";
+import { updateCodeDirectory } from "../codeDirectory/codeDirectory.service";
 import {
   createEmbeddings,
   summarizeCodeExplaination,
 } from "../openAi/openai.service";
-import { findOrUpdateAccount } from "../supabase/account.service";
 import { compareAndUpdateSnippets } from "../supabase/supabase.service";
 
 const supabase = createClient<Database>(supabaseUrl, supabaseKey);
 
 export const handleAndFilesToDb = async (
+  directoryId: string,
   files: ParseCode[],
   account: Database["public"]["Tables"]["account"]["Row"]
 ) => {
@@ -46,6 +47,14 @@ export const handleAndFilesToDb = async (
     totalNotFound += notFound;
   });
 
+  await updateCodeDirectory(directoryId, {
+    updated_at: new Date().toISOString(),
+    indexed_at: new Date().toISOString(),
+  });
+
+  console.log("totalUpdateCount", totalUpdateCount);
+  console.log("totalMatchedCount", totalMatchedCount);
+  console.log("totalNotFound", totalNotFound);
   return {
     totalUpdateCount,
     totalMatchedCount,
@@ -146,7 +155,10 @@ export const findFilesWithoutExplainationAndAssignExplaination = async () => {
 
     const combinedExplaination = code_snippet
       //@ts-ignore
-      .filter((snippet) => snippet.parsed_code_type !== "import_statement")
+      .filter(
+        (snippet: { parsed_code_type: string }) =>
+          excludedEmbeddingTypes.indexOf(snippet.parsed_code_type) === -1
+      )
       //@ts-ignore
       .map((snippet) => truncateString(snippet.code_explaination))
       .join("'''");
@@ -177,3 +189,17 @@ export const findFilesWithoutExplainationAndAssignExplaination = async () => {
   }
   console.log("Number of files updated:", filesUpdated);
 };
+
+export const excludedEmbeddingTypes = [
+  "import_statement",
+  "comment",
+  "ERROR",
+  "(",
+  ")",
+  "[",
+  "]",
+  "{",
+  "}",
+  "?",
+  ":",
+];

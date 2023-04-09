@@ -5,10 +5,14 @@ import { deserializeJson } from "../../../../utils/deserializeJson";
 import { createAiCodeFromNewFilePrompt } from "../../aiCreatedCode/aiCreatedCode.service";
 import { createMessageWithUser } from "../../message/message.service";
 import { createTextCompletion } from "../../openAi/openai.service";
+import { updateSession } from "../../supabase/supabase.service";
 import { doesMessageAnswerExpectedNextActionPrompt } from "../codeCompletion.prompts";
+import { handleExistingFileUpdate } from "./codeCompletion.knowFuncAndLoc";
+import { handleUpdatingExistingCode } from "./codeCompletion.updateExisting";
 
 export enum ExpectedNextAction {
   NEW_FILE = "User to send functionality and file name",
+  EXISTING_FILE = "User to send code functionality, what they want the code to do",
 }
 
 export async function handleKnownNextAction(
@@ -101,6 +105,47 @@ export async function handleKnownNextAction(
           },
           sessionId
         );
+        updateSession(user, sessionId, {
+          code_content: "",
+          file_name: "",
+          file_path: "",
+          new_file: null,
+          location: "",
+          expected_next_action: null,
+        });
+      }
+
+      if (dbSession.expected_next_action === ExpectedNextAction.EXISTING_FILE) {
+        console.log("handle writing existing file");
+        const userMessages = sessionMessages.filter(
+          (message) => message.role === "user"
+        );
+        handleUpdatingExistingCode(
+          userMessages[userMessages.length - 1].content,
+          dbSession.code_content || "",
+          dbSession.file_path + "/" + dbSession.file_name,
+          sessionId,
+          dbSession.location || "",
+          user
+        );
+
+        // Add message
+        createMessageWithUser(
+          user,
+          {
+            content: `I'm creating the code and once finished i'll write it to: ${dbSession.file_path}`,
+            role: "assistant",
+          },
+          sessionId
+        );
+        updateSession(user, sessionId, {
+          code_content: "",
+          file_name: "",
+          file_path: "",
+          new_file: null,
+          location: "",
+          expected_next_action: null,
+        });
       }
 
       return res.status(200).json({

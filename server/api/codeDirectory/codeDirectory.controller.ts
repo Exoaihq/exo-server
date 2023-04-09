@@ -1,5 +1,6 @@
 import { Request, Response } from "express";
 import { getDirectoryNameFromPath } from "../../../utils/getFileName";
+import { ExpectedNextAction } from "../codeCompletion/scenerios/codeCompletion.knownNextAction";
 import { createMessageWithUser } from "../message/message.service";
 import { findOrUpdateAccount } from "../supabase/account.service";
 import {
@@ -111,7 +112,7 @@ export const setDirectoryToAddFile = async (req: Request, res: Response) => {
       location: "newFile",
       new_file: true,
       file_path: directory,
-      expected_next_action: "User to send functionality and file name",
+      expected_next_action: ExpectedNextAction.NEW_FILE,
     });
 
     await createMessageWithUser(

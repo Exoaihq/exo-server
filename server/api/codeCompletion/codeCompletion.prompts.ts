@@ -87,8 +87,8 @@ export function fileNamePrompt(messages: ChatMessage[]) {
 
 export function fileUploadPromp() {
   return `${prefix}
-       The user just uploaded a file that you can help refactor.
-      Ask the user to tell you the required refactor they want to make.
+       The user just selected a file that you can help refactor.
+      Ask the user to tell you the required code refactor they want to make.
     `;
 }
 

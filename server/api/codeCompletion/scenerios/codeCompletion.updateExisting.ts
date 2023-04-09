@@ -6,7 +6,10 @@ import {
   getDirectoryNameFromPath,
   getFileSuffix,
 } from "../../../../utils/getFileName";
-import { updateAiWritenCode } from "../../aiCreatedCode/aiCreatedCode.service";
+import {
+  findAiCodeBySessionAndFileName,
+  updateAiWritenCode,
+} from "../../aiCreatedCode/aiCreatedCode.service";
 import { createDirectoryIfNotExists } from "../../codeDirectory/codeDirectory.service";
 import { createMessageWithUser } from "../../message/message.service";
 import { createChatCompletion } from "../../openAi/openai.service";
@@ -17,6 +20,7 @@ import {
   handleParsingCreatedCode,
 } from "../codeCompletion.service";
 import { CodeCompletionResponse } from "../codeCompletion.types";
+import { ExpectedNextAction } from "./codeCompletion.knownNextAction";
 
 export async function handleGetFunctionalityWhenFileExists(
   messages: ChatMessage[],
@@ -72,6 +76,7 @@ export async function handleGetFunctionalityWhenFileExists(
     file_path: extractedPath,
     new_file: false,
     code_content: codeContent,
+    expected_next_action: ExpectedNextAction.EXISTING_FILE,
   });
   return completionResponse;
 }
@@ -82,10 +87,7 @@ export async function handleUpdatingExistingCode(
   fullFilePathWithName: string,
   sessionId: string,
   location: string,
-  user: Database["public"]["Tables"]["users"]["Row"],
-  writeCodeObject: Partial<
-    Database["public"]["Tables"]["ai_created_code"]["Row"]
-  >
+  user: Database["public"]["Tables"]["users"]["Row"]
 ): Promise<CodeCompletionResponse> {
   const { fileName, extractedPath } =
     extractFileNameAndPathFromFullPath(fullFilePathWithName);
@@ -116,7 +118,11 @@ export async function handleUpdatingExistingCode(
     EngineName.GPT4
   );
 
-  if (writeCodeObject && writeCodeObject.id) {
+  const writeCodeObject = await findAiCodeBySessionAndFileName(
+    sessionId,
+    fileName
+  );
+  if (writeCodeObject) {
     updateAiWritenCode(writeCodeObject.id, {
       functionality: requiredFunctionality,
       code: response.choices[0].message?.content,

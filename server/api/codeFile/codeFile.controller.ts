@@ -3,8 +3,8 @@ import { ParseCode } from "../../../types/parseCode.types";
 import { rootProjectDirectory } from "../../../utils/envVariable";
 import { iterateOverFolderAndHandleAndUpdateFileContents } from "../../../utils/iterateOverFolders";
 import { parseCode } from "../../../utils/treeSitter";
-import { updateCodeDirectory } from "../codeDirectory/codeDirectory.service";
 import { findCodeByQuery } from "../codeSnippet/codeSnippet.service";
+import { createMessageWithUser } from "../message/message.service";
 import { findOrUpdateAccount } from "../supabase/account.service";
 import {
   addCodeToSupabase,
@@ -90,14 +90,18 @@ export const findAndUpdateFilesFromClient = async (
 
     const { files, directoryId } = req.body as CreateFilesRequest;
 
-    const updated = await updateCodeDirectory(directoryId, {
-      updated_at: new Date().toISOString(),
-      indexed_at: new Date().toISOString(),
-    });
+    handleAndFilesToDb(directoryId, files, account);
 
-    handleAndFilesToDb(files, account);
+    await createMessageWithUser(
+      user,
+      {
+        content: `Started indexing your directroy. This may take a while. The directory indexed date will be updated when the indexing is completed.`,
+        role: "assistant",
+      },
+      sessionId
+    );
 
-    return res.status(200).json({ data: updated });
+    return res.status(200).json({ data: "done" });
   } catch (error: any) {
     res.status(500).json({ message: error.message });
   }
