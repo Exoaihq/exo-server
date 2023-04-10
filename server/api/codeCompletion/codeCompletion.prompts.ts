@@ -113,7 +113,8 @@ export function haveAllTheValuesPrompt(messages: ChatMessage[]) {
 export function refactorCodePrompt(
   codeContent: string,
   requiredFunctionality: string,
-  codeMetadata: string
+  codeMetadata: string,
+  scratchPadSnippet: string
 ) {
   return `You an and api chatbot that is helping me create code. Here is the content of the file the I want to update:
     '''
@@ -121,6 +122,9 @@ export function refactorCodePrompt(
     '''
     Here is some information about the code:
     ${codeMetadata}
+    '''
+    Here is some example code that you can use to help write the new code:
+    ${scratchPadSnippet}
     '''
     And here is the refactor I want to make:
     ${requiredFunctionality}
@@ -131,12 +135,16 @@ export function refactorCodePrompt(
 
 export function createNewCodePrompt(
   functionality: string,
-  codeMetadata: string
+  codeMetadata: string,
+  scratchPadSnippet: string
 ) {
   return `You an and api chatbot that is helping me create code.
     '''
     Here is some information about the code:
     ${codeMetadata}
+    '''
+    Here is some example code that you can use to help write the new code:
+    ${scratchPadSnippet}
     '''
     And here is the functionality the code should have:
     ${functionality}

@@ -3,7 +3,7 @@ import { EngineName } from "../../../../types/openAiTypes/openAiEngine";
 import { Database, Json } from "../../../../types/supabase";
 import { createMessageWithUser } from "../../message/message.service";
 import { createChatCompletion } from "../../openAi/openai.service";
-import { updateSession } from "../../supabase/supabase.service";
+import { getSessionById, updateSession } from "../../supabase/supabase.service";
 import {
   createNewCodePrompt,
   refactorCodePrompt,
@@ -145,10 +145,21 @@ export async function handleScratchPadUpdate(
 
   const existingCode = await getAiCodeBySessionCodeNotNull(sessionId);
 
+  const session = await getSessionById(sessionId);
+
   const content =
     res.where === "existing" && existingCode && existingCode.code
-      ? refactorCodePrompt(existingCode.code, functionality, "")
-      : createNewCodePrompt(functionality, "");
+      ? refactorCodePrompt(
+          existingCode.code,
+          functionality,
+          "",
+          session.scratch_pad_content ? session.scratch_pad_content : ""
+        )
+      : createNewCodePrompt(
+          functionality,
+          "",
+          session.scratch_pad_content ? session.scratch_pad_content : ""
+        );
 
   console.log("New functionality for scratch pad", content);
 

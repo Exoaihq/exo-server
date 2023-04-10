@@ -11,21 +11,6 @@ import {
 
 const supabase = createClient(supabaseUrl, supabaseKey);
 
-export async function findCodeByQuery(
-  query: string,
-  accountId: string
-): Promise<
-  Partial<Database["public"]["Tables"]["code_snippet"]["Row"]>[] | []
-> {
-  const queryEmbedding = await createEmbeddings([query]);
-
-  const response = await findSnippetByExplainationEmbedding(
-    queryEmbedding,
-    accountId
-  );
-  return response;
-}
-
 export async function codeSnippetSearch(code: string) {
   const code_embedding = await createEmbeddings([code]);
 

@@ -1,10 +1,11 @@
-import { Database } from "../../../../types/supabase";
-import { findCodeByQuery } from "../../codeSnippet/codeSnippet.service";
+import { Database } from "../../../types/supabase";
+import { findSnippetByExplainationEmbedding } from "../codeSnippet/codeSnippet.service";
 import {
   createMessageWithUser,
   getOnlyRoleAndContentMessagesSession,
-} from "../../message/message.service";
-import { findOrUpdateAccount } from "../../supabase/account.service";
+} from "../message/message.service";
+import { createEmbeddings } from "../openAi/openai.service";
+import { findOrUpdateAccount } from "../supabase/account.service";
 
 export async function handleSearch(
   user: Database["public"]["Tables"]["users"]["Row"],
@@ -55,4 +56,19 @@ export async function handleSearch(
     sessionId
   );
   return templateResponse;
+}
+
+export async function findCodeByQuery(
+  query: string,
+  accountId: string
+): Promise<
+  Partial<Database["public"]["Tables"]["code_snippet"]["Row"]>[] | []
+> {
+  const queryEmbedding = await createEmbeddings([query]);
+
+  const response = await findSnippetByExplainationEmbedding(
+    queryEmbedding,
+    accountId
+  );
+  return response;
 }

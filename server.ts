@@ -10,6 +10,7 @@ import codeDirectoryRoutes from "./server/api/codeDirectory/codeDirectory.routes
 import codeFileRoutes from "./server/api/codeFile/codeFile.routes";
 import codeSnippetRoutes from "./server/api/codeSnippet/codeSnippet.routes";
 import messageRoutes from "./server/api/message/message.routes";
+import searchRoutes from "./server/api/search/search.routes";
 import { port } from "./utils/envVariable";
 
 const app: Express = express();
@@ -32,6 +33,7 @@ app.use("/code-snippet", codeSnippetRoutes);
 app.use("/messages", messageRoutes);
 app.use("/code", codeCompletionRoutes);
 app.use("/agent", agentRouter);
+app.use("/search", searchRoutes);
 app.use("/", routes);
 
 runScheduledTasks();

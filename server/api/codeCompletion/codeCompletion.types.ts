@@ -10,6 +10,7 @@ export interface CodeCompletionRequest {
   codeContent: string;
   fullFilePathWithName: string;
   sessionId: string;
+  scratchPadContent?: string;
 }
 
 export interface CodeCompletionDetails {

@@ -13,7 +13,7 @@ import {
 import { createDirectoryIfNotExists } from "../../codeDirectory/codeDirectory.service";
 import { createMessageWithUser } from "../../message/message.service";
 import { createChatCompletion } from "../../openAi/openai.service";
-import { updateSession } from "../../supabase/supabase.service";
+import { getSessionById, updateSession } from "../../supabase/supabase.service";
 import { fileUploadPromp, refactorCodePrompt } from "../codeCompletion.prompts";
 import {
   addSystemMessage,
@@ -102,10 +102,13 @@ export async function handleUpdatingExistingCode(
     requiredFunctionality: "",
   };
 
+  const session = await getSessionById(sessionId);
+
   const refactorPrompt = refactorCodePrompt(
     existingContent,
     requiredFunctionality,
-    codeMetadata
+    codeMetadata,
+    session.expected_next_action || ""
   );
 
   const response = await createChatCompletion(

@@ -3,8 +3,9 @@ import { ParseCode } from "../../../types/parseCode.types";
 import { rootProjectDirectory } from "../../../utils/envVariable";
 import { iterateOverFolderAndHandleAndUpdateFileContents } from "../../../utils/iterateOverFolders";
 import { parseCode } from "../../../utils/treeSitter";
-import { findCodeByQuery } from "../codeSnippet/codeSnippet.service";
+
 import { createMessageWithUser } from "../message/message.service";
+import { findCodeByQuery } from "../search/search.service";
 import { findOrUpdateAccount } from "../supabase/account.service";
 import {
   addCodeToSupabase,
@@ -18,8 +19,6 @@ export const findCodeFile = async (req: Request, res: Response) => {
     const session = await checkSessionOrThrow(req, res);
 
     const { user } = session.data;
-
-    const { sessionId } = req.body;
 
     const { query } = req.body;
 

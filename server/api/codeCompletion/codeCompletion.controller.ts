@@ -4,6 +4,7 @@ import {
   getOnlyRoleAndContentMessagesByUserAndSession,
 } from "../message/message.service";
 import { createTextCompletion } from "../openAi/openai.service";
+import { handleSearch } from "../search/search.service";
 import {
   checkSessionOrThrow,
   findOrCreateSession,
@@ -19,7 +20,6 @@ import {
 } from "./codeCompletion.service";
 import { CodeCompletionRequest } from "./codeCompletion.types";
 import { handleKnownNextAction } from "./scenerios/codeCompletion.knownNextAction";
-import { handleSearch } from "./scenerios/codeCompletion.search";
 
 export const handleCodeCompletion = async (req: Request, res: Response) => {
   try {
@@ -27,7 +27,7 @@ export const handleCodeCompletion = async (req: Request, res: Response) => {
 
     const { user } = session.data;
 
-    const { sessionId } = req.body as CodeCompletionRequest;
+    const { sessionId, scratchPadContent } = req.body as CodeCompletionRequest;
 
     const sessionMessages = await getOnlyRoleAndContentMessagesByUserAndSession(
       user,
@@ -35,6 +35,10 @@ export const handleCodeCompletion = async (req: Request, res: Response) => {
     );
 
     const dbSession = await findOrCreateSession(user, sessionId);
+
+    await updateSession(user, sessionId, {
+      scratch_pad_content: scratchPadContent,
+    });
 
     if (dbSession.expected_next_action) {
       return await handleKnownNextAction(
@@ -45,6 +49,17 @@ export const handleCodeCompletion = async (req: Request, res: Response) => {
         res
       );
     }
+
+    // if (scratchPadContent){
+    //   return await handleScratchPadContent(
+    //     sessionMessages,
+    //     dbSession,
+    //     user,
+    //     sessionId,
+    //     scratchPadContent,
+    //     res
+    //   );
+    // }
 
     const classifyMessage = await createTextCompletion(
       createBaseClassificationPrompt(sessionMessages),

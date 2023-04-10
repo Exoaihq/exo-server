@@ -238,19 +238,7 @@ export async function handleFileUploadWithSession(
   },
   sessionId: string,
   codeContent: string,
-  dbSession: {
-    code_content: string | null;
-    created_at: string | null;
-    file_name: string | null;
-    file_path: string | null;
-    functionality: string | null;
-    id: string;
-    location: string | null;
-    new_file: boolean | null;
-    updated_at: string | null;
-    user_id: string | null;
-    expected_next_action: string | null;
-  }
+  dbSession: Database["public"]["Tables"]["session"]["Row"]
 ): Promise<CodeCompletionResponse> {
   const classification = await runFileUploadClassificaiton(
     sessionMessages,

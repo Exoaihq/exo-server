@@ -81,6 +81,21 @@ export const findOrCreateSession = async (
   }
 };
 
+export const getSessionById = async (
+  sessionId: string
+): Promise<Database["public"]["Tables"]["session"]["Row"]> => {
+  const { data, error } = await supabase
+    .from("session")
+    .select("*")
+    .eq("id", sessionId);
+
+  if (error || !data || data.length === 0) {
+    throw new Error("Can't find the users session");
+  }
+
+  return data[0];
+};
+
 export const updateSession = async (
   user: Database["public"]["Tables"]["users"]["Row"],
   sessionId: string,

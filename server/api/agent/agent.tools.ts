@@ -1,9 +1,9 @@
 import { ChatUserType } from "../../../types/chatMessage.type";
 import { EngineName } from "../../../types/openAiTypes/openAiEngine";
 import { Database } from "../../../types/supabase";
-import { handleSearch } from "../codeCompletion/scenerios/codeCompletion.search";
-import { findCodeByQuery } from "../codeSnippet/codeSnippet.service";
+
 import { createChatCompletion } from "../openAi/openai.service";
+import { findCodeByQuery } from "../search/search.service";
 import { findOrUpdateAccount } from "../supabase/account.service";
 import {
   findOrCreateSession,

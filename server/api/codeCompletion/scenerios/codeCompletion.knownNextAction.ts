@@ -7,7 +7,6 @@ import { createMessageWithUser } from "../../message/message.service";
 import { createTextCompletion } from "../../openAi/openai.service";
 import { updateSession } from "../../supabase/supabase.service";
 import { doesMessageAnswerExpectedNextActionPrompt } from "../codeCompletion.prompts";
-import { handleExistingFileUpdate } from "./codeCompletion.knowFuncAndLoc";
 import { handleUpdatingExistingCode } from "./codeCompletion.updateExisting";
 
 export enum ExpectedNextAction {
@@ -85,7 +84,6 @@ export async function handleKnownNextAction(
       // Handle the expected next action
 
       if (dbSession.expected_next_action === ExpectedNextAction.NEW_FILE) {
-        console.log("handle writing file");
         const userMessages = sessionMessages.filter(
           (message) => message.role === "user"
         );

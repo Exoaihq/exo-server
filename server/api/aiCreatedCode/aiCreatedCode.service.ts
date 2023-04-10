@@ -4,12 +4,15 @@ import { EngineName } from "../../../types/openAiTypes/openAiEngine";
 import { Database } from "../../../types/supabase";
 import { deserializeJson } from "../../../utils/deserializeJson";
 import { supabaseKey, supabaseUrl } from "../../../utils/envVariable";
-import { getFileNameAndFunctionalityPrompt } from "../codeCompletion/codeCompletion.prompts";
+import {
+  createNewCodePrompt,
+  getFileNameAndFunctionalityPrompt,
+} from "../codeCompletion/codeCompletion.prompts";
 import {
   createChatCompletion,
   createTextCompletion,
 } from "../openAi/openai.service";
-import { updateSession } from "../supabase/supabase.service";
+import { getSessionById, updateSession } from "../supabase/supabase.service";
 
 const supabase = createClient<Database>(supabaseUrl, supabaseKey);
 
@@ -36,12 +39,21 @@ export const createAiCodeFromNewFilePrompt = async (
     throw new Error("Could not parse file name and functionality");
   }
   console.log("fileNameAndFunc", fileNameAndFunc, fileName, functionality);
+
+  const session = await getSessionById(sessionId);
+
+  const codePrompt = createNewCodePrompt(
+    functionality,
+    "",
+    session.scratch_pad_content || ""
+  );
+
   // Create the code
   const response = await createChatCompletion(
     [
       {
         role: ChatUserType.user,
-        content: functionality,
+        content: codePrompt,
       },
     ],
     EngineName.GPT4
