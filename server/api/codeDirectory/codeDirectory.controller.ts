@@ -11,6 +11,8 @@ import {
 import {
   createCodeDirectory,
   getCodeDirectories,
+  getDirectoryFilesAndSnippetCount,
+  updateCodeDirectoryById,
 } from "./codeDirectory.service";
 
 export const getCodeDirectoriesByAccount = async (
@@ -34,10 +36,11 @@ export const getCodeDirectoriesByAccount = async (
       return res.status(404).json({ message: "Can't find the user account" });
     }
 
-    const directories = await getCodeDirectories(account.id);
+    const directories = (await getCodeDirectories(account.id)) || [];
 
     return res.status(200).json({
       data: directories,
+      metadata: getDirectoryFilesAndSnippetCount(directories),
     });
   } catch (error: any) {
     console.log(error);
@@ -119,6 +122,45 @@ export const setDirectoryToAddFile = async (req: Request, res: Response) => {
       user,
       {
         content: `Ok I set the directory: ${directory} as the location to add a new file. Let me know what functionality and file name you want to add to the new file and ill create it and add it to the directory.`,
+        role: "assistant",
+      },
+      sessionId
+    );
+
+    return res.status(200).json({
+      data: "done",
+    });
+  } catch (error: any) {
+    console.log(error);
+    res.status(500).json({ message: error.message });
+  }
+};
+
+export const updateDirectory = async (req: Request, res: Response) => {
+  try {
+    const { directoryId, values } = req.body;
+    const session = await checkSessionOrThrow(req, res);
+
+    const { user } = session.data;
+
+    const { session_id } = req.headers;
+
+    const sessionId = session_id as string;
+
+    await findOrCreateSession(user, sessionId);
+
+    const account = await findOrUpdateAccount(user);
+
+    if (!account) {
+      return res.status(404).json({ message: "Can't find the user account" });
+    }
+
+    await updateCodeDirectoryById(directoryId, values);
+
+    await createMessageWithUser(
+      user,
+      {
+        content: `Ok I removed the directory from your saved directories`,
         role: "assistant",
       },
       sessionId

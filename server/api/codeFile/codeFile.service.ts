@@ -1,9 +1,9 @@
-import { createClient } from "@supabase/supabase-js";
+import { createClient, PostgrestError } from "@supabase/supabase-js";
 import { ParseCode, SnippetByFileName } from "../../../types/parseCode.types";
 import { Database } from "../../../types/supabase";
 import { supabaseKey, supabaseUrl } from "../../../utils/envVariable";
 import { extractFileNameAndPathFromFullPath } from "../../../utils/getFileName";
-import { updateCodeDirectory } from "../codeDirectory/codeDirectory.service";
+import { updateCodeDirectoryById } from "../codeDirectory/codeDirectory.service";
 import {
   createEmbeddings,
   summarizeCodeExplaination,
@@ -47,7 +47,7 @@ export const handleAndFilesToDb = async (
     totalNotFound += notFound;
   });
 
-  await updateCodeDirectory(directoryId, {
+  await updateCodeDirectoryById(directoryId, {
     updated_at: new Date().toISOString(),
     indexed_at: new Date().toISOString(),
   });
@@ -84,6 +84,24 @@ export async function findSnippetByFileNameAndAccount(
   return data;
 }
 
+export async function findFileByAccountId(
+  accountId: string
+): Promise<Partial<Database["public"]["Tables"]["code_file"]["Row"]>[] | null> {
+  const { data, error } = await supabase
+    .from("code_file")
+    .select("id, file_name, account_id, file_path, code_directory_id")
+    .eq("account_id", accountId);
+
+  if (error) {
+    console.log(error);
+    return null;
+  }
+  if (!data) {
+    return null;
+  }
+  return data;
+}
+
 export async function findFilesWithoutExplaination(): Promise<
   Partial<Database["public"]["Tables"]["code_file"]["Row"]>[] | null
 > {
@@ -103,6 +121,26 @@ export async function findFilesWithoutExplaination(): Promise<
   }
   return data;
 }
+
+export const updateFileById = async (
+  id: number,
+  values?: Partial<Database["public"]["Tables"]["code_file"]["Update"]>
+): Promise<
+  Partial<Database["public"]["Tables"]["code_file"]["Update"] | PostgrestError>
+> => {
+  const { data, error } = await supabase
+    .from("code_file")
+    .update({ ...values })
+    .eq("id", id)
+    .select();
+
+  if (error || !data) {
+    console.log("Error updating code directory", error);
+    return error;
+  }
+
+  return data[0] as Database["public"]["Tables"]["code_file"]["Row"];
+};
 
 export const createCodeFile = async (
   accountId: string,
