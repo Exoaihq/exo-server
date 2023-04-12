@@ -7,12 +7,14 @@ import {
   getFileSuffix,
 } from "../../../../utils/getFileName";
 import {
+  createAiWritenCode,
   findAiCodeBySessionAndFileName,
   updateAiWritenCode,
 } from "../../aiCreatedCode/aiCreatedCode.service";
 import { createDirectoryIfNotExists } from "../../codeDirectory/codeDirectory.service";
 import { createMessageWithUser } from "../../message/message.service";
 import { createChatCompletion } from "../../openAi/openai.service";
+import { createNewMessagePrompt } from "../../prompt/prompt.service";
 import { getSessionById, updateSession } from "../../supabase/supabase.service";
 import { fileUploadPromp, refactorCodePrompt } from "../codeCompletion.prompts";
 import {
@@ -66,7 +68,15 @@ export async function handleGetFunctionalityWhenFileExists(
   };
 
   if (completionResponse && completionResponse?.choices[0]) {
-    await createMessageWithUser(user, response.choices[0].message, sessionId);
+    const newMessage = await createMessageWithUser(
+      user,
+      response.choices[0].message,
+      sessionId
+    );
+
+    if (newMessage) {
+      await createNewMessagePrompt(newMessage.id);
+    }
   }
 
   updateSession(user, sessionId, {
@@ -133,6 +143,16 @@ export async function handleUpdatingExistingCode(
       location,
       path: extractedPath,
       file_name: fileName,
+    });
+  } else {
+    createAiWritenCode({
+      functionality: requiredFunctionality,
+      code: response.choices[0].message?.content,
+      completed_at: new Date().toISOString(),
+      location,
+      path: extractedPath,
+      file_name: fileName,
+      session_id: sessionId,
     });
   }
 

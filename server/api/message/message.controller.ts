@@ -36,8 +36,12 @@ export const createMessages = async (req: Request, res: Response) => {
       req.body.sessionId
     );
 
+    if (!response) {
+      return res.status(404).json({ message: "Error creating message" });
+    }
+
     return res.status(200).json({
-      data: response.data,
+      data: response,
     });
   } catch (error: any) {
     res.status(500).json({ message: error.message });

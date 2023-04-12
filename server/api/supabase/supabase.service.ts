@@ -9,7 +9,7 @@ import {
   ParsedFile,
   SnippetByFileName,
 } from "../../../types/parseCode.types";
-import { Database } from "../../../types/supabase";
+import { Database, Json } from "../../../types/supabase";
 import { supabaseKey, supabaseUrl } from "../../../utils/envVariable";
 import { extractFileNameAndPathFromFullPath } from "../../../utils/getFileName";
 import { getSubstringFromMultilineCode } from "../../../utils/getSubstringFromMultilineCode";
@@ -107,6 +107,27 @@ export const updateSession = async (
     .eq("user_id", user.id)
     .eq("id", sessionId)
     .select();
+};
+
+export const resetSession = (
+  user: {
+    avatar_url: string | null;
+    billing_address: Json;
+    email: string | null;
+    full_name: string | null;
+    id: string;
+    payment_method: Json;
+  },
+  sessionId: any
+) => {
+  updateSession(user, sessionId, {
+    code_content: "",
+    file_name: "",
+    file_path: "",
+    new_file: null,
+    location: "",
+    expected_next_action: null,
+  });
 };
 
 // Use this function to update snippets in the database

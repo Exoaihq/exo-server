@@ -69,7 +69,7 @@ export interface Database {
           account_id: string | null
           created_at: string
           directory_explaination: string | null
-          directory_explaination_embedding: unknown | null
+          directory_explaination_embedding: string | null
           directory_name: string | null
           file_path: string | null
           id: number
@@ -81,7 +81,7 @@ export interface Database {
           account_id?: string | null
           created_at?: string
           directory_explaination?: string | null
-          directory_explaination_embedding?: unknown | null
+          directory_explaination_embedding?: string | null
           directory_name?: string | null
           file_path?: string | null
           id?: number
@@ -93,7 +93,7 @@ export interface Database {
           account_id?: string | null
           created_at?: string
           directory_explaination?: string | null
-          directory_explaination_embedding?: unknown | null
+          directory_explaination_embedding?: string | null
           directory_name?: string | null
           file_path?: string | null
           id?: number
@@ -108,7 +108,7 @@ export interface Database {
           code_directory_id: number | null
           created_at: string
           file_explaination: string | null
-          file_explaination_embedding: unknown | null
+          file_explaination_embedding: string | null
           file_name: string | null
           file_path: string | null
           id: number
@@ -119,7 +119,7 @@ export interface Database {
           code_directory_id?: number | null
           created_at?: string
           file_explaination?: string | null
-          file_explaination_embedding?: unknown | null
+          file_explaination_embedding?: string | null
           file_name?: string | null
           file_path?: string | null
           id?: number
@@ -130,7 +130,7 @@ export interface Database {
           code_directory_id?: number | null
           created_at?: string
           file_explaination?: string | null
-          file_explaination_embedding?: unknown | null
+          file_explaination_embedding?: string | null
           file_name?: string | null
           file_path?: string | null
           id?: number
@@ -140,9 +140,9 @@ export interface Database {
       code_snippet: {
         Row: {
           account_id: string | null
-          code_embedding: unknown | null
+          code_embedding: string | null
           code_explaination: string | null
-          code_explaination_embedding: unknown | null
+          code_explaination_embedding: string | null
           code_file_id: number | null
           code_string: string | null
           created_at: string
@@ -158,9 +158,9 @@ export interface Database {
         }
         Insert: {
           account_id?: string | null
-          code_embedding?: unknown | null
+          code_embedding?: string | null
           code_explaination?: string | null
-          code_explaination_embedding?: unknown | null
+          code_explaination_embedding?: string | null
           code_file_id?: number | null
           code_string?: string | null
           created_at?: string
@@ -176,9 +176,9 @@ export interface Database {
         }
         Update: {
           account_id?: string | null
-          code_embedding?: unknown | null
+          code_embedding?: string | null
           code_explaination?: string | null
-          code_explaination_embedding?: unknown | null
+          code_explaination_embedding?: string | null
           code_file_id?: number | null
           code_string?: string | null
           created_at?: string
@@ -205,6 +205,26 @@ export interface Database {
         Update: {
           id?: string
           stripe_customer_id?: string | null
+        }
+      }
+      message_prompts: {
+        Row: {
+          created_at: string | null
+          id: string
+          message_id: string | null
+          prompt_id: string | null
+        }
+        Insert: {
+          created_at?: string | null
+          id?: string
+          message_id?: string | null
+          prompt_id?: string | null
+        }
+        Update: {
+          created_at?: string | null
+          id?: string
+          message_id?: string | null
+          prompt_id?: string | null
         }
       }
       messages: {
@@ -354,24 +374,39 @@ export interface Database {
       }
       prompt: {
         Row: {
+          body: string | null
           created_at: string | null
+          description: string | null
+          global: boolean | null
           id: string
-          input: string | null
-          inputClassificaiton: string | null
+          message_id: string | null
+          name: string | null
+          prefix: string | null
+          suffix: string | null
           user_id: string | null
         }
         Insert: {
+          body?: string | null
           created_at?: string | null
-          id: string
-          input?: string | null
-          inputClassificaiton?: string | null
+          description?: string | null
+          global?: boolean | null
+          id?: string
+          message_id?: string | null
+          name?: string | null
+          prefix?: string | null
+          suffix?: string | null
           user_id?: string | null
         }
         Update: {
+          body?: string | null
           created_at?: string | null
+          description?: string | null
+          global?: boolean | null
           id?: string
-          input?: string | null
-          inputClassificaiton?: string | null
+          message_id?: string | null
+          name?: string | null
+          prefix?: string | null
+          suffix?: string | null
           user_id?: string | null
         }
       }
@@ -505,7 +540,7 @@ export interface Database {
     Functions: {
       match_code: {
         Args: {
-          query_embedding: unknown
+          query_embedding: string
           similarity_threshold: number
           match_count: number
         }
@@ -519,7 +554,7 @@ export interface Database {
       }
       match_code_file: {
         Args: {
-          query_embedding: unknown
+          query_embedding: string
           similarity_threshold: number
           match_count: number
         }
@@ -534,7 +569,7 @@ export interface Database {
       match_code_snippet_explaination: {
         Args: {
           accountid: string
-          query_embedding: unknown
+          query_embedding: string
           similarity_threshold: number
           match_count: number
         }
@@ -552,7 +587,7 @@ export interface Database {
       }
       match_documents: {
         Args: {
-          query_embedding: unknown
+          query_embedding: string
           similarity_threshold: number
           match_count: number
         }

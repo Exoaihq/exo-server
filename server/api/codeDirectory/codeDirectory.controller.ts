@@ -2,6 +2,7 @@ import { Request, Response } from "express";
 import { getDirectoryNameFromPath } from "../../../utils/getFileName";
 import { ExpectedNextAction } from "../codeCompletion/scenerios/codeCompletion.knownNextAction";
 import { createMessageWithUser } from "../message/message.service";
+import { createNewMessagePrompt } from "../prompt/prompt.service";
 import { findOrUpdateAccount } from "../supabase/account.service";
 import {
   checkSessionOrThrow,
@@ -118,7 +119,7 @@ export const setDirectoryToAddFile = async (req: Request, res: Response) => {
       expected_next_action: ExpectedNextAction.NEW_FILE,
     });
 
-    await createMessageWithUser(
+    const newMessage = await createMessageWithUser(
       user,
       {
         content: `Ok I set the directory: ${directory} as the location to add a new file. Let me know what functionality and file name you want to add to the new file and ill create it and add it to the directory.`,

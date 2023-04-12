@@ -47,3 +47,13 @@ export const getDirectoryNameFromPath = (path: string) => {
   const pathArray = path.split("/");
   return pathArray[pathArray.length - 1];
 };
+
+export function convertToTestFileName(fileName: string): string {
+  const fileExtension = fileName.split(".").pop();
+  const fileNameWithoutExtension = fileName.substring(
+    0,
+    fileName.lastIndexOf(".")
+  );
+
+  return `${fileNameWithoutExtension}.test.${fileExtension}`;
+}
