@@ -2,6 +2,7 @@ import { Request, Response } from "express";
 import { checkSessionOrThrow } from "../supabase/supabase.service";
 import {
   createMessageWithUser,
+  findUnseenHelperMessages,
   getMessagesByUserAndSession,
 } from "./message.service";
 
@@ -12,6 +13,8 @@ export const getMessages = async (req: Request, res: Response) => {
     const { session_id } = req.headers;
 
     const sessionId = session_id as string;
+
+    await findUnseenHelperMessages(session.data.user, sessionId);
 
     const messages = await getMessagesByUserAndSession(
       session.data.user,

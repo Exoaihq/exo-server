@@ -64,6 +64,26 @@ export interface Database {
           writen_to_file_at?: string | null
         }
       }
+      app_helper_messages: {
+        Row: {
+          created_at: string | null
+          id: number
+          name: string | null
+          text: string | null
+        }
+        Insert: {
+          created_at?: string | null
+          id?: number
+          name?: string | null
+          text?: string | null
+        }
+        Update: {
+          created_at?: string | null
+          id?: number
+          name?: string | null
+          text?: string | null
+        }
+      }
       code_directory: {
         Row: {
           account_id: string | null
@@ -233,6 +253,7 @@ export interface Database {
           created_at: string | null
           created_location: string | null
           id: string
+          is_helper_message: boolean
           role: Database["public"]["Enums"]["message_role"] | null
           session_id: string | null
           user_id: string | null
@@ -242,6 +263,7 @@ export interface Database {
           created_at?: string | null
           created_location?: string | null
           id?: string
+          is_helper_message?: boolean
           role?: Database["public"]["Enums"]["message_role"] | null
           session_id?: string | null
           user_id?: string | null
@@ -251,6 +273,7 @@ export interface Database {
           created_at?: string | null
           created_location?: string | null
           id?: string
+          is_helper_message?: boolean
           role?: Database["public"]["Enums"]["message_role"] | null
           session_id?: string | null
           user_id?: string | null

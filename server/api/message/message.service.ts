@@ -18,6 +18,18 @@ export const getMessagesWithUser = async (
   return data || [];
 };
 
+export const getHelerMessagesWithUser = async (
+  user: Database["public"]["Tables"]["users"]["Row"]
+): Promise<any> => {
+  const { data, error } = await supabase
+    .from("messages")
+    .select("content, created_at, session_id, role")
+    .eq("user_id", user.id)
+    .eq("is_helper_message", true);
+
+  return data || [];
+};
+
 export const getMessagesByUserAndSession = async (
   user: Database["public"]["Tables"]["users"]["Row"],
   sessionId: string
@@ -190,4 +202,65 @@ export const dbMessagesToChatMessages = (
       content: message.content ? message.content : "",
     };
   });
+};
+
+export const findUnseenHelperMessages = async (
+  user: Database["public"]["Tables"]["users"]["Row"],
+  sessionId: string
+) => {
+  const userMessages = await getHelerMessagesWithUser(user);
+  const { data, error } = await supabase
+    .from("app_helper_messages")
+    .select("*");
+
+  if (error || !data || data.length === 0) {
+    return;
+  }
+
+  if (!userMessages || userMessages.length === 0) {
+    if (data) {
+      createMessageWithUser(
+        user,
+        {
+          content: data[0].text,
+          role: "assistant",
+          is_helper_message: true,
+        },
+        sessionId
+      );
+      createMessageWithUser(
+        user,
+        {
+          content: data[1].text,
+          role: "assistant",
+          is_helper_message: true,
+        },
+        sessionId
+      );
+    }
+  } else {
+    // Return the next helper message
+
+    for (let i = 0; i < data?.length; i++) {
+      const messageExists = userMessages.find(
+        (userMessage: { content: string | null }) => {
+          return userMessage.content === data[i].text;
+        }
+      );
+
+      if (!messageExists) {
+        await createMessageWithUser(
+          user,
+          {
+            content: data[i].text,
+            role: "assistant",
+            is_helper_message: true,
+          },
+          sessionId
+        );
+        // Only write one helper message at a time
+        return;
+      }
+    }
+  }
 };

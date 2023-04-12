@@ -87,6 +87,8 @@ export const getAiCodeBySession = async (
     console.log("Getting code error", error);
   }
 
+  console.log("data", data);
+
   return data as Database["public"]["Tables"]["ai_created_code"]["Row"][];
 };
 
