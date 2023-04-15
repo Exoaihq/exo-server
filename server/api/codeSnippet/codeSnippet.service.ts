@@ -1,7 +1,7 @@
 import { createClient } from "@supabase/supabase-js";
 import { Database } from "../../../types/supabase";
 import { supabaseKey, supabaseUrl } from "../../../utils/envVariable";
-import { createCodeFile } from "../codeFile/codeFile.service";
+import { createCodeFile } from "../codeFile/codeFile.repository";
 import { createEmbeddings } from "../openAi/openai.service";
 import {
   assignCodeSnippetToFile,

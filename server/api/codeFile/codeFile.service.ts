@@ -1,7 +1,6 @@
-import { createClient, PostgrestError } from "@supabase/supabase-js";
-import { ParseCode, SnippetByFileName } from "../../../types/parseCode.types";
+import { ParseCode } from "../../../types/parseCode.types";
 import { Database } from "../../../types/supabase";
-import { supabaseKey, supabaseUrl } from "../../../utils/envVariable";
+import { isTodaysDate } from "../../../utils/dates";
 import { extractFileNameAndPathFromFullPath } from "../../../utils/getFileName";
 import { updateCodeDirectoryById } from "../codeDirectory/codeDirectory.service";
 import {
@@ -9,8 +8,12 @@ import {
   summarizeCodeExplaination,
 } from "../openAi/openai.service";
 import { compareAndUpdateSnippets } from "../supabase/supabase.service";
-
-const supabase = createClient<Database>(supabaseUrl, supabaseKey);
+import {
+  findAllFiles,
+  findFilesWithoutExplaination,
+  findSnippetByFileNameAndAccount,
+  updateFileById,
+} from "./codeFile.repository";
 
 export const handleAndFilesToDb = async (
   directoryId: string,
@@ -62,104 +65,64 @@ export const handleAndFilesToDb = async (
   };
 };
 
-export async function findSnippetByFileNameAndAccount(
-  fileName: string,
-  accountId: string
-): Promise<SnippetByFileName[] | null> {
-  const { data, error } = await supabase
-    .from("code_snippet")
-    .select(
-      "file_name, id, code_file_id, code_string, code_explaination, start_row, start_column, end_row, end_column"
-    )
-    .eq("file_name", fileName)
-    .eq("account_id", accountId);
+export const updateFileExplanation = async () => {
+  const files = await findAllFiles();
 
-  if (error) {
-    console.log(error);
-    return null;
-  }
-  if (!data) {
-    return null;
-  }
-  return data;
-}
-
-export async function findFileByAccountId(
-  accountId: string
-): Promise<Partial<Database["public"]["Tables"]["code_file"]["Row"]>[] | null> {
-  const { data, error } = await supabase
-    .from("code_file")
-    .select("id, file_name, account_id, file_path, code_directory_id")
-    .eq("account_id", accountId);
-
-  if (error) {
-    console.log(error);
-    return null;
-  }
-  if (!data) {
-    return null;
-  }
-  return data;
-}
-
-export async function findFilesWithoutExplaination(): Promise<
-  Partial<Database["public"]["Tables"]["code_file"]["Row"]>[] | null
-> {
-  const { data, error } = await supabase
-    .from("code_file")
-    .select(
-      "id, file_name, code_snippet(id, file_name, code_explaination, parsed_code_type, code_string, account_id)"
-    )
-    .is("file_explaination", null);
-
-  if (error) {
-    console.log(error);
-    return null;
-  }
-  if (!data) {
-    return null;
-  }
-  return data;
-}
-
-export const updateFileById = async (
-  id: number,
-  values?: Partial<Database["public"]["Tables"]["code_file"]["Update"]>
-): Promise<
-  Partial<Database["public"]["Tables"]["code_file"]["Update"] | PostgrestError>
-> => {
-  const { data, error } = await supabase
-    .from("code_file")
-    .update({ ...values })
-    .eq("id", id)
-    .select();
-
-  if (error || !data) {
-    console.log("Error updating code directory", error);
-    return error;
+  if (!files || !files.length) {
+    return;
   }
 
-  return data[0] as Database["public"]["Tables"]["code_file"]["Row"];
-};
+  console.log("files", files.length);
+  let filesUpdated = 0;
 
-export const createCodeFile = async (
-  accountId: string,
-  values: Partial<Database["public"]["Tables"]["code_file"]["Update"]>
-): Promise<Database["public"]["Tables"]["code_directory"]["Insert"] | null> => {
-  const { data, error } = await supabase
-    .from("code_file")
-    .insert([{ ...values, account_id: accountId }])
-    .select();
+  for (let i = 0; i < files.length; i++) {
+    const { file_name, account_id, id, updated_at } = files[i];
 
-  if (error) {
-    console.log(error);
-    return null;
+    if (!updated_at) {
+      continue;
+    }
+
+    const updatedToday = isTodaysDate(new Date(updated_at));
+    console.log("updatedToday", updatedToday);
+    if (updatedToday) {
+      continue;
+    }
+
+    if (file_name && account_id) {
+      const nameAndSnippets = await findAndFilterFileExplanations(
+        file_name,
+        account_id
+      );
+
+      if (!nameAndSnippets) {
+        continue;
+      }
+
+      const file_explaination = await summarizeCodeExplaination(
+        nameAndSnippets
+      );
+
+      if (!file_explaination) {
+        continue;
+      }
+
+      const file_explaination_embedding = await createEmbeddings([
+        file_explaination,
+      ]);
+
+      if (!file_explaination || !file_explaination_embedding || !id) {
+        continue;
+      } else {
+        await updateFileById(id, {
+          file_explaination,
+          file_explaination_embedding,
+          updated_at: new Date().toISOString(),
+        });
+        filesUpdated++;
+      }
+    }
   }
-  if (!data) {
-    return null;
-  }
-
-  return data[0] as Database["public"]["Tables"]["code_file"]["Row"];
+  return filesUpdated;
 };
 
 export const findFilesWithoutExplainationAndAssignExplaination = async () => {
@@ -175,54 +138,43 @@ export const findFilesWithoutExplainationAndAssignExplaination = async () => {
     const file = files[i];
 
     //@ts-ignore
-    const { code_snippet, id } = file;
+    const { code_snippet, id, file_name, account_id } = file;
 
-    if (!file.file_name || !file.id || !code_snippet || !code_snippet.length) {
+    if (
+      !file_name ||
+      !file.id ||
+      !code_snippet ||
+      !code_snippet.length ||
+      !account_id
+    ) {
       continue;
     }
-    function truncateString(
-      inputString: string,
-      maxLength: number = 100
-    ): string {
-      if (inputString.length > maxLength) {
-        return inputString.slice(0, maxLength);
-      } else {
-        return inputString;
-      }
+
+    const combinedExplaination = await findAndFilterFileExplanations(
+      file_name,
+      account_id
+    );
+
+    if (!combinedExplaination) {
+      continue;
     }
 
-    const combinedExplaination = code_snippet
-      //@ts-ignore
-      .filter(
-        (snippet: { parsed_code_type: string }) =>
-          excludedEmbeddingTypes.indexOf(snippet.parsed_code_type) === -1
-      )
-      //@ts-ignore
-      .map((snippet) => truncateString(snippet.code_explaination))
-      .join("'''");
+    const file_explaination = await summarizeCodeExplaination(
+      combinedExplaination
+    );
 
-    const summary = await summarizeCodeExplaination(combinedExplaination);
+    const file_explaination_embedding = await createEmbeddings([
+      file_explaination,
+    ]);
 
-    const embedding = await createEmbeddings([summary]);
-
-    if (!summary || !embedding) {
+    if (!file_explaination || !file_explaination_embedding || !id) {
       continue;
     } else {
-      const { data, error } = await supabase
-        .from("code_file")
-        .update({
-          file_explaination: summary,
-          file_explaination_embedding: embedding,
-        })
-        .eq("id", id);
+      await updateFileById(id, {
+        file_explaination,
+        file_explaination_embedding,
+      });
       filesUpdated++;
-      if (error) {
-        console.log(error);
-        continue;
-      }
-      if (!data) {
-        continue;
-      }
     }
   }
   console.log("Number of files updated:", filesUpdated);
@@ -232,6 +184,7 @@ export const excludedEmbeddingTypes = [
   "import_statement",
   "comment",
   "ERROR",
+  "empty_statement",
   "(",
   ")",
   "[",
@@ -241,3 +194,30 @@ export const excludedEmbeddingTypes = [
   "?",
   ":",
 ];
+
+export const findAndFilterFileExplanations = async (
+  file_name: string,
+  account_id: string
+) => {
+  const snippets = await findSnippetByFileNameAndAccount(file_name, account_id);
+  if (!snippets || !snippets.length) {
+    return;
+  }
+  const snippetExplaintions = snippets
+    .filter((snippet) => {
+      if (!snippet.parsed_code_type) {
+        return false;
+      }
+
+      const found = excludedEmbeddingTypes.indexOf(snippet.parsed_code_type);
+
+      return found === -1;
+    })
+    .map((snippet: { code_explaination: any }, index) => {
+      return `${index + 1}) ${snippet.code_explaination}\n`;
+    })
+    .join(" ");
+
+  const nameAndSnippets = `The name of this file is ${file_name} and the code snippets are ${snippetExplaintions}}`;
+  return nameAndSnippets;
+};

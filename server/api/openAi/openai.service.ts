@@ -220,7 +220,7 @@ export async function summarizeCodeExplaination(
   try {
     const remainingRequests = await limiter.removeTokens(1);
     const response = await getCompletion(
-      `Summarize this explain of code into a paragraph: ${text}`,
+      `Summarize this explanation of code into a paragraph: ${text}`,
       0.2
     );
     const res = response.data.choices[0].text;

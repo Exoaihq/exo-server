@@ -4,7 +4,7 @@ import { supabaseKey, supabaseUrl } from "../../../utils/envVariable";
 import {
   findFileByAccountId,
   updateFileById,
-} from "../codeFile/codeFile.service";
+} from "../codeFile/codeFile.repository";
 import { findOrUpdateAccount } from "../supabase/account.service";
 
 // Create a single supabase client for interacting with your database

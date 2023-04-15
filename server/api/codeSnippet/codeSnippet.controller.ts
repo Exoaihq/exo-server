@@ -13,7 +13,7 @@ import {
   iterateOverFolderAndHandleFileContents,
 } from "../../../utils/iterateOverFolders";
 import { parseCode } from "../../../utils/treeSitter";
-import { findFilesWithoutExplaination } from "../codeFile/codeFile.service";
+import { findFilesWithoutExplaination } from "../codeFile/codeFile.repository";
 import { createTextCompletion } from "../openAi/openai.service";
 import {
   addCodeToSupabase,

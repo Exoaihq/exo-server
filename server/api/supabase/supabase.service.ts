@@ -62,10 +62,6 @@ export const findOrCreateSession = async (
     .eq("user_id", user.id)
     .eq("id", sessionId);
 
-  if (data) {
-    console.log("Session found. ID:", data && data[0] && data[0].id);
-  }
-
   if (data && data.length > 0) {
     return data[0];
   } else {
@@ -375,7 +371,7 @@ export async function findSnippetByFileName(
   const { data, error } = await supabase
     .from("code_snippet")
     .select(
-      "file_name, id, code_file_id, code_string, code_explaination, start_row, start_column, end_row, end_column"
+      "file_name, id, code_file_id, code_string, code_explaination, start_row, start_column, end_row, end_column, parsed_code_type"
     )
     .eq("file_name", fileName);
 
