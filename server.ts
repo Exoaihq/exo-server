@@ -12,6 +12,7 @@ import codeSnippetRoutes from "./server/api/codeSnippet/codeSnippet.routes";
 import messageRoutes from "./server/api/message/message.routes";
 import promptRoutes from "./server/api/prompt/prompt.routes";
 import searchRoutes from "./server/api/search/search.routes";
+import slackRoutes from "./server/api/slack/slack.route";
 import { port } from "./utils/envVariable";
 
 const app: Express = express();
@@ -36,6 +37,7 @@ app.use("/code", codeCompletionRoutes);
 app.use("/agent", agentRouter);
 app.use("/search", searchRoutes);
 app.use("/prompt", promptRoutes);
+app.use("/slack", slackRoutes);
 app.use("/", routes);
 
 runScheduledTasks();
