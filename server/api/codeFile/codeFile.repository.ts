@@ -45,6 +45,30 @@ export async function findFileByAccountId(
   return data;
 }
 
+export async function findFilesByAccountIdAndDirectoryId(
+  accountId: string,
+  directoryId: number
+): Promise<Partial<Database["public"]["Tables"]["code_file"]["Row"]>[] | null> {
+  const { data, error } = await supabase
+    .from("code_file")
+    .select(
+      "id, file_name, account_id, file_path, code_directory_id, code_directory_parent_id, file_explaination"
+    )
+    .eq("account_id", accountId)
+    .or(
+      `code_directory_id.eq.${directoryId}, code_directory_parent_id.eq.${directoryId}`
+    );
+
+  if (error) {
+    console.log(error);
+    return null;
+  }
+  if (!data) {
+    return null;
+  }
+  return data;
+}
+
 export async function findFilesWithoutExplaination(): Promise<
   Partial<Database["public"]["Tables"]["code_file"]["Row"]>[] | null
 > {
@@ -72,6 +96,27 @@ export async function findAllFiles(): Promise<
     .from("code_file")
     .select("id, file_name, file_explaination, account_id, updated_at")
     .not("account_id", "is", null);
+
+  if (error) {
+    console.log(error);
+    return null;
+  }
+  if (!data) {
+    return null;
+  }
+  return data;
+}
+
+export async function findAllFilesWhereParentIsNull(): Promise<
+  Partial<Database["public"]["Tables"]["code_file"]["Row"]>[] | null
+> {
+  const { data, error } = await supabase
+    .from("code_file")
+    .select(
+      "id, file_name, file_path, file_explaination, account_id, updated_at, code_directory_id, code_directory_parent_id"
+    )
+    .not("account_id", "is", null)
+    .is("code_directory_parent_id", null);
 
   if (error) {
     console.log(error);

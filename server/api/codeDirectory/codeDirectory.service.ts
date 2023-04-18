@@ -1,14 +1,25 @@
-import { createClient, PostgrestError } from "@supabase/supabase-js";
 import { Database } from "../../../types/supabase";
-import { supabaseKey, supabaseUrl } from "../../../utils/envVariable";
+import { extractFileNameAndPathFromFullPath } from "../../../utils/getFileName";
 import {
+  findAllFilesWhereParentIsNull,
   findFileByAccountId,
+  findFilesByAccountIdAndDirectoryId,
   updateFileById,
 } from "../codeFile/codeFile.repository";
-import { findOrUpdateAccount } from "../supabase/account.service";
-
-// Create a single supabase client for interacting with your database
-const supabase = createClient<Database>(supabaseUrl, supabaseKey);
+import {
+  createEmbeddings,
+  summarizeCodeExplaination,
+  summarizeDirectoryExplaination,
+} from "../openAi/openai.service";
+import {
+  createCodeDirectory,
+  createCodeDirectoryByUser,
+  findCodeDirectoryByNameAndUser,
+  findCodeDirectoryByPathAndAccountId,
+  getDirectoriesWithoutExplainations,
+  getSavedDirectoryWhereAccountIsNotNull,
+  updateCodeDirectoryById,
+} from "./codeDirectory.repository";
 
 export const createDirectoryIfNotExists = async (
   user: Database["public"]["Tables"]["users"]["Row"],
@@ -18,139 +29,8 @@ export const createDirectoryIfNotExists = async (
 ) => {
   const found = await findCodeDirectoryByNameAndUser(user, directoryName);
   if (!found) {
-    await createCodeDirectory(user, filePath, directoryName, saved);
+    await createCodeDirectoryByUser(user, filePath, directoryName, saved);
   }
-};
-
-export const createCodeDirectory = async (
-  user: Database["public"]["Tables"]["users"]["Row"],
-  filePath: string,
-  directoryName: string,
-  saved: boolean
-): Promise<Database["public"]["Tables"]["code_directory"]["Insert"]> => {
-  const account = await findOrUpdateAccount(user);
-
-  const { data } = await supabase
-    .from("code_directory")
-    .insert([
-      {
-        file_path: filePath,
-        directory_name: directoryName,
-        account_id: account ? account.id : null,
-        saved,
-      },
-    ])
-    .select();
-
-  // @ts-ignore
-  return data[0] as Database["public"]["Tables"]["code_directory"]["Row"];
-};
-
-export const findCodeDirectoryByNameAndUser = async (
-  user: Database["public"]["Tables"]["users"]["Row"],
-  directoryName: string
-): Promise<Database["public"]["Tables"]["code_directory"]["Row"] | null> => {
-  const account = await findOrUpdateAccount(user);
-
-  const { data, error } = await supabase
-    .from("code_directory")
-    .select("*")
-    .eq("account_id", account ? account.id : null)
-    .eq("directory_name", directoryName);
-
-  if (error) {
-    console.log("Getting code error", error);
-  }
-
-  if (!data || !data[0]) {
-    return null;
-  } else {
-    return data[0];
-  }
-};
-
-export const getCodeDirectories = async (
-  accountId: string
-): Promise<Database["public"]["Tables"]["code_directory"]["Row"][] | null> => {
-  const { data, error } = await supabase
-    .from("code_directory")
-    .select("*, code_file(*)")
-    .eq("account_id", accountId)
-    .order("indexed_at", { ascending: true })
-    .order("created_at", { ascending: false });
-
-  if (error) {
-    console.log("Getting code error", error);
-  }
-
-  if (!data || !data[0]) {
-    return null;
-  } else {
-    return data;
-  }
-};
-
-export const getSavedCodeDirectories = async (): Promise<
-  Database["public"]["Tables"]["code_directory"]["Row"][] | null
-> => {
-  const { data, error } = await supabase
-    .from("code_directory")
-    .select("*, code_file(*)")
-    .eq("saved", true);
-
-  if (error) {
-    console.log("Getting code error", error);
-  }
-
-  if (!data || !data[0]) {
-    return null;
-  } else {
-    console.log("Save directory count:", data.length);
-    return data;
-  }
-};
-
-export const getSavedCodeDirectoriesGroupByAccount = async (): Promise<
-  Database["public"]["Tables"]["code_directory"]["Row"][] | null
-> => {
-  const { data, error } = await supabase
-    .from("code_directory")
-    .select("*, code_file(*)")
-    .eq("saved", true)
-    .order("account_id", { ascending: true });
-
-  if (error) {
-    console.log("Getting code error", error);
-  }
-
-  if (!data || !data[0]) {
-    return null;
-  } else {
-    console.log("Save directory count:", data.length);
-    return data;
-  }
-};
-
-export const updateCodeDirectoryById = async (
-  id: string,
-  values?: Partial<Database["public"]["Tables"]["code_directory"]["Update"]>
-): Promise<
-  Partial<
-    Database["public"]["Tables"]["code_directory"]["Update"] | PostgrestError
-  >
-> => {
-  const { data, error } = await supabase
-    .from("code_directory")
-    .update({ ...values })
-    .eq("id", id)
-    .select();
-
-  if (error || !data) {
-    console.log("Error updating code directory", error);
-    return error;
-  }
-
-  return data[0] as Database["public"]["Tables"]["code_directory"]["Row"];
 };
 
 export const findFilesForSavedDirectories = async () => {
@@ -188,15 +68,11 @@ async function getSavedCodeDirectoriesByAccount(): Promise<
   Map<string, Partial<Database["public"]["Tables"]["code_directory"]["Row"]>[]>
 > {
   // Fetch data and error from the "code_directory" table
-  const { data, error } = await supabase
-    .from("code_directory")
-    .select("id, saved, account_id, file_path, directory_name")
-    .eq("saved", true)
-    .not("account_id", "is", null)
-    .order("account_id", { ascending: true });
 
-  if (error) {
-    console.error("Error fetching code directories:", error);
+  const data = await getSavedDirectoryWhereAccountIsNotNull();
+
+  if (!data) {
+    console.error("Error fetching code directories");
     return new Map<
       string,
       Database["public"]["Tables"]["code_directory"]["Row"][]
@@ -246,4 +122,92 @@ export const getDirectoryFilesAndSnippetCount = (
     savedDirectoryCount: savedDirectories.length,
     directoryFileCount: fileCount,
   };
+};
+
+export const getFilesAndMapToDirectories = async () => {
+  // get all files
+  const allFiles = await findAllFilesWhereParentIsNull();
+  console.log("files without parents", allFiles?.length);
+
+  // Check each file to see if there is a parent directory
+
+  for (let file of allFiles!) {
+    const { file_path, id, account_id } = file;
+    // create the parent directory if it does not exist
+    if (file_path && account_id && id) {
+      const foundDirectory = await findCodeDirectoryByPathAndAccountId(
+        account_id,
+        file_path
+      );
+      if (!foundDirectory) {
+        const { fileName } = extractFileNameAndPathFromFullPath(file_path);
+        await createCodeDirectory({
+          file_path,
+          account_id,
+          directory_name: fileName,
+          saved: false,
+        });
+      } else {
+        // Update the file with the directory id
+        await updateFileById(id, {
+          code_directory_parent_id: foundDirectory.id,
+        });
+      }
+    }
+  }
+};
+
+export const updateDirectoryExplaination = async () => {
+  // Get all directories without explaination and update them
+  const directories = await getDirectoriesWithoutExplainations();
+  if (!directories) {
+    return;
+  }
+
+  for (let directory of directories) {
+    const { account_id, id } = directory;
+    // get all files in the directory
+    if (account_id && id) {
+      const files = await findFilesByAccountIdAndDirectoryId(account_id, id);
+      console.log("Total files in directory", files?.length);
+
+      let filesToSumarize: string = "";
+
+      if (files && files.length > 0 && files.length < 10) {
+        filesToSumarize = files
+          .map((file) => file.file_explaination)
+          .join(", ");
+      } else if (files && files.length > 0 && files.length > 10) {
+        // Get random 10 files
+        const shuffledFile = files.sort(() => 0.5 - Math.random());
+        const selectedFiles = shuffledFile.slice(0, 10);
+
+        filesToSumarize = selectedFiles
+          .map((file) => file.file_explaination)
+          .join(", ");
+      }
+
+      const summariesWithExplaination =
+        filesToSumarize +
+        `This is a directory that contains code files. The files are summarised above. The name of the directory is ${directory.directory_name}. Summarize an explanation of this directory into a paragraph:`;
+
+      const summary = await summarizeDirectoryExplaination(
+        summariesWithExplaination
+      );
+
+      if (!summary) {
+        continue;
+      }
+
+      const embedding = await createEmbeddings([summary]);
+
+      if (summary && embedding) {
+        await updateCodeDirectoryById(id, {
+          directory_explaination: summary,
+          directory_explaination_embedding: embedding,
+          updated_at: new Date().toISOString(),
+        });
+      }
+    }
+  }
 };

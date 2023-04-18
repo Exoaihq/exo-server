@@ -2,7 +2,6 @@ import { Request, Response } from "express";
 import { getDirectoryNameFromPath } from "../../../utils/getFileName";
 import { ExpectedNextAction } from "../codeCompletion/scenerios/codeCompletion.knownNextAction";
 import { createMessageWithUser } from "../message/message.service";
-import { createNewMessagePrompt } from "../prompt/prompt.service";
 import { findOrUpdateAccount } from "../supabase/account.service";
 import {
   checkSessionOrThrow,
@@ -10,11 +9,11 @@ import {
   updateSession,
 } from "../supabase/supabase.service";
 import {
-  createCodeDirectory,
+  createCodeDirectoryByUser,
   getCodeDirectories,
-  getDirectoryFilesAndSnippetCount,
   updateCodeDirectoryById,
-} from "./codeDirectory.service";
+} from "./codeDirectory.repository";
+import { getDirectoryFilesAndSnippetCount } from "./codeDirectory.service";
 
 export const getCodeDirectoriesByAccount = async (
   req: Request,
@@ -68,7 +67,7 @@ export const createDirectoryByAccount = async (req: Request, res: Response) => {
       return res.status(404).json({ message: "Can't find the user account" });
     }
 
-    const directories = await createCodeDirectory(
+    const directories = await createCodeDirectoryByUser(
       user,
       directory,
       getDirectoryNameFromPath(directory),

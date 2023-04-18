@@ -60,7 +60,7 @@ export const findAndUpdateFilesFromServerFileSys = async (
 
 export interface CreateFilesRequest {
   files: ParseCode[];
-  directoryId: string;
+  directoryId: number;
   baseApiUrl: string;
   session: any;
   sessionId: string;

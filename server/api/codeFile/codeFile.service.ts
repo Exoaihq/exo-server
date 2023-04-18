@@ -2,7 +2,7 @@ import { ParseCode } from "../../../types/parseCode.types";
 import { Database } from "../../../types/supabase";
 import { isTodaysDate } from "../../../utils/dates";
 import { extractFileNameAndPathFromFullPath } from "../../../utils/getFileName";
-import { updateCodeDirectoryById } from "../codeDirectory/codeDirectory.service";
+import { updateCodeDirectoryById } from "../codeDirectory/codeDirectory.repository";
 import {
   createEmbeddings,
   summarizeCodeExplaination,
@@ -16,7 +16,7 @@ import {
 } from "./codeFile.repository";
 
 export const handleAndFilesToDb = async (
-  directoryId: string,
+  directoryId: number,
   files: ParseCode[],
   account: Database["public"]["Tables"]["account"]["Row"]
 ) => {

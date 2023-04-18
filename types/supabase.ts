@@ -94,6 +94,7 @@ export interface Database {
           file_path: string | null
           id: number
           indexed_at: string | null
+          is_root_directory: boolean
           saved: boolean | null
           updated_at: string | null
         }
@@ -106,6 +107,7 @@ export interface Database {
           file_path?: string | null
           id?: number
           indexed_at?: string | null
+          is_root_directory?: boolean
           saved?: boolean | null
           updated_at?: string | null
         }
@@ -118,6 +120,7 @@ export interface Database {
           file_path?: string | null
           id?: number
           indexed_at?: string | null
+          is_root_directory?: boolean
           saved?: boolean | null
           updated_at?: string | null
         }
@@ -126,6 +129,7 @@ export interface Database {
         Row: {
           account_id: string | null
           code_directory_id: number | null
+          code_directory_parent_id: number | null
           created_at: string
           file_explaination: string | null
           file_explaination_embedding: string | null
@@ -137,6 +141,7 @@ export interface Database {
         Insert: {
           account_id?: string | null
           code_directory_id?: number | null
+          code_directory_parent_id?: number | null
           created_at?: string
           file_explaination?: string | null
           file_explaination_embedding?: string | null
@@ -148,6 +153,7 @@ export interface Database {
         Update: {
           account_id?: string | null
           code_directory_id?: number | null
+          code_directory_parent_id?: number | null
           created_at?: string
           file_explaination?: string | null
           file_explaination_embedding?: string | null
@@ -225,6 +231,29 @@ export interface Database {
         Update: {
           id?: string
           stripe_customer_id?: string | null
+        }
+      }
+      long_term_memory: {
+        Row: {
+          account_id: string | null
+          id: string
+          memory_context: string | null
+          memory_embedding: string | null
+          memory_text: string | null
+        }
+        Insert: {
+          account_id?: string | null
+          id?: string
+          memory_context?: string | null
+          memory_embedding?: string | null
+          memory_text?: string | null
+        }
+        Update: {
+          account_id?: string | null
+          id?: string
+          memory_context?: string | null
+          memory_embedding?: string | null
+          memory_text?: string | null
         }
       }
       message_prompts: {
@@ -477,6 +506,32 @@ export interface Database {
           user_id?: string | null
         }
       }
+      short_term_memory: {
+        Row: {
+          created_at: string | null
+          id: string
+          memory_context: string | null
+          memory_embedding: string | null
+          memory_text: string | null
+          session_id: string | null
+        }
+        Insert: {
+          created_at?: string | null
+          id?: string
+          memory_context?: string | null
+          memory_embedding?: string | null
+          memory_text?: string | null
+          session_id?: string | null
+        }
+        Update: {
+          created_at?: string | null
+          id?: string
+          memory_context?: string | null
+          memory_embedding?: string | null
+          memory_text?: string | null
+          session_id?: string | null
+        }
+      }
       subscriptions: {
         Row: {
           cancel_at: string | null
@@ -556,6 +611,23 @@ export interface Database {
           payment_method?: Json | null
         }
       }
+      wait_list: {
+        Row: {
+          created_at: string | null
+          email: string | null
+          id: number
+        }
+        Insert: {
+          created_at?: string | null
+          email?: string | null
+          id?: number
+        }
+        Update: {
+          created_at?: string | null
+          email?: string | null
+          id?: number
+        }
+      }
     }
     Views: {
       [_ in never]: never
@@ -619,6 +691,36 @@ export interface Database {
           code_string: string
           code_explaination: string
           relative_file_path: string
+          similarity: number
+        }[]
+      }
+      match_long_term_memory: {
+        Args: {
+          query_embedding: string
+          similarity_threshold: number
+          match_count: number
+          accountid: string
+        }
+        Returns: {
+          id: number
+          memory_text: string
+          memory_context: string
+          account_id: string
+          similarity: number
+        }[]
+      }
+      match_short_term_memory: {
+        Args: {
+          query_embedding: string
+          similarity_threshold: number
+          match_count: number
+          sessionid: string
+        }
+        Returns: {
+          id: number
+          memory_text: string
+          memory_context: string
+          session_id: string
           similarity: number
         }[]
       }
