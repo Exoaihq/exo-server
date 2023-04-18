@@ -5,6 +5,6 @@ const slackRoutes = Router();
 
 // Base route: /slack
 
-slackRoutes.get("/", sendUserSignupToSlack);
+slackRoutes.post("/", sendUserSignupToSlack);
 
 export default slackRoutes;
