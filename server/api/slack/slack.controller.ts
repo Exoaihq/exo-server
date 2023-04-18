@@ -45,8 +45,10 @@ export const postSlack = async (message: string) => {
 
 // Example usage - this should be called when a new user signs up
 export async function sendUserSignupToSlack(req: Request, res: Response) {
+  console.log(req.body);
   const { record } = req.body;
   const { email } = record;
+  console.log(email);
 
   await postSlack(`New user signed up: ${email}`);
 }
