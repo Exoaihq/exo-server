@@ -1,4 +1,5 @@
 import { Database } from "../../../types/supabase";
+import { codeDirectorySearch } from "../codeDirectory/codeDirectory.repository";
 import { findSnippetByExplainationEmbedding } from "../codeSnippet/codeSnippet.service";
 import {
   createMessageWithUser,
@@ -22,7 +23,12 @@ export async function handleSearch(
 
   const account = await findOrUpdateAccount(user);
 
-  const response = await findCodeByQuery(
+  // const response = await findCodeByQuery(
+  //   userMessages[userMessages.length - 1].content,
+  //   account?.id ? account.id : ""
+  // );
+
+  const response = await codeDirectorySearch(
     userMessages[userMessages.length - 1].content,
     account?.id ? account.id : ""
   );
@@ -60,15 +66,15 @@ export async function handleSearch(
 
 export async function findCodeByQuery(
   query: string,
-  accountId: string
-): Promise<
-  Partial<Database["public"]["Tables"]["code_snippet"]["Row"]>[] | []
-> {
+  accountId: string,
+  match_count: number = 10
+): Promise<any> {
   const queryEmbedding = await createEmbeddings([query]);
 
   const response = await findSnippetByExplainationEmbedding(
     queryEmbedding,
-    accountId
+    accountId,
+    match_count
   );
   return response;
 }

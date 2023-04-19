@@ -1,6 +1,7 @@
 import { createClient, PostgrestError } from "@supabase/supabase-js";
 import { Database } from "../../../types/supabase";
 import { supabaseKey, supabaseUrl } from "../../../utils/envVariable";
+import { createEmbeddings } from "../openAi/openai.service";
 import { findOrUpdateAccount } from "../supabase/account.service";
 
 // Create a single supabase client for interacting with your database
@@ -55,13 +56,13 @@ export const getCodeDirectories = async (
 ): Promise<Database["public"]["Tables"]["code_directory"]["Row"][] | null> => {
   const { data, error } = await supabase
     .from("code_directory")
-    .select("*, code_file(*)")
+    .select("*, code_file!code_file_code_directory_id_fkey(*)")
     .eq("account_id", accountId)
     .order("indexed_at", { ascending: true })
     .order("created_at", { ascending: false });
 
   if (error) {
-    console.log("Getting code error", error);
+    console.log("Getting code directory error", error);
   }
 
   if (!data || !data[0]) {
@@ -76,11 +77,11 @@ export const getSavedCodeDirectories = async (): Promise<
 > => {
   const { data, error } = await supabase
     .from("code_directory")
-    .select("*, code_file(*)")
+    .select("*, code_file!code_file_code_directory_id_fkey(*)")
     .eq("saved", true);
 
   if (error) {
-    console.log("Getting code error", error);
+    console.log("Getting saved directory error", error);
   }
 
   if (!data || !data[0]) {
@@ -153,12 +154,12 @@ export const getSavedCodeDirectoriesGroupByAccount = async (): Promise<
 > => {
   const { data, error } = await supabase
     .from("code_directory")
-    .select("*, code_file(*)")
+    .select("*, code_file!code_file_code_directory_id_fkey(*)")
     .eq("saved", true)
     .order("account_id", { ascending: true });
 
   if (error) {
-    console.log("Getting code error", error);
+    console.log("Getting saved code directory error", error);
   }
 
   if (!data || !data[0]) {
@@ -204,3 +205,22 @@ export const createCodeDirectory = async (
   // @ts-ignore
   return data[0] as Database["public"]["Tables"]["code_directory"]["Row"];
 };
+
+export async function codeDirectorySearch(
+  searchQuery: string,
+  accountId: string,
+  match_count: number = 10
+) {
+  const embedding = await createEmbeddings([searchQuery]);
+
+  const query = {
+    accountid: accountId,
+    query_embedding: embedding,
+    similarity_threshold: 0.8,
+    match_count,
+  };
+
+  const { data, error } = await supabase.rpc("match_code_directory", query);
+
+  return data;
+}

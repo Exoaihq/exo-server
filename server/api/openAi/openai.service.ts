@@ -38,7 +38,7 @@ export async function chatAgent(prompt: string, stopPattern: string[]) {
       },
     ],
     max_tokens: 2048,
-    temperature: 1,
+    temperature: 0.2,
     model: "gpt-3.5-turbo",
     stop: stopPattern,
   });
@@ -99,10 +99,27 @@ export async function getCompletion(
   try {
     return await openai.createCompletion({
       model: "text-davinci-003",
-      prompt: truncateStringTokens(prompt, 2048),
+      prompt,
       max_tokens: 2048,
       temperature,
       stop,
+    });
+  } catch (error: any) {
+    console.log(error);
+    throw error;
+  }
+}
+
+export async function getCompletionDefaultStopToken(
+  prompt: string,
+  temperature: number = 0
+) {
+  try {
+    return await openai.createCompletion({
+      model: "text-davinci-002",
+      prompt,
+      max_tokens: 2048,
+      temperature,
     });
   } catch (error: any) {
     console.log(error);

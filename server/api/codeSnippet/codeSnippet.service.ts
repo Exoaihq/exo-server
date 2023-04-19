@@ -51,15 +51,14 @@ export async function findFileByExplainationEmbedding(
 
 export async function findSnippetByExplainationEmbedding(
   embedding: number[],
-  accountId: string
-): Promise<
-  Partial<Database["public"]["Tables"]["code_snippet"]["Row"]>[] | []
-> {
+  accountId: string,
+  match_count: number = 10
+) {
   const query = {
     accountid: accountId,
     query_embedding: embedding,
     similarity_threshold: 0.5,
-    match_count: 10,
+    match_count,
   };
 
   const { data, error } = await supabase.rpc(

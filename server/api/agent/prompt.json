@@ -1,0 +1,11 @@
+{
+    "Question": "<the question>",
+    "Thought": "<the thought>",
+    "Reasoning": "<the reasoning>",
+    "Plan": ["example step one", "example step two"],
+    "Critisism": "<the criticism>",
+    "Action": "<the action>",
+    "Observation": "<the observation>"
+}
+
+

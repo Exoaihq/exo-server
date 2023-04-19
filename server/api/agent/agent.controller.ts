@@ -1,21 +1,30 @@
 import { Request, Response } from "express";
+import { deserializeJson } from "../../../utils/deserializeJson";
 import { CodeCompletionRequest } from "../codeCompletion/codeCompletion.types";
 import {
   createMessageWithUser,
   getOnlyRoleAndContentMessagesByUserAndSession,
 } from "../message/message.service";
+import { getCompletionDefaultStopToken } from "../openAi/openai.service";
+import { findOrUpdateAccount } from "../supabase/account.service";
 import {
   checkSessionOrThrow,
   findOrCreateSession,
 } from "../supabase/supabase.service";
-import { getExpectedNextAction } from "./agent.prompt";
-import { run } from "./agent.service";
+import { getExpectedNextAction, parseToJsonPrompt } from "./agent.prompt";
+import { expandContext, run } from "./agent.service";
 import {
+  findCodeTool,
+  findDirectoryTool,
   generateCodeTool,
+  retrieveMemoryTool,
   searchCodeTool,
+  searchDirectoryTool,
   setLocationToWriteCodeTool,
+  storeMemoryTool,
   writeCompletedCodeTool,
 } from "./agent.tools";
+import { exampleRes } from "./exampleRes.";
 
 export const useAgent = async (req: Request, res: Response) => {
   try {
@@ -32,19 +41,39 @@ export const useAgent = async (req: Request, res: Response) => {
 
     const dbSession = await findOrCreateSession(user, sessionId);
 
-    console.log("Db session", dbSession);
+    const account = await findOrUpdateAccount(user);
+
+    if (!account) {
+      return res.status(200).json({
+        data: {
+          choices: [
+            {
+              text: "Please login to use the agent",
+            },
+          ],
+        },
+      });
+    }
+
+    const expandedContext = await expandContext(sessionMessages, account?.id);
+    console.log("Context", expandedContext);
 
     const agentResponse = await run(
       user,
       sessionId,
       [
-        setLocationToWriteCodeTool(),
         generateCodeTool(),
+        searchDirectoryTool(),
         writeCompletedCodeTool(),
         searchCodeTool(),
+        setLocationToWriteCodeTool(),
+        storeMemoryTool(),
+        findCodeTool(),
+        findDirectoryTool(),
+        retrieveMemoryTool(),
       ],
-      getExpectedNextAction(dbSession, sessionMessages),
-      10
+      getExpectedNextAction(dbSession, sessionMessages, expandedContext),
+      20
     );
 
     await createMessageWithUser(
@@ -74,8 +103,31 @@ export const useAgent = async (req: Request, res: Response) => {
           requiredFunctionality: "",
         },
         completedCode: "",
-        search: agentResponse?.runMetadata,
+        // search: agentResponse?.runMetadata,
       },
+    });
+  } catch (error: any) {
+    console.log(error);
+    res.status(500).json({ message: error.message });
+  }
+};
+
+export const testAgent = async (req: Request, res: Response) => {
+  try {
+    // NEED to fix this
+    const parsedToJson = await getCompletionDefaultStopToken(
+      parseToJsonPrompt(exampleRes)
+    );
+
+    const parseResponse = parsedToJson.data.choices[0].text;
+    console.log(">>>>>>>>>Parsed to json", parseResponse);
+
+    const json = deserializeJson(parseResponse);
+
+    console.log(">>>>>>>>>Json", json);
+
+    return res.status(200).json({
+      data: "done",
     });
   } catch (error: any) {
     console.log(error);

@@ -8,7 +8,6 @@ import {
 } from "../codeFile/codeFile.repository";
 import {
   createEmbeddings,
-  summarizeCodeExplaination,
   summarizeDirectoryExplaination,
 } from "../openAi/openai.service";
 import {

@@ -647,6 +647,25 @@ export interface Database {
           similarity: number
         }[]
       }
+      match_code_directory: {
+        Args: {
+          accountid: string
+          query_embedding: string
+          similarity_threshold: number
+          match_count: number
+        }
+        Returns: {
+          id: number
+          directory_explaination: string
+          directory_name: string
+          file_path: string
+          created_at: string
+          account_id: string
+          indexed_at: string
+          saved: boolean
+          similarity: number
+        }[]
+      }
       match_code_file: {
         Args: {
           query_embedding: string
