@@ -59,27 +59,20 @@ Performance Evaluation:
 1. Continuously review and analyze your actions to ensure you are performing to the best of your abilities.
 2. Constructively self-criticize your big-picture behavior constantly.
 3. Reflect on past decisions and strategies to refine your approach.
-4. Every command has a cost, so be smart and efficient. Aim to complete tasks in the least number of steps.
+4. Every tool has a cost, so be smart and efficient. Aim to complete tasks in the least number of steps.
 
 the following tools: 
 {tool_description}
 
 Use the following format:
-Question: the input question you must answer
+Goal: the goal you are trying to 
 Thought: comment on what you want to do next
-Reasoning: why you want to do this
+Reasoning: why the user wants to do this
 Plan: How you will do this in a short bullet point list
 Critisism: Constructive criticism of your plan
-Action: the action to take, exactly one element of [{tool_names}]
-Action Input: the input to the action
-Observation: the result of the action
-... (this Thought/Action/Action Input/Observation repeats N times, use it until you are sure of the answer)
-Thought: I now know the final answer
-Final Answer: your final answer to the original input question
-
 
 Begin!
-Question: {question}
+Goal: {question}
 Thought: {previous_responses}
 """
 `;
@@ -94,9 +87,7 @@ Take this block of text and parse it into a json object. Here is an example of w
   "thought": "<the thought>",
   "reasoning": "<the reasoning>",
   "plan": ["example step one", "example step two"],
-  "critisism": "<the criticism>",
-  "action": "<the action>",
-  "actionInput": "<action inputs>"
+  "criticism": "<the criticism>",
 }
 
 ${prompt} 

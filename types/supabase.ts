@@ -308,6 +308,35 @@ export interface Database {
           user_id?: string | null
         }
       }
+      objective: {
+        Row: {
+          created_at: string | null
+          criticism: string | null
+          id: string
+          question: string | null
+          reasoning: string | null
+          session_id: string | null
+          thought: string | null
+        }
+        Insert: {
+          created_at?: string | null
+          criticism?: string | null
+          id?: string
+          question?: string | null
+          reasoning?: string | null
+          session_id?: string | null
+          thought?: string | null
+        }
+        Update: {
+          created_at?: string | null
+          criticism?: string | null
+          id?: string
+          question?: string | null
+          reasoning?: string | null
+          session_id?: string | null
+          thought?: string | null
+        }
+      }
       openai_models: {
         Row: {
           created_at: string | null

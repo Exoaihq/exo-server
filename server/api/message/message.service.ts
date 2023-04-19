@@ -141,7 +141,7 @@ export const getOnlyRoleAndContentMessagesByUserAndSession = async (
 };
 
 export const createMessageWithUser = async (
-  user: Database["public"]["Tables"]["users"]["Row"],
+  user: Partial<Database["public"]["Tables"]["users"]["Row"]>,
   message: Database["public"]["Tables"]["messages"]["Insert"],
   sessionId: string
 ): Promise<{

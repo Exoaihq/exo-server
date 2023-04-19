@@ -1,8 +1,10 @@
 import { last } from "lodash";
 import { ChatUserType } from "../../../types/chatMessage.type";
-import { Database } from "../../../types/supabase";
+import { Database, Json } from "../../../types/supabase";
 import { deserializeJson } from "../../../utils/deserializeJson";
 import { codeDirectorySearch } from "../codeDirectory/codeDirectory.repository";
+import { createMessageWithUser } from "../message/message.service";
+import { createObjectiveWithSession } from "../objective/objective.service";
 import {
   chatAgent,
   createChatCompletion,
@@ -11,6 +13,7 @@ import {
 } from "../openAi/openai.service";
 import { searchCode } from "../search/search.controller";
 import { findCodeByQuery } from "../search/search.service";
+import { actOnPlan } from "./agent.act";
 import {
   parseToJsonPrompt,
   PROMPT_TEMPLATE,
@@ -35,6 +38,7 @@ export interface ToolInterface {
     sessionId: string,
     input: string
   ) => Promise<ToolResponse>;
+  arguments?: string[];
 }
 
 interface ToolInfo {
@@ -46,8 +50,17 @@ const FINAL_ANSWER_TOKEN = "Final Answer:";
 const OBSERVATION_TOKEN = "Observation:";
 const THOUGHT_TOKEN = "Thought:";
 
-function getToolDescription(tools: ToolInterface[]): string {
-  return tools.map((tool) => `${tool.name}: ${tool.description}`).join("\n");
+export function getToolDescription(tools: ToolInterface[]): string {
+  return tools
+    .map((tool) => {
+      const argList =
+        tool.arguments && tool.arguments.length > 0
+          ? tool.arguments.map((arg) => `<${arg}>`).join(", ")
+          : "";
+
+      return `"${tool.name}": ${tool.description}, args ${argList} `;
+    })
+    .join("\n");
 }
 
 function getToolNames(tools: ToolInterface[]): string {
@@ -78,23 +91,10 @@ export const parseGeneratedToJson = async (generated: string) => {
   return json;
 };
 
-async function decideNextAction(
-  prompt: string,
-  stopPattern: string[]
-): Promise<[string, string, string]> {
-  const generated: string = await chatAgent(prompt, stopPattern);
-  console.log("generated", generated);
-  const json = await parseGeneratedToJson(generated);
-  if (json) {
-    const { thought, question, reasoning, plan } = json;
-    console.log("thought", thought);
-    console.log("question", question);
-    console.log("reasoning", reasoning);
-    console.log("plan", plan);
-  }
+async function decideNextAction(generated: string): Promise<[string, string]> {
   const toolInfo: ToolInfo = parse(generated);
   const { tool, toolInput } = toolInfo;
-  return [generated, tool, toolInput];
+  return [tool, toolInput];
 }
 
 function parse(generated: string): ToolInfo {
@@ -127,7 +127,7 @@ export async function run(
   user: Database["public"]["Tables"]["users"]["Row"],
   sessionId: string,
   tools: ToolInterface[],
-  question: string,
+  inputQuestion: string,
   maxLoops: number
 ): Promise<RunResponse | undefined> {
   const stopPattern: string[] = [
@@ -146,10 +146,8 @@ export async function run(
     .replace("{today}", new Date().toISOString().slice(0, 10))
     .replace("{tool_description}", toolDescription)
     .replace("{tool_names}", toolNames)
-    .replace("{question}", question)
+    .replace("{question}", inputQuestion)
     .replace("{previous_responses}", "{previous_responses}");
-
-  console.log(prompt.replace("{previous_responses}", ""));
 
   let runMetadata;
   while (numLoops < maxLoops) {
@@ -159,10 +157,59 @@ export async function run(
       "{previous_responses}",
       previousResponses.join("\n")
     );
-    const [generated, tool, tool_input] = await decideNextAction(
-      currentPrompt,
-      stopPattern
-    );
+
+    // ***** This is the start of the chat agent *****
+    const generated: string = await chatAgent(currentPrompt, stopPattern);
+
+    const json = await parseGeneratedToJson(generated);
+    if (json) {
+      const { thought, question, reasoning, plan, criticism } = json;
+
+      createMessageWithUser(
+        user,
+        {
+          content: `Here are my thoughts: ${thought}. And my plan is: ${plan.map(
+            (item: string) => `item\n`
+          )}`,
+          role: ChatUserType.assistant,
+        },
+        sessionId
+      );
+      console.log("thought", thought);
+      console.log("question", question);
+      console.log("reasoning", reasoning);
+      console.log("plan", plan);
+      const objective = await createObjectiveWithSession(
+        {
+          thought,
+          question: question ? question : inputQuestion,
+          reasoning,
+          criticism,
+        },
+        sessionId
+      );
+
+      if (objective && plan) {
+        // Add the plan list to tasks
+        const results = await actOnPlan(
+          plan,
+          tools,
+          user,
+          sessionId,
+          thought,
+          question
+        );
+
+        console.log("results", results);
+      }
+
+      return;
+    } else {
+      // Send message to user that we couldn't parse the response to json
+      throw new Error("Could not parse response to json");
+    }
+
+    const [tool, tool_input] = await decideNextAction(generated);
     console.log("generated: ", generated);
     console.log(`Tool: ${tool}`);
     console.log(`Tool Input: ${tool_input}`);
@@ -192,7 +239,11 @@ export async function run(
 
 export const expandContext = async (
   sessionMessages: string | any[],
-  accountId: string
+  accountId: string,
+  user: {
+    id: string;
+  },
+  sessionId: string
 ): Promise<string> => {
   const lastMessage = sessionMessages[sessionMessages.length - 1].content;
 
@@ -204,7 +255,15 @@ export const expandContext = async (
   ]);
 
   const nouns = res.choices[0].message.content.split(", ");
-  console.log(nouns);
+
+  createMessageWithUser(
+    user,
+    {
+      content: `I'm checking your directories and code for some additional context...`,
+      role: ChatUserType.assistant,
+    },
+    sessionId
+  );
 
   let releventDirectories: any[] = [];
   let releventCode: any[] = [];

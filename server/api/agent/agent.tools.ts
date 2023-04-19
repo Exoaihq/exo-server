@@ -8,6 +8,7 @@ import {
   createMemoryWithSession,
   getMemoriesById,
 } from "../memory/memory.service";
+import { createMessageWithUser } from "../message/message.service";
 
 import { createChatCompletion } from "../openAi/openai.service";
 import { findCodeByQuery } from "../search/search.service";
@@ -37,7 +38,7 @@ export function writeCompletedCodeTool(): ToolInterface {
       location,
     });
 
-    await resetSession(user, sessionId);
+    // await resetSession(user, sessionId);
 
     return {
       output: `I've written the code to the location you specified. I've also cleared the session of the code and location so you can write new code.`,
@@ -47,23 +48,24 @@ export function writeCompletedCodeTool(): ToolInterface {
   return {
     name: "write code",
     description:
-      "Writes the given code functionality to the the location specified. Before using this tool you must set the location to write code to and generate the code.",
+      "Writes the given code functionality to the the location specified by the `set location` tool. Before using this tool you must set the location to write code to and generate the code.",
     use: async (user, sessionId, text) =>
       await handleWriteCode(user, sessionId, text),
+    arguments: [],
   };
 }
 
-export function generateCodeTool(): ToolInterface {
+export function generateNewCodeTool(): ToolInterface {
   async function handleWriteCode(
     user: Database["public"]["Tables"]["users"]["Row"],
     sessionId: string,
-    text: string
+    functionality: string
   ) {
     const response = await createChatCompletion(
       [
         {
           role: ChatUserType.user,
-          content: `Improve the following code: ${text}`,
+          content: `Wrtie the following code: ${functionality}`,
         },
       ],
       EngineName.GPT4
@@ -71,10 +73,10 @@ export function generateCodeTool(): ToolInterface {
 
     const improvedCode = response?.choices[0].message?.content
       ? response?.choices[0].message?.content
-      : text;
+      : "I'm sorry I couldn't generate code for you. Please try again later.";
 
     await updateSession(user, sessionId, {
-      code_content: text,
+      code_content: improvedCode,
     });
 
     return {
@@ -83,11 +85,12 @@ export function generateCodeTool(): ToolInterface {
   }
 
   return {
-    name: "generate code",
+    name: "generate new code",
     description:
-      "Generates the given code functionality and adds it to the session to be written to the file or scratch pad. Before using this tool you must set the location to write code to.",
-    use: async (user, sessionId, text) =>
-      await handleWriteCode(user, sessionId, text),
+      "Generates new code based on the functionality requested and adds the code to the session so it can be written to location set by the 'set location' tool. Before using this tool you must set the location to write code to. Arguments should be as specific as possible.",
+    use: async (user, sessionId, functionality) =>
+      await handleWriteCode(user, sessionId, functionality),
+    arguments: ["code functionality"],
   };
 }
 
@@ -111,9 +114,10 @@ export function setLocationToWriteCodeTool(): ToolInterface {
   return {
     name: "set location",
     description:
-      "If you know the location to write code to you can set it here. Return either 'scratchPad' or the full file path: '/src/components' for example. Before using this tool you should decide if you should search exising code or write new code.",
+      "If you know the location to write code to you can set it here. Input is either 'scratchPad' or the file path. Before using this tool you should decide if you should search for an exising code location or write new code to a new location.",
     use: async (user, sessionId, text) =>
       handleGetLocation(user, sessionId, text),
+    arguments: ["location"],
   };
 }
 
@@ -141,6 +145,7 @@ export function storeMemoryTool(): ToolInterface {
       "Stores memories for longer tasks that require multiple steps to complete.",
     use: async (user, sessionId, memory) =>
       handleStoreMemory(user, sessionId, memory),
+    arguments: ["memory text"],
   };
 }
 
@@ -164,6 +169,7 @@ export function retrieveMemoryTool(): ToolInterface {
     description:
       "Retrieves a stored memory for longer tasks that require multiple steps to complete.",
     use: async (user, sessionId, id) => handleStoreMemory(user, sessionId, id),
+    arguments: ["memory id"],
   };
 }
 
@@ -190,9 +196,10 @@ export function searchCodeTool(): ToolInterface {
   return {
     name: "search code",
     description:
-      "Searches the users code files for the given query and return up to ten results.",
+      "Searches the users code for the given query and return up to ten results for code locations.",
     use: async (user, sessionId, text) =>
       await handleSearchCode(user, sessionId, text),
+    arguments: ["search query"],
   };
 }
 
@@ -216,9 +223,10 @@ export function findCodeTool(): ToolInterface {
   return {
     name: "find one code result",
     description:
-      "Finds the users code for the given query and returns one result",
+      "Finds the users code for the given query and returns one code location result",
     use: async (user, sessionId, text) =>
       await handleSearchCode(user, sessionId, text),
+    arguments: ["search query"],
   };
 }
 
@@ -226,12 +234,12 @@ export function searchDirectoryTool(): ToolInterface {
   async function handleSearchDirectory(
     user: Database["public"]["Tables"]["users"]["Row"],
     sessionId: string,
-    name: string
+    query: string
   ) {
     // const searchResult = await handleSearch(user, sessionId);
     const account = await findOrUpdateAccount(user);
     const response = await codeDirectorySearch(
-      name,
+      query,
       account?.id ? account.id : ""
     );
 
@@ -262,9 +270,10 @@ export function searchDirectoryTool(): ToolInterface {
   return {
     name: "search directory",
     description:
-      "Searches the users code files and directories for the given directory name and return up to ten code files.",
-    use: async (user, sessionId, name) =>
-      await handleSearchDirectory(user, sessionId, name),
+      "Searches the users code files and directories for the given directory name and return up to ten directories.",
+    use: async (user, sessionId, query) =>
+      await handleSearchDirectory(user, sessionId, query),
+    arguments: ["search query"],
   };
 }
 
@@ -299,5 +308,37 @@ export function findDirectoryTool(): ToolInterface {
     description: "Finds one code file or directory given the query",
     use: async (user, sessionId, query) =>
       await handleSearchDirectory(user, sessionId, query),
+    arguments: ["search query"],
+  };
+}
+
+export function askUserAQuestionTool(): ToolInterface {
+  async function handleSearchDirectory(
+    user: Database["public"]["Tables"]["users"]["Row"],
+    sessionId: string,
+    question: string
+  ) {
+    createMessageWithUser(
+      user,
+      {
+        content: question,
+        role: ChatUserType.assistant,
+      },
+      sessionId
+    );
+
+    let output = `I've asked the user the question: ${question}. Please wait for a response.`;
+
+    return {
+      output,
+    };
+  }
+
+  return {
+    name: "ask user",
+    description: "Asks the user a question and waits for a response",
+    use: async (user, sessionId, question) =>
+      await handleSearchDirectory(user, sessionId, question),
+    arguments: ["question"],
   };
 }

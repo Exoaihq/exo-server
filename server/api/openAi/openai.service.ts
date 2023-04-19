@@ -99,7 +99,7 @@ export async function getCompletion(
   try {
     return await openai.createCompletion({
       model: "text-davinci-003",
-      prompt,
+      prompt: truncateStringTokens(prompt, 2048),
       max_tokens: 2048,
       temperature,
       stop,
