@@ -95,6 +95,7 @@ export interface Database {
           id: number
           indexed_at: string | null
           is_root_directory: boolean
+          parent_directory_id: number | null
           saved: boolean | null
           updated_at: string | null
         }
@@ -108,6 +109,7 @@ export interface Database {
           id?: number
           indexed_at?: string | null
           is_root_directory?: boolean
+          parent_directory_id?: number | null
           saved?: boolean | null
           updated_at?: string | null
         }
@@ -121,6 +123,7 @@ export interface Database {
           id?: number
           indexed_at?: string | null
           is_root_directory?: boolean
+          parent_directory_id?: number | null
           saved?: boolean | null
           updated_at?: string | null
         }
@@ -612,6 +615,29 @@ export interface Database {
           trial_end?: string | null
           trial_start?: string | null
           user_id?: string
+        }
+      }
+      task: {
+        Row: {
+          completed_at: string | null
+          created_at: string | null
+          description: string | null
+          id: string
+          objective_id: string | null
+        }
+        Insert: {
+          completed_at?: string | null
+          created_at?: string | null
+          description?: string | null
+          id?: string
+          objective_id?: string | null
+        }
+        Update: {
+          completed_at?: string | null
+          created_at?: string | null
+          description?: string | null
+          id?: string
+          objective_id?: string | null
         }
       }
       users: {

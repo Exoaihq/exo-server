@@ -1,18 +1,16 @@
 import { Request, Response } from "express";
-import { deserializeJson } from "../../../utils/deserializeJson";
 import { CodeCompletionRequest } from "../codeCompletion/codeCompletion.types";
 import {
   createMessageWithUser,
   getOnlyRoleAndContentMessagesByUserAndSession,
 } from "../message/message.service";
-import { getCompletionDefaultStopToken } from "../openAi/openai.service";
 import { findOrUpdateAccount } from "../supabase/account.service";
 import {
   checkSessionOrThrow,
   findOrCreateSession,
 } from "../supabase/supabase.service";
 import { actOnPlan } from "./agent.act";
-import { getExpectedNextAction, parseToJsonPrompt } from "./agent.prompt";
+import { getExpectedNextAction } from "./agent.prompt";
 import { expandContext, run } from "./agent.service";
 import {
   askUserAQuestionTool,
@@ -25,7 +23,7 @@ import {
   setLocationToWriteCodeTool,
   storeMemoryTool,
   writeCompletedCodeTool,
-} from "./agent.tools";
+} from "./tools";
 
 export const useAgent = async (req: Request, res: Response) => {
   try {

@@ -13,8 +13,10 @@ import {
 import {
   createCodeDirectory,
   createCodeDirectoryByUser,
+  findAllDirectories,
   findCodeDirectoryByNameAndUser,
   findCodeDirectoryByPathAndAccountId,
+  getDirectoriesByParentId,
   getDirectoriesWithoutExplainations,
   getSavedDirectoryWhereAccountIsNotNull,
   updateCodeDirectoryById,
@@ -170,6 +172,17 @@ export const updateDirectoryExplaination = async () => {
       const files = await findFilesByAccountIdAndDirectoryId(account_id, id);
       console.log("Total files in directory", files?.length);
 
+      const childDirectories = await getDirectoriesByParentId(id);
+
+      let directoriesToSummarize: string = "";
+
+      if (childDirectories && childDirectories.length > 0) {
+        directoriesToSummarize = childDirectories
+          .slice(0, 5)
+          .map((dir) => dir.directory_explaination)
+          .join(", ");
+      }
+
       let filesToSumarize: string = "";
 
       if (files && files.length > 0 && files.length < 10) {
@@ -186,9 +199,17 @@ export const updateDirectoryExplaination = async () => {
           .join(", ");
       }
 
-      const summariesWithExplaination =
-        filesToSumarize +
-        `This is a directory that contains code files. The files are summarised above. The name of the directory is ${directory.directory_name}. Summarize an explanation of this directory into a paragraph:`;
+      const summariesWithExplaination = ` 
+        This is a directory that contains code files: 
+        ${filesToSumarize}
+        It also may contain other directories:
+        ${directoriesToSummarize}
+
+        The files and directories are summarised above. 
+        
+        The name of the directory is ${directory.directory_name}. Summarize an explanation of this directory into a paragraph:`;
+
+      console.log("Summarizing", summariesWithExplaination);
 
       const summary = await summarizeDirectoryExplaination(
         summariesWithExplaination
@@ -206,6 +227,67 @@ export const updateDirectoryExplaination = async () => {
           directory_explaination_embedding: embedding,
           updated_at: new Date().toISOString(),
         });
+      }
+    }
+  }
+};
+
+export const findMissingDirectoryNodes = async () => {
+  const directories = await findAllDirectories();
+  console.log("Total directories", directories?.length);
+
+  for (let directory of directories!) {
+    const {
+      account_id,
+      id,
+      file_path,
+      is_root_directory,
+      parent_directory_id,
+    } = directory;
+    if (file_path && account_id && !is_root_directory) {
+      // get the parent directory
+      const { fileName, extractedPath } =
+        extractFileNameAndPathFromFullPath(file_path);
+
+      if (extractedPath) {
+        const parentDirectory = await findCodeDirectoryByPathAndAccountId(
+          account_id,
+          extractedPath
+        );
+        if (!parentDirectory) {
+          const name = extractFileNameAndPathFromFullPath(extractedPath);
+
+          // create the parent directory
+          const created = await createCodeDirectory({
+            file_path: extractedPath,
+            account_id,
+            directory_name: name.fileName,
+            saved: false,
+          });
+
+          // update the directory with the parent id
+          await updateCodeDirectoryById(id, {
+            parent_directory_id: created.id,
+            updated_at: new Date().toISOString(),
+          });
+
+          console.log(
+            "Created directory",
+            created.file_path,
+            created.directory_name
+          );
+        } else {
+          if (!parentDirectory.id) {
+            // update the directory with the parent id
+            const updated = await updateCodeDirectoryById(id, {
+              parent_directory_id: parentDirectory.id,
+              updated_at: new Date().toISOString(),
+            });
+            if (updated) {
+              console.log("Added parent directory");
+            }
+          }
+        }
       }
     }
   }

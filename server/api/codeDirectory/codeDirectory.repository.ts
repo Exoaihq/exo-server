@@ -7,6 +7,22 @@ import { findOrUpdateAccount } from "../supabase/account.service";
 // Create a single supabase client for interacting with your database
 const supabase = createClient<Database>(supabaseUrl, supabaseKey);
 
+export const findAllDirectories = async (): Promise<
+  Database["public"]["Tables"]["code_directory"]["Row"][] | null
+> => {
+  const { data, error } = await supabase.from("code_directory").select("*");
+
+  if (error) {
+    console.log("Getting all directories error", error);
+  }
+
+  if (!data || !data[0]) {
+    return null;
+  } else {
+    return data;
+  }
+};
+
 export const findCodeDirectoryByNameAndUser = async (
   user: Database["public"]["Tables"]["users"]["Row"],
   directoryName: string
@@ -88,6 +104,30 @@ export const getSavedCodeDirectories = async (): Promise<
     return null;
   } else {
     console.log("Save directory count:", data.length);
+    return data;
+  }
+};
+
+export const getDirectoriesByParentId = async (
+  parentId: number
+): Promise<
+  Partial<Database["public"]["Tables"]["code_directory"]["Row"]>[] | null
+> => {
+  const { data, error } = await supabase
+    .from("code_directory")
+    .select(
+      "id, parent_directory_id, directory_name, file_path, saved, account_id, directory_explaination, indexed_at, created_at, updated_at"
+    )
+    .eq("parent_directory_id", parentId);
+
+  if (error) {
+    console.log("Getting saved directory error", error);
+  }
+
+  if (!data || !data[0]) {
+    return null;
+  } else {
+    console.log("Get directory by parent id count:", data.length);
     return data;
   }
 };

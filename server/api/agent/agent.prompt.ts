@@ -42,7 +42,7 @@ export const getExpectedNextAction = (
 
   const prompt = expectedNextAction
     ? `We expected the user to answer this: ${expectedNextAction}. And this was their response ${lastMessage}`
-    : lastMessage + `\n\n Here is the expanded context: ${expandedContext}`;
+    : `\n\n Here is the expanded context: ${expandedContext}` + lastMessage;
 
   return prompt;
 };

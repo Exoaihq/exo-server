@@ -1,6 +1,5 @@
-import { last } from "lodash";
 import { ChatUserType } from "../../../types/chatMessage.type";
-import { Database, Json } from "../../../types/supabase";
+import { Database } from "../../../types/supabase";
 import { deserializeJson } from "../../../utils/deserializeJson";
 import { codeDirectorySearch } from "../codeDirectory/codeDirectory.repository";
 import { createMessageWithUser } from "../message/message.service";
@@ -8,17 +7,11 @@ import { createObjectiveWithSession } from "../objective/objective.service";
 import {
   chatAgent,
   createChatCompletion,
-  getCompletion,
   getCompletionDefaultStopToken,
 } from "../openAi/openai.service";
-import { searchCode } from "../search/search.controller";
 import { findCodeByQuery } from "../search/search.service";
 import { actOnPlan } from "./agent.act";
-import {
-  parseToJsonPrompt,
-  PROMPT_TEMPLATE,
-  scratchTemplate,
-} from "./agent.prompt";
+import { parseToJsonPrompt, scratchTemplate } from "./agent.prompt";
 
 export interface ToolResponse {
   output: string;
@@ -168,9 +161,9 @@ export async function run(
       createMessageWithUser(
         user,
         {
-          content: `Here are my thoughts: ${thought}. And my plan is: ${plan.map(
-            (item: string) => `item\n`
-          )}`,
+          content: `Here is the question I'm trying to answer: ${question}. And my plan is: ${plan
+            .map((item: string, index: any) => `${index + 1}) ${item}`)
+            .join("\n")}`,
           role: ChatUserType.assistant,
         },
         sessionId
@@ -297,7 +290,7 @@ export const expandContext = async (
               directory;
             return `Directory: ${directory_name} \n\nPath: ${file_path} \n\nExplaination: ${directory_explaination}`;
           })
-          .join(", ")
+          .join(" ")
       : "None";
 
   const releventCodeToString =
@@ -308,17 +301,33 @@ export const expandContext = async (
               code;
             return `Explaination: ${code_explaination} \n\nPath: ${relative_file_path} \n\nCode type: ${parsed_code_type}`;
           })
-          .join(", ")
+          .join(" ")
       : "None";
+
+  if (
+    releventDirectoriesToString !== "None" ||
+    releventCodeToString !== "None"
+  ) {
+    createMessageWithUser(
+      user,
+      {
+        content: `I've found some additional context: \n\nRelevent directories: ${releventDirectories.length} \n\nRelevent code: ${releventCode.length}`,
+        role: ChatUserType.assistant,
+      },
+      sessionId
+    );
+  }
+
+  // const promptToExpandContext = `Please expand the context of this message: ${lastMessage} \n\nRelevent directories: ${releventDirectoriesToString} \n\nRelevent code: ${releventCodeToString}.`;
+
+  // const expandedContextRes = await createChatCompletion([
+  //   {
+  //     content: promptToExpandContext,
+  //     role: ChatUserType.user,
+  //   },
+  // ]);
 
   const promptToExpandContext = `Please expand the context of this message: ${lastMessage} \n\nRelevent directories: ${releventDirectoriesToString} \n\nRelevent code: ${releventCodeToString}.`;
 
-  const expandedContextRes = await createChatCompletion([
-    {
-      content: promptToExpandContext,
-      role: ChatUserType.user,
-    },
-  ]);
-
-  return expandedContextRes.choices[0].message.content;
+  return promptToExpandContext;
 };
