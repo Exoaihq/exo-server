@@ -1,20 +1,16 @@
 import { Database, Json } from "../../../types/supabase";
+import { getObjectiveById } from "../objective/objective.service";
 import { getCompletionDefaultStopToken } from "../openAi/openai.service";
+import { getSessionById } from "../supabase/supabase.service";
 import { createTaskWithObjective } from "../task/task.service";
-import { ToolInterface } from "./agent.service";
+import { getToolByNames, ToolInterface } from "./agent.service";
+import { allTools } from "./tools";
 
-export const actOnPlan = async (
+export const addPlansTaskListToDb = async (
   objective: Database["public"]["Tables"]["objective"]["Row"],
   plan: string[],
   tools: ToolInterface[],
-  user: {
-    avatar_url: string | null;
-    billing_address: Json;
-    email: string | null;
-    full_name: string | null;
-    id: string;
-    payment_method: Json;
-  },
+  userId: string,
   sessionId: string,
   thought: string,
   question: string
@@ -34,7 +30,7 @@ export const actOnPlan = async (
           },
           objective.id
         );
-        // const { output, metadata } = await tool.use(user, sessionId, task);
+        // const { output, metadata } = await tool.use(userId, sessionId, task);
         // console.log("Tool output", output);
         // planOutput.push(output);
         continue;
@@ -78,7 +74,7 @@ export const actOnPlan = async (
           },
           objective.id
         );
-        // const { output, metadata } = await tool.use(user, sessionId, toolInput);
+        // const { output, metadata } = await tool.use(userId, sessionId, toolInput);
         // console.log("Tool output", output);
         // planOutput.push(output);
         continue;
@@ -86,4 +82,41 @@ export const actOnPlan = async (
     }
   }
   return planOutput;
+};
+
+export const executeTask = async (
+  toolName: string,
+  toolInput: string,
+  task: Database["public"]["Tables"]["task"]["Row"]
+) => {
+  const { objective_id } = task;
+
+  if (!objective_id) {
+    throw new Error("No objective id found");
+  }
+
+  const objective = await getObjectiveById(objective_id);
+
+  if (!objective) {
+    throw new Error("No objective found");
+  }
+
+  const { session_id, thought, question } = objective;
+
+  if (!session_id) {
+    throw new Error("No session id found");
+  }
+
+  const session = await getSessionById(session_id);
+
+  if (!session || !session.user_id) {
+    throw new Error("No session found");
+  }
+
+  const tool = getToolByNames(allTools);
+  const { output, metadata } = await tool[toolName].use(
+    session.user_id,
+    session_id,
+    toolInput
+  );
 };

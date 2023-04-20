@@ -53,13 +53,13 @@ export async function checkSession(session: {
 }
 
 export const findOrCreateSession = async (
-  user: Database["public"]["Tables"]["users"]["Row"],
+  userId: string,
   sessionId: string
 ): Promise<Database["public"]["Tables"]["session"]["Row"]> => {
   const { data, error } = await supabase
     .from("session")
     .select("*")
-    .eq("user_id", user.id)
+    .eq("user_id", userId)
     .eq("id", sessionId);
 
   if (data && data.length > 0) {
@@ -67,7 +67,7 @@ export const findOrCreateSession = async (
   } else {
     const { data, error } = await supabase
       .from("session")
-      .insert([{ user_id: user.id, id: sessionId }])
+      .insert([{ user_id: userId, id: sessionId }])
       .select();
 
     console.log("Session created. ID:", data && data[0].id);
@@ -93,30 +93,20 @@ export const getSessionById = async (
 };
 
 export const updateSession = async (
-  user: Database["public"]["Tables"]["users"]["Row"],
+  userId: string,
   sessionId: string,
   session: Partial<Database["public"]["Tables"]["session"]["Update"]>
 ): Promise<any> => {
   const { data } = await supabase
     .from("session")
     .update({ ...session })
-    .eq("user_id", user.id)
+    .eq("user_id", userId)
     .eq("id", sessionId)
     .select();
 };
 
-export const resetSession = (
-  user: {
-    avatar_url: string | null;
-    billing_address: Json;
-    email: string | null;
-    full_name: string | null;
-    id: string;
-    payment_method: Json;
-  },
-  sessionId: any
-) => {
-  updateSession(user, sessionId, {
+export const resetSession = (userId: string, sessionId: any) => {
+  updateSession(userId, sessionId, {
     code_content: "",
     file_name: "",
     file_path: "",

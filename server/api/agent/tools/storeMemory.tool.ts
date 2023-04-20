@@ -4,7 +4,7 @@ import { ToolInterface } from "../agent.service";
 
 export function storeMemoryTool(): ToolInterface {
   async function handleStoreMemory(
-    user: Database["public"]["Tables"]["users"]["Row"],
+    userId: string,
     sessionId: string,
     text: string
   ) {
@@ -24,8 +24,8 @@ export function storeMemoryTool(): ToolInterface {
     name: "store memory",
     description:
       "Stores memories for longer tasks that require multiple steps or loops to complete.",
-    use: async (user, sessionId, memory) =>
-      handleStoreMemory(user, sessionId, memory),
+    use: async (userId, sessionId, memory) =>
+      handleStoreMemory(userId, sessionId, memory),
     arguments: ["memory text"],
   };
 }

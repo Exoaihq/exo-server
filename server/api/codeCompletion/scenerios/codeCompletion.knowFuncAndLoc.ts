@@ -1,37 +1,30 @@
 import { ChatUserType } from "../../../../types/chatMessage.type";
 import { EngineName } from "../../../../types/openAiTypes/openAiEngine";
-import { Database, Json } from "../../../../types/supabase";
+import { Database } from "../../../../types/supabase";
+import {
+  getAiCodeBySessionCodeNotNull,
+  updateAiWritenCode,
+} from "../../aiCreatedCode/aiCreatedCode.service";
 import { createMessageWithUser } from "../../message/message.service";
 import { createChatCompletion } from "../../openAi/openai.service";
 import { getSessionById, updateSession } from "../../supabase/supabase.service";
+import { runUpdateExistingOrCreateNewClassificaiton } from "../codeCompletion.classifier";
 import {
   createNewCodePrompt,
   refactorCodePrompt,
   useChooseFile,
 } from "../codeCompletion.prompts";
-import { CodeCompletionResponse } from "../codeCompletion.types";
-import { handleUpdatingExistingCode } from "./codeCompletion.updateExisting";
 import {
   addSystemMessage,
   handleParsingCreatedCode,
 } from "../codeCompletion.service";
-import { runUpdateExistingOrCreateNewClassificaiton } from "../codeCompletion.classifier";
-import {
-  getAiCodeBySessionCodeNotNull,
-  updateAiWritenCode,
-} from "../../aiCreatedCode/aiCreatedCode.service";
+import { CodeCompletionResponse } from "../codeCompletion.types";
+import { handleUpdatingExistingCode } from "./codeCompletion.updateExisting";
 
 export async function handleExistingFileUpdate(
   messages: any[],
   classification: { functionality: any; location?: string },
-  user: {
-    avatar_url: string | null;
-    billing_address: Json;
-    email: string | null;
-    full_name: string | null;
-    id: string;
-    payment_method: Json;
-  },
+  userId: string,
   sessionId: string,
   code_content: any,
   file_name: string,
@@ -55,7 +48,7 @@ export async function handleExistingFileUpdate(
       0.1
     );
 
-    await createMessageWithUser(user, response.choices[0].message, sessionId);
+    await createMessageWithUser(userId, response.choices[0].message, sessionId);
 
     if (writeCodeObject && writeCodeObject.id) {
       updateAiWritenCode(writeCodeObject.id, {
@@ -63,7 +56,7 @@ export async function handleExistingFileUpdate(
       });
     }
 
-    updateSession(user, sessionId, {
+    updateSession(userId, sessionId, {
       location: "existingFile",
       functionality,
       file_name: "",
@@ -91,11 +84,11 @@ export async function handleExistingFileUpdate(
     file_path + "/" + file_name,
     sessionId,
     classification.location || "",
-    user
+    userId
   );
 
   await createMessageWithUser(
-    user,
+    userId,
     {
       content: `I have add your request to the queue:\n
         "${userMessages[userMessages.length - 1].content}". \n
@@ -120,7 +113,7 @@ export async function handleExistingFileUpdate(
 export async function handleScratchPadUpdate(
   messages: any[],
   classification: { functionality: any; location: any },
-  user: any,
+  userId: string,
   sessionId: any,
   location: any,
   writeCodeObject: Partial<
@@ -181,7 +174,7 @@ export async function handleScratchPadUpdate(
     requiredFunctionality: "",
   };
 
-  updateSession(user, sessionId, {
+  updateSession(userId, sessionId, {
     location: classification.location,
     functionality: classification.functionality,
   });
@@ -200,7 +193,7 @@ export async function handleScratchPadUpdate(
     metadata,
     sessionId,
     location,
-    user,
+    userId,
     functionality
   );
 }

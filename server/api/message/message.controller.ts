@@ -9,17 +9,15 @@ import {
 export const getMessages = async (req: Request, res: Response) => {
   try {
     const session = await checkSessionOrThrow(req, res);
+    const { user } = session.data;
 
     const { session_id } = req.headers;
 
     const sessionId = session_id as string;
 
-    await findUnseenHelperMessages(session.data.user, sessionId);
+    await findUnseenHelperMessages(user.id, sessionId);
 
-    const messages = await getMessagesByUserAndSession(
-      session.data.user,
-      sessionId
-    );
+    const messages = await getMessagesByUserAndSession(user.id, sessionId);
 
     return res.status(200).json({
       data: messages,
@@ -32,9 +30,10 @@ export const getMessages = async (req: Request, res: Response) => {
 export const createMessages = async (req: Request, res: Response) => {
   try {
     const session = await checkSessionOrThrow(req, res);
+    const { user } = session.data;
 
     const response = await createMessageWithUser(
-      session.data.user,
+      user.id,
       req.body.message,
       req.body.sessionId
     );

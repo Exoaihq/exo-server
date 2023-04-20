@@ -1,6 +1,5 @@
 import { ChatMessage } from "../../../../types/chatMessage.type";
 import { EngineName } from "../../../../types/openAiTypes/openAiEngine";
-import { Json } from "../../../../types/supabase";
 import { createMessageWithUser } from "../../message/message.service";
 import { createChatCompletion } from "../../openAi/openai.service";
 import { updateSession } from "../../supabase/supabase.service";
@@ -17,20 +16,13 @@ import { CodeCompletionResponse } from "../codeCompletion.types";
 
 export async function handleKNnowLocButNotFunc(
   messages: ChatMessage[],
-  user: {
-    avatar_url: string | null;
-    billing_address: Json;
-    email: string | null;
-    full_name: string | null;
-    id: string;
-    payment_method: Json;
-  },
+  userId: string,
   sessionId: string,
   classification: { location: string; functionality: any }
 ): Promise<CodeCompletionResponse> {
   const { location, functionality } = classification;
 
-  updateSession(user, sessionId, {
+  updateSession(userId, sessionId, {
     location,
     functionality,
   });
@@ -97,7 +89,7 @@ export async function handleKNnowLocButNotFunc(
       0.1
     );
 
-    await createMessageWithUser(user, response.choices[0].message, sessionId);
+    await createMessageWithUser(userId, response.choices[0].message, sessionId);
 
     return {
       choices: response.choices,

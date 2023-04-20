@@ -1,13 +1,12 @@
 import { ChatUserType } from "../../../../types/chatMessage.type";
 import { EngineName } from "../../../../types/openAiTypes/openAiEngine";
-import { Database } from "../../../../types/supabase";
 import { createChatCompletion } from "../../openAi/openai.service";
 import { updateSession } from "../../supabase/supabase.service";
 import { ToolInterface } from "../agent.service";
 
 export function generateNewCodeTool(): ToolInterface {
   async function handleWriteCode(
-    user: Database["public"]["Tables"]["users"]["Row"],
+    userId: string,
     sessionId: string,
     functionality: string
   ) {
@@ -25,7 +24,7 @@ export function generateNewCodeTool(): ToolInterface {
       ? response?.choices[0].message?.content
       : "I'm sorry I couldn't generate code for you. Please try again later.";
 
-    await updateSession(user, sessionId, {
+    await updateSession(userId, sessionId, {
       code_content: improvedCode,
     });
 
@@ -38,8 +37,8 @@ export function generateNewCodeTool(): ToolInterface {
     name: "generate new code",
     description:
       "Generates new code based on the functionality requested and adds the code to the session so it can be written to location set by the 'set location' tool. Before using this tool you must set the location to write code to. Arguments should be as specific as possible.",
-    use: async (user, sessionId, functionality) =>
-      await handleWriteCode(user, sessionId, functionality),
+    use: async (userId, sessionId, functionality) =>
+      await handleWriteCode(userId, sessionId, functionality),
     arguments: ["code functionality"],
   };
 }

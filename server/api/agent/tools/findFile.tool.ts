@@ -1,16 +1,15 @@
-import { Database } from "../../../../types/supabase";
 import { findCodeByQuery } from "../../search/search.service";
 import { findOrUpdateAccount } from "../../supabase/account.service";
 import { ToolInterface } from "../agent.service";
 
 export function findFileTool(): ToolInterface {
   async function handleSearchCode(
-    user: Database["public"]["Tables"]["users"]["Row"],
+    userId: string,
     sessionId: string,
     text: string
   ) {
-    // const searchResult = await handleSearch(user, sessionId);
-    const account = await findOrUpdateAccount(user);
+    // const searchResult = await handleSearch(userId, sessionId);
+    const account = await findOrUpdateAccount(userId);
     const response = await findCodeByQuery(text, account?.id ? account.id : "");
     return {
       output: response[0].file_name
@@ -24,8 +23,8 @@ export function findFileTool(): ToolInterface {
     name: "find one file",
     description:
       "Finds the users code file for the given name or query and returns one code file result",
-    use: async (user, sessionId, text) =>
-      await handleSearchCode(user, sessionId, text),
+    use: async (userId, sessionId, text) =>
+      await handleSearchCode(userId, sessionId, text),
     arguments: ["search query"],
   };
 }

@@ -1,10 +1,9 @@
-import { Database } from "../../../../types/supabase";
 import { getMemoriesById } from "../../memory/memory.service";
 import { ToolInterface } from "../agent.service";
 
 export function retrieveMemoryTool(): ToolInterface {
   async function handleStoreMemory(
-    user: Database["public"]["Tables"]["users"]["Row"],
+    userId: string,
     sessionId: string,
     id: string
   ) {
@@ -21,7 +20,8 @@ export function retrieveMemoryTool(): ToolInterface {
     name: "retrieve memory",
     description:
       "Retrieves a stored memory for longer tasks that require multiple steps or loops to complete.",
-    use: async (user, sessionId, id) => handleStoreMemory(user, sessionId, id),
+    use: async (userId, sessionId, id) =>
+      handleStoreMemory(userId, sessionId, id),
     arguments: ["memory id"],
   };
 }

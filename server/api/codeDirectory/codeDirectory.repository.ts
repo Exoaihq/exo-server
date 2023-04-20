@@ -24,10 +24,10 @@ export const findAllDirectories = async (): Promise<
 };
 
 export const findCodeDirectoryByNameAndUser = async (
-  user: Database["public"]["Tables"]["users"]["Row"],
+  userId: string,
   directoryName: string
 ): Promise<Database["public"]["Tables"]["code_directory"]["Row"] | null> => {
-  const account = await findOrUpdateAccount(user);
+  const account = await findOrUpdateAccount(userId);
 
   const { data, error } = await supabase
     .from("code_directory")
@@ -211,12 +211,12 @@ export const getSavedCodeDirectoriesGroupByAccount = async (): Promise<
 };
 
 export const createCodeDirectoryByUser = async (
-  user: Database["public"]["Tables"]["users"]["Row"],
+  userId: string,
   filePath: string,
   directoryName: string,
   saved: boolean
 ): Promise<Database["public"]["Tables"]["code_directory"]["Insert"]> => {
-  const account = await findOrUpdateAccount(user);
+  const account = await findOrUpdateAccount(userId);
 
   const { data } = await supabase
     .from("code_directory")

@@ -1,5 +1,5 @@
 import { createClient } from "@supabase/supabase-js";
-import { Database, Json } from "../../../types/supabase";
+import { Database } from "../../../types/supabase";
 import { supabaseKey, supabaseUrl } from "../../../utils/envVariable";
 import { convertToTestFileName } from "../../../utils/getFileName";
 import { createAiCodeFromNewFilePrompt } from "../aiCreatedCode/aiCreatedCode.service";
@@ -88,14 +88,7 @@ export const handleUsingSelectedPrompt = async (
     user_id?: string | null;
   },
   sessionId: string,
-  user: {
-    avatar_url: string | null;
-    billing_address: Json;
-    email: string | null;
-    full_name: string | null;
-    id: string;
-    payment_method: Json;
-  },
+  userId: string,
   prompt: {
     body?: string | null;
     created_at?: string | null;
@@ -125,21 +118,21 @@ export const handleUsingSelectedPrompt = async (
       path,
       sessionId,
       dbSession.location || "",
-      user
+      userId
     );
 
     createMessageWithUser(
-      user,
+      userId,
       {
         content: `I'm creating the code and once finished i'll write it to: ${dbSession.file_path}`,
         role: "assistant",
       },
       sessionId
     );
-    resetSession(user, sessionId);
+    resetSession(userId, sessionId);
   } else if (dbSession.expected_next_action === ExpectedNextAction.NEW_FILE) {
     createAiCodeFromNewFilePrompt(
-      user,
+      userId,
       createPromptForLlm({
         promptPrefix: prompt.prefix,
         promptSuffix: prompt.suffix,
@@ -150,17 +143,17 @@ export const handleUsingSelectedPrompt = async (
     );
 
     createMessageWithUser(
-      user,
+      userId,
       {
         content: `I'm creating the code and once finished i'll write it to: ${dbSession.file_path}`,
         role: "assistant",
       },
       sessionId
     );
-    resetSession(user, sessionId);
+    resetSession(userId, sessionId);
   } else {
     createMessageWithUser(
-      user,
+      userId,
       {
         content: `Hmm, I don't know what to do with that prompt. Did you select a file to update or a location to write a new file?`,
         role: "assistant",

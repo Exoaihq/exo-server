@@ -1,4 +1,3 @@
-import { Database } from "../../../types/supabase";
 import { codeDirectorySearch } from "../codeDirectory/codeDirectory.repository";
 import { findSnippetByExplainationEmbedding } from "../codeSnippet/codeSnippet.service";
 import {
@@ -8,20 +7,17 @@ import {
 import { createEmbeddings } from "../openAi/openai.service";
 import { findOrUpdateAccount } from "../supabase/account.service";
 
-export async function handleSearch(
-  user: Database["public"]["Tables"]["users"]["Row"],
-  sessionId: string
-) {
+export async function handleSearch(userId: string, sessionId: string) {
   const sessionMessages = await getOnlyRoleAndContentMessagesSession(sessionId);
 
-  if (!user) throw new Error("User not found");
+  if (!userId) throw new Error("User not found");
 
   const userMessages = sessionMessages.filter(
     (message) => message.role === "user"
   );
   console.log("User messages", userMessages[userMessages.length - 1].content);
 
-  const account = await findOrUpdateAccount(user);
+  const account = await findOrUpdateAccount(userId);
 
   // const response = await findCodeByQuery(
   //   userMessages[userMessages.length - 1].content,
@@ -56,7 +52,7 @@ export async function handleSearch(
   };
 
   await createMessageWithUser(
-    user,
+    userId,
     // @ts-ignore
     templateResponse.data.choices[0].message,
     sessionId

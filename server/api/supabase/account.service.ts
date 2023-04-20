@@ -6,12 +6,12 @@ import { supabaseKey, supabaseUrl } from "../../../utils/envVariable";
 const supabase = createClient<Database>(supabaseUrl, supabaseKey);
 
 export const findOrUpdateAccount = async (
-  user: Database["public"]["Tables"]["users"]["Row"]
+  userId: string
 ): Promise<Database["public"]["Tables"]["account"]["Row"] | null> => {
   const { data, error } = await supabase
     .from("account")
     .select("*")
-    .eq("user_id", user.id)
+    .eq("user_id", userId)
     .select();
 
   if (error) {
@@ -23,11 +23,11 @@ export const findOrUpdateAccount = async (
   } else {
     const { data, error } = await supabase
       .from("account")
-      .insert([{ user_id: user.id }])
+      .insert([{ user_id: userId }])
       .select();
 
     if (!data || !data[0]) {
-      console.log("Error creating session for user: ", user.id);
+      console.log("Error creating session for user: ", userId);
       return null;
     } else {
       return data[0] as Database["public"]["Tables"]["account"]["Row"];

@@ -1,16 +1,15 @@
-import { Database } from "../../../../types/supabase";
 import { findCodeByQuery } from "../../search/search.service";
 import { findOrUpdateAccount } from "../../supabase/account.service";
 import { ToolInterface } from "../agent.service";
 
 export function searchCodeTool(): ToolInterface {
   async function handleSearchCode(
-    user: Database["public"]["Tables"]["users"]["Row"],
+    userId: string,
     sessionId: string,
     text: string
   ) {
-    // const searchResult = await handleSearch(user, sessionId);
-    const account = await findOrUpdateAccount(user);
+    // const searchResult = await handleSearch(userId, sessionId);
+    const account = await findOrUpdateAccount(userId);
     const response = await findCodeByQuery(text, account?.id ? account.id : "");
     return {
       output: response
@@ -27,8 +26,8 @@ export function searchCodeTool(): ToolInterface {
     name: "search code",
     description:
       "Searches the users code for the given query and return up to ten results for code locations.",
-    use: async (user, sessionId, text) =>
-      await handleSearchCode(user, sessionId, text),
+    use: async (userId, sessionId, text) =>
+      await handleSearchCode(userId, sessionId, text),
     arguments: ["search query"],
   };
 }

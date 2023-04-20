@@ -15,6 +15,7 @@ import {
   dbMessagesToChatMessages,
   getMessagesByUserAndSession,
 } from "../message/message.service";
+
 import { createChatCompletion } from "../openAi/openai.service";
 import {
   runCodeClassificaiton,
@@ -61,10 +62,10 @@ export function addSystemMessage(messages: ChatMessage[], content: string) {
 export async function checkDbSession(
   dbSession: Database["public"]["Tables"]["session"]["Row"],
   messages: ChatMessage[],
-  user: Database["public"]["Tables"]["users"]["Row"],
+  userId: string,
   sessionId: string
 ): Promise<CodeCompletionResponse> {
-  const sessionMessages = await getMessagesByUserAndSession(user, sessionId);
+  const sessionMessages = await getMessagesByUserAndSession(userId, sessionId);
 
   const writeCodeObject = await findOrCreateAiWritenCode(sessionId);
 
@@ -96,7 +97,7 @@ export async function checkDbSession(
       return await handleExistingFileUpdate(
         messages,
         classification,
-        user,
+        userId,
         sessionId,
         code_content,
         file_name || "",
@@ -112,7 +113,7 @@ export async function checkDbSession(
       return handleExistingFileUpdate(
         messages,
         classification,
-        user,
+        userId,
         sessionId,
         code_content,
         file_name || "",
@@ -128,7 +129,7 @@ export async function checkDbSession(
       handleScratchPadUpdate(
         messages,
         classification,
-        user,
+        userId,
         sessionId,
         classification.location,
         writeCodeObject
@@ -139,7 +140,7 @@ export async function checkDbSession(
       );
 
       await createMessageWithUser(
-        user,
+        userId,
         {
           content: `I have add your request to the queue:\n
             "${userMessages[userMessages.length - 1].content}". \n
@@ -166,7 +167,7 @@ export async function checkDbSession(
   if (classification.location && !classification.functionality) {
     return await handleKNnowLocButNotFunc(
       messages,
-      user,
+      userId,
       sessionId,
       classification
     );
@@ -177,7 +178,7 @@ export async function checkDbSession(
     handleScratchPadUpdate(
       messages,
       classification,
-      user,
+      userId,
       sessionId,
       "scratchPad",
       writeCodeObject
@@ -186,7 +187,7 @@ export async function checkDbSession(
     const userMessages = messages.filter((message) => message.role === "user");
 
     await createMessageWithUser(
-      user,
+      userId,
       {
         content: `I have add your request to the queue:\n
         "${userMessages[userMessages.length - 1].content}". \n
@@ -218,7 +219,7 @@ export async function checkDbSession(
   codeCompletionResponse.choices = response.choices;
 
   await createMessageWithUser(
-    user,
+    userId,
     codeCompletionResponse.choices[0].message,
     sessionId
   );
@@ -228,14 +229,7 @@ export async function checkDbSession(
 export async function handleFileUploadWithSession(
   sessionMessages: ChatMessage[],
   fullFilePathWithName: string,
-  user: {
-    avatar_url: string | null;
-    billing_address: Json;
-    email: string | null;
-    full_name: string | null;
-    id: string;
-    payment_method: Json;
-  },
+  userId: string,
   sessionId: string,
   codeContent: string,
   dbSession: Database["public"]["Tables"]["session"]["Row"]
@@ -265,7 +259,7 @@ export async function handleFileUploadWithSession(
   //   return await handleExistingFileUpdate(
   //     sessionMessages,
   //     classification,
-  //     user,
+  //     userId
   //     sessionId,
   //     codeContent,
   //     fileName ? fileName : dbSession.file_name || "",
@@ -276,7 +270,7 @@ export async function handleFileUploadWithSession(
   return await handleGetFunctionalityWhenFileExists(
     sessionMessages,
     fullFilePathWithName,
-    user,
+    userId,
     sessionId,
     codeContent
   );
@@ -288,7 +282,7 @@ export async function handleParsingCreatedCode(
   metadata: CodeCompletionResponseMetadata,
   sessionId?: string,
   location?: string,
-  user?: Database["public"]["Tables"]["users"]["Row"],
+  userId: string = "",
   functionality?: string
 ): Promise<CodeCompletionResponse> {
   const parsedContent = parseReturnedCode(response.choices[0].message?.content);
@@ -306,9 +300,9 @@ export async function handleParsingCreatedCode(
   ];
 
   if (sessionId && location) {
-    if (user) {
+    if (userId) {
       await createMessagesWithUser(
-        user,
+        userId,
         codeCompletionChoiceResponse.map((choice) => choice.message),
         sessionId
       );

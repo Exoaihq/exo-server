@@ -29,14 +29,7 @@ export async function handleKnownNextAction(
     updated_at?: string | null;
     user_id?: string | null;
   },
-  user: {
-    avatar_url: string | null;
-    billing_address: Json;
-    email: string | null;
-    full_name: string | null;
-    id: string;
-    payment_method: Json;
-  },
+  userId: string,
   sessionId: string,
   res: Response<any, Record<string, any>>
 ) {
@@ -50,7 +43,7 @@ export async function handleKnownNextAction(
 
   if (!doesItAnswerTheQuestion.choices[0].text) {
     createMessageWithUser(
-      user,
+      userId,
       {
         content: "I'm sorry, I don't understand. Can you clarify or rephrase?",
         role: "assistant",
@@ -62,7 +55,7 @@ export async function handleKnownNextAction(
 
     if (doesIt.answer === false) {
       createMessageWithUser(
-        user,
+        userId,
         {
           content: doesIt.remedy,
           role: "assistant",
@@ -88,7 +81,7 @@ export async function handleKnownNextAction(
           (message) => message.role === "user"
         );
         createAiCodeFromNewFilePrompt(
-          user,
+          userId,
           userMessages[userMessages.length - 1].content,
           sessionId,
           dbSession.file_path || ""
@@ -96,14 +89,14 @@ export async function handleKnownNextAction(
 
         // Add message
         createMessageWithUser(
-          user,
+          userId,
           {
             content: `I'm creating the code and once finished i'll write it to: ${dbSession.file_path}`,
             role: "assistant",
           },
           sessionId
         );
-        updateSession(user, sessionId, {
+        updateSession(userId, sessionId, {
           code_content: "",
           file_name: "",
           file_path: "",
@@ -124,19 +117,19 @@ export async function handleKnownNextAction(
           dbSession.file_path + "/" + dbSession.file_name,
           sessionId,
           dbSession.location || "",
-          user
+          userId
         );
 
         // Add message
         createMessageWithUser(
-          user,
+          userId,
           {
             content: `I'm creating the code and once finished i'll write it to: ${dbSession.file_path}`,
             role: "assistant",
           },
           sessionId
         );
-        updateSession(user, sessionId, {
+        updateSession(userId, sessionId, {
           code_content: "",
           file_name: "",
           file_path: "",

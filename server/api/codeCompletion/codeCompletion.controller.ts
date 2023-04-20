@@ -30,13 +30,13 @@ export const handleCodeCompletion = async (req: Request, res: Response) => {
     const { sessionId, scratchPadContent } = req.body as CodeCompletionRequest;
 
     const sessionMessages = await getOnlyRoleAndContentMessagesByUserAndSession(
-      user,
+      user.id,
       sessionId
     );
 
-    const dbSession = await findOrCreateSession(user, sessionId);
+    const dbSession = await findOrCreateSession(user.id, sessionId);
 
-    await updateSession(user, sessionId, {
+    await updateSession(user.id, sessionId, {
       scratch_pad_content: scratchPadContent,
     });
 
@@ -44,7 +44,7 @@ export const handleCodeCompletion = async (req: Request, res: Response) => {
       return await handleKnownNextAction(
         sessionMessages,
         dbSession,
-        user,
+        user.id,
         sessionId,
         res
       );
@@ -54,7 +54,7 @@ export const handleCodeCompletion = async (req: Request, res: Response) => {
     //   return await handleScratchPadContent(
     //     sessionMessages,
     //     dbSession,
-    //     user,
+    //     userId
     //     sessionId,
     //     scratchPadContent,
     //     res
@@ -83,7 +83,7 @@ export const handleCodeCompletion = async (req: Request, res: Response) => {
       ).choices;
 
       await createMessagesWithUser(
-        user,
+        user.id,
         choices.map((choice) => choice.message),
         sessionId
       );
@@ -97,7 +97,7 @@ export const handleCodeCompletion = async (req: Request, res: Response) => {
       const responseBasedOnDbSession = await checkDbSession(
         dbSession,
         sessionMessages,
-        user,
+        user.id,
         sessionId
       );
 
@@ -105,7 +105,7 @@ export const handleCodeCompletion = async (req: Request, res: Response) => {
         data: responseBasedOnDbSession,
       });
     } else if (baseClassificaiton === "search") {
-      return res.status(200).json(await handleSearch(user, sessionId));
+      return res.status(200).json(await handleSearch(user.id, sessionId));
     } else {
       res
         .status(500)
@@ -128,15 +128,15 @@ export const handleFileUpload = async (req: Request, res: Response) => {
       req.body as CodeCompletionRequest;
 
     const sessionMessages = await getOnlyRoleAndContentMessagesByUserAndSession(
-      user,
+      user.id,
       sessionId
     );
-    const dbSession = await findOrCreateSession(user, sessionId);
+    const dbSession = await findOrCreateSession(user.id, sessionId);
 
     const response = await handleFileUploadWithSession(
       sessionMessages,
       fullFilePathWithName,
-      user,
+      user.id,
       sessionId,
       codeContent,
       dbSession

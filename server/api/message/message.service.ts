@@ -2,43 +2,42 @@ import { createClient, PostgrestSingleResponse } from "@supabase/supabase-js";
 import { ChatMessage, ChatUserType } from "../../../types/chatMessage.type";
 import { Database } from "../../../types/supabase";
 import { supabaseKey, supabaseUrl } from "../../../utils/envVariable";
-import { getGlobalPrompts } from "../prompt/prompt.controller";
-import { getGlobalPromptsDb, getPromptById } from "../prompt/prompt.service";
+import { getGlobalPromptsDb } from "../prompt/prompt.service";
 
 const supabase = createClient<Database>(supabaseUrl, supabaseKey);
 
 export const getMessagesWithUser = async (
-  user: Database["public"]["Tables"]["users"]["Row"]
+  userId: string
 ): Promise<Database["public"]["Tables"]["messages"]["Row"][]> => {
   const { data, error } = await supabase
     .from("messages")
     .select("*")
-    .eq("user_id", user.id);
+    .eq("user_id", userId);
 
   return data || [];
 };
 
 export const getHelerMessagesWithUser = async (
-  user: Database["public"]["Tables"]["users"]["Row"]
+  userId: string
 ): Promise<any> => {
   const { data, error } = await supabase
     .from("messages")
     .select("content, created_at, session_id, role")
-    .eq("user_id", user.id)
+    .eq("user_id", userId)
     .eq("is_helper_message", true);
 
   return data || [];
 };
 
 export const getMessagesByUserAndSession = async (
-  user: Database["public"]["Tables"]["users"]["Row"],
+  userId: string,
   sessionId: string
 ): Promise<Database["public"]["Tables"]["messages"]["Row"][]> => {
   const { data, error } = await supabase
     .from("messages")
     .select("*, message_prompts(prompt_id)")
     .order("created_at", { ascending: true })
-    .eq("user_id", user.id)
+    .eq("user_id", userId)
     .eq("session_id", sessionId);
 
   const globalMessagePrompts = await getGlobalPromptsDb();
@@ -114,14 +113,14 @@ export const getOnlyRoleAndContentMessagesSession = async (
 };
 
 export const getOnlyRoleAndContentMessagesByUserAndSession = async (
-  user: Database["public"]["Tables"]["users"]["Row"],
+  userId: string,
   sessionId: string
 ): Promise<ChatMessage[]> => {
   const { data, error } = await supabase
     .from("messages")
     .select("role, content, created_at, session_id")
     .order("created_at", { ascending: false })
-    .eq("user_id", user.id)
+    .eq("user_id", userId)
     .eq("session_id", sessionId)
     .limit(5);
 
@@ -141,7 +140,7 @@ export const getOnlyRoleAndContentMessagesByUserAndSession = async (
 };
 
 export const createMessageWithUser = async (
-  user: Partial<Database["public"]["Tables"]["users"]["Row"]>,
+  userId: string,
   message: Database["public"]["Tables"]["messages"]["Insert"],
   sessionId: string
 ): Promise<{
@@ -153,7 +152,7 @@ export const createMessageWithUser = async (
   session_id: string | null;
   user_id: string | null;
 } | null> => {
-  message["user_id"] = user.id;
+  message["user_id"] = userId;
   message["session_id"] = sessionId;
 
   const { data, error } = await supabase
@@ -171,12 +170,12 @@ export const createMessageWithUser = async (
 };
 
 export const createMessagesWithUser = async (
-  user: Database["public"]["Tables"]["users"]["Row"],
+  userId: string,
   message: Database["public"]["Tables"]["messages"]["Insert"][],
   sessionId: string
 ): Promise<PostgrestSingleResponse<null>> => {
   const updateMessages = message.map((message) => {
-    return { ...message, user_id: user.id, session_id: sessionId };
+    return { ...message, user_id: userId, session_id: sessionId };
   });
 
   const res = await supabase
@@ -205,10 +204,10 @@ export const dbMessagesToChatMessages = (
 };
 
 export const findUnseenHelperMessages = async (
-  user: Database["public"]["Tables"]["users"]["Row"],
+  userId: string,
   sessionId: string
 ) => {
-  const userMessages = await getHelerMessagesWithUser(user);
+  const userMessages = await getHelerMessagesWithUser(userId);
   const { data, error } = await supabase
     .from("app_helper_messages")
     .select("*");
@@ -220,7 +219,7 @@ export const findUnseenHelperMessages = async (
   if (!userMessages || userMessages.length === 0) {
     if (data) {
       createMessageWithUser(
-        user,
+        userId,
         {
           content: data[0].text,
           role: "assistant",
@@ -229,7 +228,7 @@ export const findUnseenHelperMessages = async (
         sessionId
       );
       createMessageWithUser(
-        user,
+        userId,
         {
           content: data[1].text,
           role: "assistant",
@@ -250,7 +249,7 @@ export const findUnseenHelperMessages = async (
 
       if (!messageExists) {
         await createMessageWithUser(
-          user,
+          userId,
           {
             content: data[i].text,
             role: "assistant",

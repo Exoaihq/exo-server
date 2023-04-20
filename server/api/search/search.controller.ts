@@ -11,7 +11,7 @@ export const searchCode = async (req: Request, res: Response) => {
 
     const { search } = req.body;
 
-    const account = await findOrUpdateAccount(user);
+    const account = await findOrUpdateAccount(user.id);
     if (!account) {
       return res.status(404).json({ message: "Can't find the user account" });
     }

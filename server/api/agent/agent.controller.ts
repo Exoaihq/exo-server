@@ -1,21 +1,18 @@
 import { Request, Response } from "express";
 import { CodeCompletionRequest } from "../codeCompletion/codeCompletion.types";
-import {
-  createMessageWithUser,
-  getOnlyRoleAndContentMessagesByUserAndSession,
-} from "../message/message.service";
+import { getOnlyRoleAndContentMessagesByUserAndSession } from "../message/message.service";
 import { findOrUpdateAccount } from "../supabase/account.service";
 import {
   checkSessionOrThrow,
   findOrCreateSession,
 } from "../supabase/supabase.service";
-import { actOnPlan } from "./agent.act";
 import { getExpectedNextAction } from "./agent.prompt";
 import { expandContext, run } from "./agent.service";
 import {
+  allTools,
   askUserAQuestionTool,
-  findFileTool,
   findDirectoryTool,
+  findFileTool,
   generateNewCodeTool,
   retrieveMemoryTool,
   searchCodeTool,
@@ -24,7 +21,6 @@ import {
   storeMemoryTool,
   writeCompletedCodeTool,
 } from "./tools";
-import { getExisitingCodeTool } from "./tools/getCode.tool";
 
 export const useAgent = async (req: Request, res: Response) => {
   try {
@@ -35,13 +31,13 @@ export const useAgent = async (req: Request, res: Response) => {
     const { sessionId } = req.body as CodeCompletionRequest;
 
     const sessionMessages = await getOnlyRoleAndContentMessagesByUserAndSession(
-      user,
+      user.id,
       sessionId
     );
 
-    const dbSession = await findOrCreateSession(user, sessionId);
+    const dbSession = await findOrCreateSession(user.id, sessionId);
 
-    const account = await findOrUpdateAccount(user);
+    const account = await findOrUpdateAccount(user.id);
 
     if (!account) {
       return res.status(200).json({
@@ -58,27 +54,15 @@ export const useAgent = async (req: Request, res: Response) => {
     const expandedContext = await expandContext(
       sessionMessages,
       account?.id,
-      user,
+      user.id,
       sessionId
     );
     console.log("Context", expandedContext);
 
     const agentResponse = await run(
-      user,
+      user.id,
       sessionId,
-      [
-        searchCodeTool(),
-        setLocationToWriteCodeTool(),
-        storeMemoryTool(),
-        searchDirectoryTool(),
-        findFileTool(),
-        generateNewCodeTool(),
-        askUserAQuestionTool(),
-        findDirectoryTool(),
-        retrieveMemoryTool(),
-        writeCompletedCodeTool(),
-        getExisitingCodeTool(),
-      ],
+      allTools,
       getExpectedNextAction(dbSession, sessionMessages, expandedContext),
       20
     );
@@ -140,7 +124,7 @@ export const testAgent = async (req: Request, res: Response) => {
       "The user wants to add a new code to the code-gen-server directory that counts the number of letters in a string.";
     const question =
       "I need to generate js code for a new controller that handles counting the number of letters in a string using javascript.";
-    // const act = actOnPlan(plan, tools, user, sessionId, thought, question);
+    // const act = actOnPlan(plan, tools, userId sessionId, thought, question);
 
     return res.status(200).json({
       data: "done",

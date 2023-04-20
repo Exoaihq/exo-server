@@ -1,16 +1,15 @@
-import { Database } from "../../../../types/supabase";
 import { codeDirectorySearch } from "../../codeDirectory/codeDirectory.repository";
 import { findOrUpdateAccount } from "../../supabase/account.service";
 import { ToolInterface } from "../agent.service";
 
 export function findDirectoryTool(): ToolInterface {
   async function handleSearchDirectory(
-    user: Database["public"]["Tables"]["users"]["Row"],
+    userId: string,
     sessionId: string,
     query: string
   ) {
-    // const searchResult = await handleSearch(user, sessionId);
-    const account = await findOrUpdateAccount(user);
+    // const searchResult = await handleSearch(userId, sessionId);
+    const account = await findOrUpdateAccount(userId);
     const response = await codeDirectorySearch(
       query,
       account?.id ? account.id : ""
@@ -32,8 +31,8 @@ export function findDirectoryTool(): ToolInterface {
   return {
     name: "find one directory",
     description: "Finds one code file or directory given the query",
-    use: async (user, sessionId, query) =>
-      await handleSearchDirectory(user, sessionId, query),
+    use: async (userId, sessionId, query) =>
+      await handleSearchDirectory(userId, sessionId, query),
     arguments: ["search query"],
   };
 }

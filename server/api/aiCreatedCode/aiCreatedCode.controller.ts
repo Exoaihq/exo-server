@@ -18,7 +18,7 @@ export const getAiCompletedCode = async (req: Request, res: Response) => {
 
     const sessionId = session_id as string;
 
-    await findOrCreateSession(user, sessionId);
+    await findOrCreateSession(user.id, sessionId);
 
     const aiCreatedCode = await getAiCodeBySession(sessionId);
 
@@ -38,7 +38,7 @@ export const updateAiCompletedCode = async (req: Request, res: Response) => {
 
     const { user } = session.data;
 
-    await findOrCreateSession(user, sessionId);
+    await findOrCreateSession(user.id, sessionId);
 
     await updateAiWritenCode(id, { ...values });
 

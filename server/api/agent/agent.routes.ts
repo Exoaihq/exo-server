@@ -6,6 +6,6 @@ const agentRouter = Router();
 // Base route: /agent
 
 agentRouter.post("/", useAgent);
-agentRouter.get("/test", testAgent);
+// agentRouter.post("/", testAgent);
 
 export default agentRouter;

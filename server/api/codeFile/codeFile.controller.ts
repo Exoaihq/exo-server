@@ -22,7 +22,7 @@ export const findCodeFile = async (req: Request, res: Response) => {
 
     const { query } = req.body;
 
-    const account = await findOrUpdateAccount(user);
+    const account = await findOrUpdateAccount(user.id);
     if (!account) {
       return res.status(404).json({ message: "Can't find the user account" });
     }
@@ -79,9 +79,9 @@ export const findAndUpdateFilesFromClient = async (
 
     const sessionId = session_id as string;
 
-    await findOrCreateSession(user, sessionId);
+    await findOrCreateSession(user.id, sessionId);
 
-    const account = await findOrUpdateAccount(user);
+    const account = await findOrUpdateAccount(user.id);
 
     if (!account) {
       return res.status(404).json({ message: "Can't find the user account" });
@@ -92,7 +92,7 @@ export const findAndUpdateFilesFromClient = async (
     handleAndFilesToDb(directoryId, files, account);
 
     await createMessageWithUser(
-      user,
+      user.id,
       {
         content: `Started indexing your directroy. This may take a while. The directory indexed date will be updated when the indexing is completed.`,
         role: "assistant",

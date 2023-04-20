@@ -1,6 +1,5 @@
 import { ChatMessage, ChatUserType } from "../../../../types/chatMessage.type";
 import { EngineName } from "../../../../types/openAiTypes/openAiEngine";
-import { Database } from "../../../../types/supabase";
 import {
   extractFileNameAndPathFromFullPath,
   getDirectoryNameFromPath,
@@ -27,7 +26,7 @@ import { ExpectedNextAction } from "./codeCompletion.knownNextAction";
 export async function handleGetFunctionalityWhenFileExists(
   messages: ChatMessage[],
   fullFilePathWithName: string,
-  user: Database["public"]["Tables"]["users"]["Row"],
+  userId: string,
   sessionId: string,
   codeContent: string
 ) {
@@ -49,7 +48,7 @@ export async function handleGetFunctionalityWhenFileExists(
   // Adds the directory to the account so that it can be use for future code completion
 
   await createDirectoryIfNotExists(
-    user,
+    userId,
     extractedPath,
     getDirectoryNameFromPath(extractedPath),
     false
@@ -69,7 +68,7 @@ export async function handleGetFunctionalityWhenFileExists(
 
   if (completionResponse && completionResponse?.choices[0]) {
     const newMessage = await createMessageWithUser(
-      user,
+      userId,
       response.choices[0].message,
       sessionId
     );
@@ -79,7 +78,7 @@ export async function handleGetFunctionalityWhenFileExists(
     }
   }
 
-  updateSession(user, sessionId, {
+  updateSession(userId, sessionId, {
     location: "existingFile",
     functionality: "",
     file_name: fileName,
@@ -97,7 +96,7 @@ export async function handleUpdatingExistingCode(
   fullFilePathWithName: string,
   sessionId: string,
   location: string,
-  user: Database["public"]["Tables"]["users"]["Row"]
+  userId: string
 ): Promise<CodeCompletionResponse> {
   const { fileName, extractedPath } =
     extractFileNameAndPathFromFullPath(fullFilePathWithName);
@@ -161,7 +160,7 @@ export async function handleUpdatingExistingCode(
     metadata,
     sessionId,
     location,
-    user,
+    userId,
     requiredFunctionality
   );
 }

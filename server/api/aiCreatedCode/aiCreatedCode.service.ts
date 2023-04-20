@@ -17,7 +17,7 @@ import { getSessionById, updateSession } from "../supabase/supabase.service";
 const supabase = createClient<Database>(supabaseUrl, supabaseKey);
 
 export const createAiCodeFromNewFilePrompt = async (
-  user: Database["public"]["Tables"]["users"]["Row"],
+  userId: string,
   content: string,
   sessionId: string,
   path: string

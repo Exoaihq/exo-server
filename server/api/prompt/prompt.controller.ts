@@ -17,7 +17,7 @@ export const getGlobalPrompts = async (req: Request, res: Response) => {
 
     const { user } = session.data;
 
-    const account = await findOrUpdateAccount(user);
+    const account = await findOrUpdateAccount(user.id);
     if (!account) {
       return res.status(404).json({ message: "Can't find the user account" });
     }
@@ -37,7 +37,7 @@ export const handleSelectedPrompt = async (req: Request, res: Response) => {
 
     const { user } = session.data;
 
-    const dbSession = await findOrCreateSession(user, sessionId);
+    const dbSession = await findOrCreateSession(user.id, sessionId);
 
     const prompt = await getPromptById(promptId);
 
@@ -45,7 +45,7 @@ export const handleSelectedPrompt = async (req: Request, res: Response) => {
       return res.status(404).json({ message: "Can't find the prompt" });
     }
 
-    await handleUsingSelectedPrompt(dbSession, sessionId, user, prompt);
+    await handleUsingSelectedPrompt(dbSession, sessionId, user.id, prompt);
 
     return res.status(200).json({
       data: "done",

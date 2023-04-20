@@ -5,11 +5,11 @@ import { ToolInterface } from "../agent.service";
 
 export function writeCompletedCodeTool(): ToolInterface {
   async function handleWriteCode(
-    user: Database["public"]["Tables"]["users"]["Row"],
+    userId: string,
     sessionId: string,
     text: string
   ) {
-    const dbSession = await findOrCreateSession(user, sessionId);
+    const dbSession = await findOrCreateSession(userId, sessionId);
     const { location, code_content } = dbSession;
 
     await createAiWritenCode({
@@ -18,7 +18,7 @@ export function writeCompletedCodeTool(): ToolInterface {
       location,
     });
 
-    // await resetSession(user, sessionId);
+    // await resetSession(userId, sessionId);
 
     return {
       output: `I've written the code to the location you specified. I've also cleared the session of the code and location so you can write new code.`,
@@ -28,8 +28,8 @@ export function writeCompletedCodeTool(): ToolInterface {
     name: "write code",
     description:
       "Writes the given code functionality to the the location specified by the `set location` tool. Before using this tool you must set the location to write code to and generate the code.",
-    use: async (user, sessionId, text) =>
-      await handleWriteCode(user, sessionId, text),
+    use: async (userId, sessionId, text) =>
+      await handleWriteCode(userId, sessionId, text),
     arguments: [],
   };
 }

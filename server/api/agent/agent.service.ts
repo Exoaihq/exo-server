@@ -10,7 +10,7 @@ import {
   getCompletionDefaultStopToken,
 } from "../openAi/openai.service";
 import { findCodeByQuery } from "../search/search.service";
-import { actOnPlan } from "./agent.act";
+import { addPlansTaskListToDb } from "./agent.act";
 import { parseToJsonPrompt, scratchTemplate } from "./agent.prompt";
 
 export interface ToolResponse {
@@ -27,7 +27,7 @@ export interface ToolInterface {
   name: string;
   description: string;
   use: (
-    user: Database["public"]["Tables"]["users"]["Row"],
+    userId: string,
     sessionId: string,
     input: string
   ) => Promise<ToolResponse>;
@@ -56,11 +56,11 @@ export function getToolDescription(tools: ToolInterface[]): string {
     .join("\n");
 }
 
-function getToolNames(tools: ToolInterface[]): string {
+export function getToolNames(tools: ToolInterface[]): string {
   return tools.map((tool) => tool.name).join(", ");
 }
 
-function getToolByNames(tools: ToolInterface[]): {
+export function getToolByNames(tools: ToolInterface[]): {
   [key: string]: ToolInterface;
 } {
   const toolByNames = {} as { [key: string]: ToolInterface };
@@ -117,7 +117,7 @@ function parse(generated: string): ToolInfo {
 }
 
 export async function run(
-  user: Database["public"]["Tables"]["users"]["Row"],
+  userId: string,
   sessionId: string,
   tools: ToolInterface[],
   inputQuestion: string,
@@ -159,7 +159,7 @@ export async function run(
       const { thought, question, reasoning, plan, criticism } = json;
 
       createMessageWithUser(
-        user,
+        userId,
         {
           content: `Here is the question I'm trying to answer: ${question}. And my plan is: ${plan
             .map((item: string, index: any) => `${item}`)
@@ -184,11 +184,11 @@ export async function run(
 
       if (objective && plan) {
         // Add the plan list to tasks
-        const results = await actOnPlan(
+        const results = await addPlansTaskListToDb(
           objective,
           plan,
           tools,
-          user,
+          userId,
           sessionId,
           thought,
           question
@@ -197,7 +197,7 @@ export async function run(
         console.log("results", results);
 
         await createMessageWithUser(
-          user,
+          userId,
           {
             content:
               "Let me know if you want me to execute this plan as described above. If not, you can change the plan or expand on the goal. If you want to change the goal, you can ask me to start over.",
@@ -213,40 +213,38 @@ export async function run(
       throw new Error("Could not parse response to json");
     }
 
-    const [tool, tool_input] = await decideNextAction(generated);
-    console.log("generated: ", generated);
-    console.log(`Tool: ${tool}`);
-    console.log(`Tool Input: ${tool_input}`);
+    // const [tool, tool_input] = await decideNextAction(generated);
+    // console.log("generated: ", generated);
+    // console.log(`Tool: ${tool}`);
+    // console.log(`Tool Input: ${tool_input}`);
 
-    if (tool === "Final Answer") {
-      return {
-        output: tool_input,
-        runMetadata,
-      };
-    }
-    if (!toolByNames[tool]) {
-      console.log(`Unknown tool: ${tool}`);
-    }
-    const { output, metadata } = await toolByNames[tool.toLowerCase()].use(
-      user,
-      sessionId,
-      tool_input
-    );
-    if (metadata) {
-      runMetadata = metadata;
-    }
-    const response = `${generated}\n${OBSERVATION_TOKEN} ${output}\n${THOUGHT_TOKEN}`;
-    console.log(response);
-    previousResponses.push(response);
+    // if (tool === "Final Answer") {
+    //   return {
+    //     output: tool_input,
+    //     runMetadata,
+    //   };
+    // }
+    // if (!toolByNames[tool]) {
+    //   console.log(`Unknown tool: ${tool}`);
+    // }
+    // const { output, metadata } = await toolByNames[tool.toLowerCase()].use(
+    //   userId
+    //   sessionId,
+    //   tool_input
+    // );
+    // if (metadata) {
+    //   runMetadata = metadata;
+    // }
+    // const response = `${generated}\n${OBSERVATION_TOKEN} ${output}\n${THOUGHT_TOKEN}`;
+    // console.log(response);
+    // previousResponses.push(response);
   }
 }
 
 export const expandContext = async (
   sessionMessages: string | any[],
   accountId: string,
-  user: {
-    id: string;
-  },
+  userId: string,
   sessionId: string
 ): Promise<string> => {
   const lastMessage = sessionMessages[sessionMessages.length - 1].content;
@@ -261,7 +259,7 @@ export const expandContext = async (
   const nouns = res.choices[0].message.content.split(", ");
 
   createMessageWithUser(
-    user,
+    userId,
     {
       content: `I'm checking your directories and code for some additional context...`,
       role: ChatUserType.assistant,
@@ -320,7 +318,7 @@ export const expandContext = async (
     releventCodeToString !== "None"
   ) {
     createMessageWithUser(
-      user,
+      userId,
       {
         content: `I've found some additional context. \n\nRelevent directories: ${releventDirectories.length} \n\nRelevent code: ${releventCode.length}`,
         role: ChatUserType.assistant,
@@ -334,7 +332,7 @@ export const expandContext = async (
   // const expandedContextRes = await createChatCompletion([
   //   {
   //     content: promptToExpandContext,
-  //     role: ChatUserType.user,
+  //     role: ChatUserType.user
   //   },
   // ]);
 

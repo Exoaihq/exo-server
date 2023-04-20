@@ -23,14 +23,14 @@ import {
 } from "./codeDirectory.repository";
 
 export const createDirectoryIfNotExists = async (
-  user: Database["public"]["Tables"]["users"]["Row"],
+  userId: string,
   filePath: string,
   directoryName: string,
   saved: boolean
 ) => {
-  const found = await findCodeDirectoryByNameAndUser(user, directoryName);
+  const found = await findCodeDirectoryByNameAndUser(userId, directoryName);
   if (!found) {
-    await createCodeDirectoryByUser(user, filePath, directoryName, saved);
+    await createCodeDirectoryByUser(userId, filePath, directoryName, saved);
   }
 };
 
