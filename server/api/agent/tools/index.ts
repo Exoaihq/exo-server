@@ -1,5 +1,5 @@
 export * from "./askUserAQuestion.tool";
-export * from "./findCode.tool";
+export * from "./findFile.tool";
 export * from "./findDirectory.tool";
 export * from "./generateNewCode.tool";
 export * from "./retrieveMemory.tool";
@@ -8,3 +8,4 @@ export * from "./searchDirectory.tool";
 export * from "./setLocationToWriteCode.tool";
 export * from "./storeMemory.tool";
 export * from "./writeCompletedCode.tool";
+export * from "./getCode.tool";

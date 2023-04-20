@@ -624,6 +624,9 @@ export interface Database {
           description: string | null
           id: string
           objective_id: string | null
+          tool_input: string | null
+          tool_name: string | null
+          tool_output: string | null
         }
         Insert: {
           completed_at?: string | null
@@ -631,6 +634,9 @@ export interface Database {
           description?: string | null
           id?: string
           objective_id?: string | null
+          tool_input?: string | null
+          tool_name?: string | null
+          tool_output?: string | null
         }
         Update: {
           completed_at?: string | null
@@ -638,6 +644,9 @@ export interface Database {
           description?: string | null
           id?: string
           objective_id?: string | null
+          tool_input?: string | null
+          tool_name?: string | null
+          tool_output?: string | null
         }
       }
       users: {

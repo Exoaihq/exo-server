@@ -23,7 +23,7 @@ export function storeMemoryTool(): ToolInterface {
   return {
     name: "store memory",
     description:
-      "Stores memories for longer tasks that require multiple steps to complete.",
+      "Stores memories for longer tasks that require multiple steps or loops to complete.",
     use: async (user, sessionId, memory) =>
       handleStoreMemory(user, sessionId, memory),
     arguments: ["memory text"],

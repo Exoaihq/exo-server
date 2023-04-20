@@ -3,7 +3,7 @@ import { findCodeByQuery } from "../../search/search.service";
 import { findOrUpdateAccount } from "../../supabase/account.service";
 import { ToolInterface } from "../agent.service";
 
-export function findCodeTool(): ToolInterface {
+export function findFileTool(): ToolInterface {
   async function handleSearchCode(
     user: Database["public"]["Tables"]["users"]["Row"],
     sessionId: string,
@@ -21,9 +21,9 @@ export function findCodeTool(): ToolInterface {
   }
 
   return {
-    name: "find one code result",
+    name: "find one file",
     description:
-      "Finds the users code for the given query and returns one code location result",
+      "Finds the users code file for the given name or query and returns one code file result",
     use: async (user, sessionId, text) =>
       await handleSearchCode(user, sessionId, text),
     arguments: ["search query"],

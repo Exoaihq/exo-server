@@ -14,7 +14,7 @@ import { getExpectedNextAction } from "./agent.prompt";
 import { expandContext, run } from "./agent.service";
 import {
   askUserAQuestionTool,
-  findCodeTool,
+  findFileTool,
   findDirectoryTool,
   generateNewCodeTool,
   retrieveMemoryTool,
@@ -24,6 +24,7 @@ import {
   storeMemoryTool,
   writeCompletedCodeTool,
 } from "./tools";
+import { getExisitingCodeTool } from "./tools/getCode.tool";
 
 export const useAgent = async (req: Request, res: Response) => {
   try {
@@ -66,28 +67,20 @@ export const useAgent = async (req: Request, res: Response) => {
       user,
       sessionId,
       [
-        generateNewCodeTool(),
-        searchDirectoryTool(),
-        writeCompletedCodeTool(),
         searchCodeTool(),
         setLocationToWriteCodeTool(),
         storeMemoryTool(),
-        findCodeTool(),
+        searchDirectoryTool(),
+        findFileTool(),
+        generateNewCodeTool(),
         askUserAQuestionTool(),
         findDirectoryTool(),
         retrieveMemoryTool(),
+        writeCompletedCodeTool(),
+        getExisitingCodeTool(),
       ],
       getExpectedNextAction(dbSession, sessionMessages, expandedContext),
       20
-    );
-
-    await createMessageWithUser(
-      user,
-      {
-        content: agentResponse?.output,
-        role: "assistant",
-      },
-      sessionId
     );
 
     return res.status(200).json({
@@ -125,15 +118,15 @@ export const testAgent = async (req: Request, res: Response) => {
 
     const { sessionId } = req.body as CodeCompletionRequest;
     const tools = [
-      generateNewCodeTool(),
-      searchDirectoryTool(),
-      writeCompletedCodeTool(),
       searchCodeTool(),
       setLocationToWriteCodeTool(),
       storeMemoryTool(),
-      findCodeTool(),
+      writeCompletedCodeTool(),
+      findFileTool(),
       askUserAQuestionTool(),
+      searchDirectoryTool(),
       findDirectoryTool(),
+      generateNewCodeTool(),
       retrieveMemoryTool(),
     ];
     const plan = [
@@ -147,7 +140,7 @@ export const testAgent = async (req: Request, res: Response) => {
       "The user wants to add a new code to the code-gen-server directory that counts the number of letters in a string.";
     const question =
       "I need to generate js code for a new controller that handles counting the number of letters in a string using javascript.";
-    const act = actOnPlan(plan, tools, user, sessionId, thought, question);
+    // const act = actOnPlan(plan, tools, user, sessionId, thought, question);
 
     return res.status(200).json({
       data: "done",

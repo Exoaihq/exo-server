@@ -1,6 +1,5 @@
 import { Database } from "../../../../types/supabase";
 import { codeDirectorySearch } from "../../codeDirectory/codeDirectory.repository";
-import { findFilesByAccountIdAndDirectoryId } from "../../codeFile/codeFile.repository";
 import { findOrUpdateAccount } from "../../supabase/account.service";
 import { ToolInterface } from "../agent.service";
 
@@ -19,14 +18,10 @@ export function searchDirectoryTool(): ToolInterface {
 
     let output = "";
     if (response && response.length > 0 && account) {
-      const files = await findFilesByAccountIdAndDirectoryId(
-        account?.id,
-        response[0].id
-      );
-      if (files && files.length > 0) {
-        output = files
+      if (response && response.length > 0) {
+        output = response
           .slice(0, 10)
-          .map((r) => `Name: ${r.file_name}, Path: ${r.file_path}`)
+          .map((r) => `Name: ${r.directory_name}, Path: ${r.file_path}`)
           .join(", ");
       } else {
         output = "No results found";
@@ -44,7 +39,7 @@ export function searchDirectoryTool(): ToolInterface {
   return {
     name: "search directory",
     description:
-      "Searches the users code files and directories for the given directory name and return up to ten directories.",
+      "Searches the users directories for the given directory name or query and return up to ten directories. This does not return the contents of the directory.",
     use: async (user, sessionId, query) =>
       await handleSearchDirectory(user, sessionId, query),
     arguments: ["search query"],

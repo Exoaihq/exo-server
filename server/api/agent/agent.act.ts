@@ -1,8 +1,10 @@
-import { Json } from "../../../types/supabase";
+import { Database, Json } from "../../../types/supabase";
 import { getCompletionDefaultStopToken } from "../openAi/openai.service";
+import { createTaskWithObjective } from "../task/task.service";
 import { ToolInterface } from "./agent.service";
 
 export const actOnPlan = async (
+  objective: Database["public"]["Tables"]["objective"]["Row"],
   plan: string[],
   tools: ToolInterface[],
   user: {
@@ -25,9 +27,16 @@ export const actOnPlan = async (
       // Execute the tool.
 
       if (tool.arguments && tool.arguments.length === 0) {
-        const { output, metadata } = await tool.use(user, sessionId, task);
-        console.log("Tool output", output);
-        planOutput.push(output);
+        await createTaskWithObjective(
+          {
+            description: task,
+            tool_name: tool.name,
+          },
+          objective.id
+        );
+        // const { output, metadata } = await tool.use(user, sessionId, task);
+        // console.log("Tool output", output);
+        // planOutput.push(output);
         continue;
       }
 
@@ -61,9 +70,17 @@ export const actOnPlan = async (
         console.log("No tool input");
         continue;
       } else {
-        const { output, metadata } = await tool.use(user, sessionId, toolInput);
-        console.log("Tool output", output);
-        planOutput.push(output);
+        await createTaskWithObjective(
+          {
+            description: task,
+            tool_name: tool.name,
+            tool_input: toolInput,
+          },
+          objective.id
+        );
+        // const { output, metadata } = await tool.use(user, sessionId, toolInput);
+        // console.log("Tool output", output);
+        // planOutput.push(output);
         continue;
       }
     }

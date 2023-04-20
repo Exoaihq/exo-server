@@ -162,7 +162,7 @@ export async function run(
         user,
         {
           content: `Here is the question I'm trying to answer: ${question}. And my plan is: ${plan
-            .map((item: string, index: any) => `${index + 1}) ${item}`)
+            .map((item: string, index: any) => `${item}`)
             .join("\n")}`,
           role: ChatUserType.assistant,
         },
@@ -185,6 +185,7 @@ export async function run(
       if (objective && plan) {
         // Add the plan list to tasks
         const results = await actOnPlan(
+          objective,
           plan,
           tools,
           user,
@@ -194,6 +195,16 @@ export async function run(
         );
 
         console.log("results", results);
+
+        await createMessageWithUser(
+          user,
+          {
+            content:
+              "Let me know if you want me to execute this plan as described above. If not, you can change the plan or expand on the goal. If you want to change the goal, you can ask me to start over.",
+            role: ChatUserType.assistant,
+          },
+          sessionId
+        );
       }
 
       return;
@@ -311,7 +322,7 @@ export const expandContext = async (
     createMessageWithUser(
       user,
       {
-        content: `I've found some additional context: \n\nRelevent directories: ${releventDirectories.length} \n\nRelevent code: ${releventCode.length}`,
+        content: `I've found some additional context. \n\nRelevent directories: ${releventDirectories.length} \n\nRelevent code: ${releventCode.length}`,
         role: ChatUserType.assistant,
       },
       sessionId

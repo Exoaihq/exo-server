@@ -20,7 +20,7 @@ export function retrieveMemoryTool(): ToolInterface {
   return {
     name: "retrieve memory",
     description:
-      "Retrieves a stored memory for longer tasks that require multiple steps to complete.",
+      "Retrieves a stored memory for longer tasks that require multiple steps or loops to complete.",
     use: async (user, sessionId, id) => handleStoreMemory(user, sessionId, id),
     arguments: ["memory id"],
   };
