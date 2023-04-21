@@ -7,7 +7,7 @@ import {
   findOrCreateSession,
 } from "../supabase/supabase.service";
 import { getExpectedNextAction } from "./agent.prompt";
-import { expandContext, run } from "./agent.service";
+import { expandContext, startNewObjective } from "./agent.service";
 import {
   allTools,
   askUserAQuestionTool,
@@ -59,7 +59,7 @@ export const useAgent = async (req: Request, res: Response) => {
     );
     console.log("Context", expandedContext);
 
-    const agentResponse = await run(
+    const agentResponse = await startNewObjective(
       user.id,
       sessionId,
       allTools,

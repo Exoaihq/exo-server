@@ -47,12 +47,10 @@ export const createObjectiveWithSession = async (
 
 export const getObjectiveById = async (
   id: string
-): Promise<Partial<
-  Database["public"]["Tables"]["objective"]["Row"]
-> | null> => {
+): Promise<Database["public"]["Tables"]["objective"]["Row"] | null> => {
   const { data, error } = await supabase
-    .from("short_term_objective")
-    .select("*")
+    .from("objective")
+    .select("*, task(*)")
     .order("created_at", { ascending: false })
     .eq("id", id);
 

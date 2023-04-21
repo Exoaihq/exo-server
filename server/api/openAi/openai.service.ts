@@ -29,7 +29,7 @@ const configuration = new Configuration({
 
 const openai = new OpenAIApi(configuration);
 
-export async function chatAgent(prompt: string, stopPattern: string[]) {
+export async function chatAgent(prompt: string) {
   const res = await openai.createChatCompletion({
     messages: [
       {
@@ -40,7 +40,6 @@ export async function chatAgent(prompt: string, stopPattern: string[]) {
     max_tokens: 2048,
     temperature: 0.2,
     model: "gpt-3.5-turbo",
-    stop: stopPattern,
   });
 
   if (res.data.error) {

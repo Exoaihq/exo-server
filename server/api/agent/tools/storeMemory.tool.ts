@@ -1,4 +1,3 @@
-import { Database } from "../../../../types/supabase";
 import { createMemoryWithSession } from "../../memory/memory.service";
 import { ToolInterface } from "../agent.service";
 
@@ -16,14 +15,14 @@ export function storeMemoryTool(): ToolInterface {
     );
 
     return {
-      output: `I've set the memory ${text}. To retrieve this memory say 'retrieve memory' with the id of ${memory.id} `,
+      output: `I've set the text: ${text}. To retrieve this text say 'retrieve text' with the id of ${memory.id} `,
     };
   }
 
   return {
-    name: "store memory",
+    name: "store text",
     description:
-      "Stores memories for longer tasks that require multiple steps or loops to complete.",
+      "Stores text for longer tasks that require multiple steps or loops to complete.",
     use: async (userId, sessionId, memory) =>
       handleStoreMemory(userId, sessionId, memory),
     arguments: ["memory text"],

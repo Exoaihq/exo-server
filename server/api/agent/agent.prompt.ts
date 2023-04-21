@@ -16,7 +16,7 @@ export const getExpectedNextAction = (
   return prompt;
 };
 
-export const scratchTemplate = `
+export const promptTemplate = `
 """Today is {today} and you can use tools to get new information. You can also write code to the users scratch pad and file system. Answer the question as best as you can.  
 
 Resources:

@@ -1,61 +1,17 @@
-import { createClient } from "@supabase/supabase-js";
-import { Database } from "../../../types/supabase";
+import { executeTask, runTaskLoop } from "../agent/agent.act";
+import { getIncompleteTasks } from "./task.repository";
 
-import { supabaseKey, supabaseUrl } from "../../../utils/envVariable";
+export async function findAndExecuteTasks() {
+  // Find all tasks that are not completed, have an input and no output
 
-const supabase = createClient<Database>(supabaseUrl, supabaseKey);
+  const tasks = await getIncompleteTasks();
+  console.log("Incomplete tasks:", tasks.length);
 
-export const getTasksBySession = async (
-  sessionId: string
-): Promise<Partial<Database["public"]["Tables"]["task"]["Row"]>[] | []> => {
-  const { data, error } = await supabase
-    .from("short_term_task")
-    .select("*")
-    .order("created_at", { ascending: false })
-    .eq("session_id", sessionId);
-
-  if (error || !data) {
-    console.log("Error getting tasks", error);
-    return [];
+  // Execute each task
+  for (const task of tasks) {
+    if (task.objective_id === "eadc3eaf-aef0-4db7-8628-6caba99951de") {
+      console.log("Task", task);
+      executeTask(task);
+    }
   }
-  console.log(data);
-
-  return data || [];
-};
-
-export const createTaskWithObjective = async (
-  task: Database["public"]["Tables"]["task"]["Insert"],
-  objectiveId: string
-): Promise<any | null> => {
-  task["objective_id"] = objectiveId;
-
-  const { data, error } = await supabase
-    .from("task")
-    .insert([task])
-    .select("*");
-
-  if (error || !data || data.length === 0) {
-    console.log("Error creating task", error);
-    return null;
-  }
-
-  return data[0];
-};
-
-export const getTaskById = async (
-  id: string
-): Promise<Partial<Database["public"]["Tables"]["task"]["Row"]> | null> => {
-  const { data, error } = await supabase
-    .from("short_term_task")
-    .select("*")
-    .order("created_at", { ascending: false })
-    .eq("id", id);
-
-  if (error || !data) {
-    console.log("Error getting tasks", error);
-    return null;
-  }
-  console.log(data);
-
-  return data[0] || [];
-};
+}

@@ -1,6 +1,6 @@
 import { Request, Response } from "express";
 import { checkSessionOrThrow } from "../supabase/supabase.service";
-import { getTasksBySession } from "./task.service";
+import { getTasksBySession } from "./task.repository";
 
 export const getTasks = async (req: Request, res: Response) => {
   try {

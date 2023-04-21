@@ -1,8 +1,16 @@
 import { ChatUserType } from "../../../../types/chatMessage.type";
 import { EngineName } from "../../../../types/openAiTypes/openAiEngine";
-import { createChatCompletion } from "../../openAi/openai.service";
+import {
+  getAiCodeBySession,
+  updateAiWritenCode,
+} from "../../aiCreatedCode/aiCreatedCode.service";
+import {
+  createChatCompletion,
+  createTextCompletion,
+} from "../../openAi/openai.service";
 import { updateSession } from "../../supabase/supabase.service";
 import { ToolInterface } from "../agent.service";
+import { generateNewCodePrompt } from "./generateNewCode.prompt";
 
 export function generateNewCodeTool(): ToolInterface {
   async function handleWriteCode(
@@ -10,27 +18,63 @@ export function generateNewCodeTool(): ToolInterface {
     sessionId: string,
     functionality: string
   ) {
-    const response = await createChatCompletion(
-      [
-        {
-          role: ChatUserType.user,
-          content: `Wrtie the following code: ${functionality}`,
-        },
-      ],
-      EngineName.GPT4
+    // This is an expensive and time consuming operation. We should only do this when we are sure that the functionality is valid.
+
+    const isPromptToGenerateCode = await createTextCompletion(
+      `Is this an example of a prompt to generate code? ${functionality}. Return yes or no`,
+      0.2
     );
 
-    const improvedCode = response?.choices[0].message?.content
-      ? response?.choices[0].message?.content
-      : "I'm sorry I couldn't generate code for you. Please try again later.";
+    if (
+      isPromptToGenerateCode?.choices[0].text?.toLowerCase().includes("yes")
+    ) {
+      const response = await createChatCompletion(
+        [
+          {
+            role: ChatUserType.user,
+            content: `Wrtie the following code: ${functionality}`,
+          },
+        ],
+        EngineName.GPT4
+      );
+      const improvedCode = response?.choices[0].message?.content
+        ? response?.choices[0].message?.content
+        : null;
 
-    await updateSession(userId, sessionId, {
-      code_content: improvedCode,
-    });
+      console.log("improvedCode", improvedCode);
 
-    return {
-      output: `Here is the code that I generated for you: ${improvedCode}. I've added this code to the session. When you are ready to write this code to the file use the write file tool.`,
-    };
+      if (!improvedCode) {
+        return {
+          output: `I'm sorry I couldn't generate code for you. Please try again later.`,
+        };
+      }
+      await updateSession(userId, sessionId, {
+        code_content: improvedCode,
+      });
+
+      const aiGeneratedCode = await getAiCodeBySession(sessionId);
+
+      if (aiGeneratedCode.length > 0) {
+        // Get the most recent ai generated code that the location is not set to
+        const aiGeneratedCodeWithLocationNotSet = aiGeneratedCode.find(
+          (aiCreatedCode) => aiCreatedCode.location === null
+        );
+
+        if (aiGeneratedCodeWithLocationNotSet) {
+          await updateAiWritenCode(aiGeneratedCodeWithLocationNotSet.id, {
+            code: improvedCode,
+          });
+        }
+      }
+
+      return {
+        output: `Here is the code that I generated for you: ${improvedCode}. I've added this code to the session. When you are ready to write this code to the file use the write file tool.`,
+      };
+    } else {
+      return {
+        output: `The functionality you provided is not a valid prompt to generate code. Please try again.`,
+      };
+    }
   }
 
   return {
@@ -40,5 +84,6 @@ export function generateNewCodeTool(): ToolInterface {
     use: async (userId, sessionId, functionality) =>
       await handleWriteCode(userId, sessionId, functionality),
     arguments: ["code functionality"],
+    promptTemplate: generateNewCodePrompt,
   };
 }

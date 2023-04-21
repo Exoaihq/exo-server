@@ -256,7 +256,7 @@ export async function codeDirectorySearch(
   const query = {
     accountid: accountId,
     query_embedding: embedding,
-    similarity_threshold: 0.8,
+    similarity_threshold: 0.7,
     match_count,
   };
 

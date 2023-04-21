@@ -1,4 +1,7 @@
-import { Database } from "../../../../types/supabase";
+import {
+  getAiCodeBySession,
+  updateAiWritenCode,
+} from "../../aiCreatedCode/aiCreatedCode.service";
 import {
   findOrCreateSession,
   updateSession,
@@ -16,6 +19,21 @@ export function setLocationToWriteCodeTool(): ToolInterface {
     await updateSession(userId, sessionId, {
       location: text,
     });
+
+    const aiGeneratedCode = await getAiCodeBySession(sessionId);
+
+    if (aiGeneratedCode.length > 0) {
+      // Get the most recent ai generated code that the location is not set to
+      const aiGeneratedCodeWithLocationNotSet = aiGeneratedCode.find(
+        (aiCreatedCode) => aiCreatedCode.location === null
+      );
+
+      if (aiGeneratedCodeWithLocationNotSet) {
+        await updateAiWritenCode(aiGeneratedCodeWithLocationNotSet.id, {
+          location: text,
+        });
+      }
+    }
 
     return {
       output: `I've set the location to write code to ${text}`,

@@ -11,7 +11,7 @@ import {
 } from "../openAi/openai.service";
 import { findCodeByQuery } from "../search/search.service";
 import { addPlansTaskListToDb } from "./agent.act";
-import { parseToJsonPrompt, scratchTemplate } from "./agent.prompt";
+import { parseToJsonPrompt, promptTemplate } from "./agent.prompt";
 
 export interface ToolResponse {
   output: string;
@@ -32,16 +32,17 @@ export interface ToolInterface {
     input: string
   ) => Promise<ToolResponse>;
   arguments?: string[];
+  promptTemplate?: string;
 }
 
-interface ToolInfo {
+export interface ToolInfo {
   tool: string;
   toolInput: string;
 }
 
-const FINAL_ANSWER_TOKEN = "Final Answer:";
-const OBSERVATION_TOKEN = "Observation:";
-const THOUGHT_TOKEN = "Thought:";
+export const FINAL_ANSWER_TOKEN = "Final Answer:";
+export const OBSERVATION_TOKEN = "Observation:";
+export const THOUGHT_TOKEN = "Thought:";
 
 export function getToolDescription(tools: ToolInterface[]): string {
   return tools
@@ -84,56 +85,18 @@ export const parseGeneratedToJson = async (generated: string) => {
   return json;
 };
 
-async function decideNextAction(generated: string): Promise<[string, string]> {
-  const toolInfo: ToolInfo = parse(generated);
-  const { tool, toolInput } = toolInfo;
-  return [tool, toolInput];
-}
-
-function parse(generated: string): ToolInfo {
-  if (generated.includes(FINAL_ANSWER_TOKEN)) {
-    const finalAnswer: string = generated.split(FINAL_ANSWER_TOKEN)[1].trim();
-    return { tool: "Final Answer", toolInput: finalAnswer };
-  }
-
-  let tool: string = "";
-  let toolInput: string = "";
-
-  const toolRegex: RegExp =
-    /Action: [\[]?(.*?)[\]]?[\n]*Action Input:[\s]*(.*)/s;
-  const toolMatch: RegExpExecArray | null = toolRegex.exec(generated);
-  if (!toolMatch) {
-    console.log(`Output of LLM is not parsable for next tool use`);
-  } else {
-    tool = toolMatch[1].trim();
-    toolInput = toolMatch[2].trim().replace(/"/g, "");
-  }
-
-  const planRegex: RegExp = /Plan: [\[]?(.*?)[\]]?[\n]/s;
-  const planMatch: RegExpExecArray | null = planRegex.exec(generated);
-  console.log("planMatch", planMatch);
-
-  return { tool, toolInput };
-}
-
-export async function run(
+export async function startNewObjective(
   userId: string,
   sessionId: string,
   tools: ToolInterface[],
   inputQuestion: string,
   maxLoops: number
 ): Promise<RunResponse | undefined> {
-  const stopPattern: string[] = [
-    `\n${OBSERVATION_TOKEN}`,
-    `\n\t${OBSERVATION_TOKEN}`,
-  ];
-
   const previousResponses: string[] = [];
   let numLoops = 0;
   const toolDescription = getToolDescription(tools);
   const toolNames = getToolNames(tools);
   const toolByNames = getToolByNames(tools);
-  const promptTemplate = scratchTemplate;
 
   const prompt = promptTemplate
     .replace("{today}", new Date().toISOString().slice(0, 10))
@@ -141,6 +104,8 @@ export async function run(
     .replace("{tool_names}", toolNames)
     .replace("{question}", inputQuestion)
     .replace("{previous_responses}", "{previous_responses}");
+
+  console.log(prompt.replace("{previous_responses}", ""));
 
   let runMetadata;
   while (numLoops < maxLoops) {
@@ -152,7 +117,7 @@ export async function run(
     );
 
     // ***** This is the start of the chat agent *****
-    const generated: string = await chatAgent(currentPrompt, stopPattern);
+    const generated: string = await chatAgent(currentPrompt);
 
     const json = await parseGeneratedToJson(generated);
     if (json) {

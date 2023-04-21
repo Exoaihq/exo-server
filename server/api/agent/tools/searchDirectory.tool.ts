@@ -1,6 +1,7 @@
 import { codeDirectorySearch } from "../../codeDirectory/codeDirectory.repository";
 import { findOrUpdateAccount } from "../../supabase/account.service";
 import { ToolInterface } from "../agent.service";
+import { searchDirectoryPrompt } from "./searchDirectory.prompt";
 
 export function searchDirectoryTool(): ToolInterface {
   async function handleSearchDirectory(
@@ -42,5 +43,6 @@ export function searchDirectoryTool(): ToolInterface {
     use: async (userId, sessionId, query) =>
       await handleSearchDirectory(userId, sessionId, query),
     arguments: ["search query"],
+    promptTemplate: searchDirectoryPrompt,
   };
 }

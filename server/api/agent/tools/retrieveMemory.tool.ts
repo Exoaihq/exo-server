@@ -10,18 +10,18 @@ export function retrieveMemoryTool(): ToolInterface {
     const memory = await getMemoriesById(id);
 
     return {
-      output: `Here is the memory you requested: ${
-        memory?.memory_text ? memory.memory_text : "No memory found"
+      output: `Here is the text you requested: ${
+        memory?.memory_text ? memory.memory_text : "No text found"
       }`,
     };
   }
 
   return {
-    name: "retrieve memory",
+    name: "retrieve text",
     description:
-      "Retrieves a stored memory for longer tasks that require multiple steps or loops to complete.",
+      "Retrieves stored text for longer tasks that require multiple steps or loops to complete.",
     use: async (userId, sessionId, id) =>
       handleStoreMemory(userId, sessionId, id),
-    arguments: ["memory id"],
+    arguments: ["text id"],
   };
 }

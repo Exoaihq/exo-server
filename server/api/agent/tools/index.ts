@@ -1,11 +1,14 @@
 import { askUserAQuestionTool } from "./askUserAQuestion.tool";
+import { finalAnswerTool } from "./finalAnswerTool";
 import { findDirectoryTool } from "./findDirectory.tool";
 import { findFileTool } from "./findFile.tool";
 import { generateNewCodeTool } from "./generateNewCode.tool";
+import { generateTestCodeTool } from "./generateTestCode.tool";
 import { getExisitingCodeTool } from "./getCode.tool";
 import { retrieveMemoryTool } from "./retrieveMemory.tool";
 import { searchCodeTool } from "./searchCode.tool";
 import { searchDirectoryTool } from "./searchDirectory.tool";
+import { searchTestsTool } from "./searchTests.tool";
 import { setLocationToWriteCodeTool } from "./setLocationToWriteCode.tool";
 import { storeMemoryTool } from "./storeMemory.tool";
 import { writeCompletedCodeTool } from "./writeCompletedCode.tool";
@@ -35,4 +38,7 @@ export const allTools = [
   retrieveMemoryTool(),
   writeCompletedCodeTool(),
   getExisitingCodeTool(),
+  finalAnswerTool(),
+  generateTestCodeTool(),
+  searchTestsTool(),
 ];
