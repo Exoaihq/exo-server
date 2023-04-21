@@ -1,12 +1,7 @@
-import {
-  getAiCodeBySession,
-  updateAiWritenCode,
-} from "../../aiCreatedCode/aiCreatedCode.service";
-import {
-  findOrCreateSession,
-  updateSession,
-} from "../../supabase/supabase.service";
+import { findAndUpdateAiCodeBySession } from "../../aiCreatedCode/aiCreatedCode.service";
+import { updateSession } from "../../supabase/supabase.service";
 import { ToolInterface } from "../agent.service";
+import { setLocationPrompt } from "./setLocationToWriteCode.prompt";
 
 export function setLocationToWriteCodeTool(): ToolInterface {
   async function handleGetLocation(
@@ -14,26 +9,17 @@ export function setLocationToWriteCodeTool(): ToolInterface {
     sessionId: string,
     text: string
   ) {
-    const dbSession = await findOrCreateSession(userId, sessionId);
-
     await updateSession(userId, sessionId, {
       location: text,
     });
 
-    const aiGeneratedCode = await getAiCodeBySession(sessionId);
-
-    if (aiGeneratedCode.length > 0) {
-      // Get the most recent ai generated code that the location is not set to
-      const aiGeneratedCodeWithLocationNotSet = aiGeneratedCode.find(
-        (aiCreatedCode) => aiCreatedCode.location === null
-      );
-
-      if (aiGeneratedCodeWithLocationNotSet) {
-        await updateAiWritenCode(aiGeneratedCodeWithLocationNotSet.id, {
-          location: text,
-        });
-      }
-    }
+    await findAndUpdateAiCodeBySession(
+      sessionId,
+      {
+        location: text,
+      },
+      "location"
+    );
 
     return {
       output: `I've set the location to write code to ${text}`,
@@ -47,5 +33,7 @@ export function setLocationToWriteCodeTool(): ToolInterface {
     use: async (userId, sessionId, text) =>
       handleGetLocation(userId, sessionId, text),
     arguments: ["location"],
+    promptTemplate: setLocationPrompt,
   };
 }
+// The code for a function to calculate factorial has been written to /Users/kg/Repos/code-gen-app/src/utils/factorial.js.

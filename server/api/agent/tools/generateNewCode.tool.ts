@@ -1,9 +1,6 @@
 import { ChatUserType } from "../../../../types/chatMessage.type";
 import { EngineName } from "../../../../types/openAiTypes/openAiEngine";
-import {
-  getAiCodeBySession,
-  updateAiWritenCode,
-} from "../../aiCreatedCode/aiCreatedCode.service";
+import { findAndUpdateAiCodeBySession } from "../../aiCreatedCode/aiCreatedCode.service";
 import {
   createChatCompletion,
   createTextCompletion,
@@ -25,6 +22,7 @@ export function generateNewCodeTool(): ToolInterface {
       0.2
     );
 
+    console.log("isPromptToGenerateCode", isPromptToGenerateCode);
     if (
       isPromptToGenerateCode?.choices[0].text?.toLowerCase().includes("yes")
     ) {
@@ -37,6 +35,7 @@ export function generateNewCodeTool(): ToolInterface {
         ],
         EngineName.GPT4
       );
+
       const improvedCode = response?.choices[0].message?.content
         ? response?.choices[0].message?.content
         : null;
@@ -52,20 +51,13 @@ export function generateNewCodeTool(): ToolInterface {
         code_content: improvedCode,
       });
 
-      const aiGeneratedCode = await getAiCodeBySession(sessionId);
-
-      if (aiGeneratedCode.length > 0) {
-        // Get the most recent ai generated code that the location is not set to
-        const aiGeneratedCodeWithLocationNotSet = aiGeneratedCode.find(
-          (aiCreatedCode) => aiCreatedCode.location === null
-        );
-
-        if (aiGeneratedCodeWithLocationNotSet) {
-          await updateAiWritenCode(aiGeneratedCodeWithLocationNotSet.id, {
-            code: improvedCode,
-          });
-        }
-      }
+      await findAndUpdateAiCodeBySession(
+        sessionId,
+        {
+          code: improvedCode,
+        },
+        "code"
+      );
 
       return {
         output: `Here is the code that I generated for you: ${improvedCode}. I've added this code to the session. When you are ready to write this code to the file use the write file tool.`,
@@ -80,7 +72,7 @@ export function generateNewCodeTool(): ToolInterface {
   return {
     name: "generate new code",
     description:
-      "Generates new code based on the functionality requested and adds the code to the session so it can be written to location set by the 'set location' tool. Before using this tool you must set the location to write code to. Arguments should be as specific as possible.",
+      "Generates new code based on the functionality requested and adds the code to the session so it can be written to the location. Before using this tool you must set the location to write code. Arguments should be as specific as possible.",
     use: async (userId, sessionId, functionality) =>
       await handleWriteCode(userId, sessionId, functionality),
     arguments: ["code functionality"],

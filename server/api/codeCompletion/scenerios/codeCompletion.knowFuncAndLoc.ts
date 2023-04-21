@@ -4,7 +4,7 @@ import { Database } from "../../../../types/supabase";
 import {
   getAiCodeBySessionCodeNotNull,
   updateAiWritenCode,
-} from "../../aiCreatedCode/aiCreatedCode.service";
+} from "../../aiCreatedCode/aiCreatedCode.repository";
 import { createMessageWithUser } from "../../message/message.service";
 import { createChatCompletion } from "../../openAi/openai.service";
 import { getSessionById, updateSession } from "../../supabase/supabase.service";

@@ -1,3 +1,4 @@
+import { findAndUpdateAiCodeBySession } from "../../aiCreatedCode/aiCreatedCode.service";
 import { codeDirectorySearch } from "../../codeDirectory/codeDirectory.repository";
 import { findOrUpdateAccount } from "../../supabase/account.service";
 import { ToolInterface } from "../agent.service";
@@ -9,7 +10,6 @@ export function searchDirectoryTool(): ToolInterface {
     sessionId: string,
     query: string
   ) {
-    // const searchResult = await handleSearch(userId, sessionId);
     const account = await findOrUpdateAccount(userId);
     const response = await codeDirectorySearch(
       query,
@@ -36,6 +36,19 @@ export function searchDirectoryTool(): ToolInterface {
     };
   }
 
+  function outputFunction(output: string, sessionId: string) {
+    findAndUpdateAiCodeBySession(
+      sessionId,
+      {
+        location: output,
+        path: output,
+      },
+      "location"
+    );
+
+    return output;
+  }
+
   return {
     name: "search directory",
     description:
@@ -44,5 +57,6 @@ export function searchDirectoryTool(): ToolInterface {
       await handleSearchDirectory(userId, sessionId, query),
     arguments: ["search query"],
     promptTemplate: searchDirectoryPrompt,
+    outputFunction,
   };
 }

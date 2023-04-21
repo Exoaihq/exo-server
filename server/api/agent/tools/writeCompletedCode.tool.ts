@@ -1,6 +1,8 @@
-import { Database } from "../../../../types/supabase";
-import { createAiWritenCode } from "../../aiCreatedCode/aiCreatedCode.service";
-import { findOrCreateSession } from "../../supabase/supabase.service";
+import {
+  getAiCodeBySession,
+  updateAiWritenCode,
+} from "../../aiCreatedCode/aiCreatedCode.repository";
+import { resetSession } from "../../supabase/supabase.service";
 import { ToolInterface } from "../agent.service";
 
 export function writeCompletedCodeTool(): ToolInterface {
@@ -9,20 +11,35 @@ export function writeCompletedCodeTool(): ToolInterface {
     sessionId: string,
     text: string
   ) {
-    const dbSession = await findOrCreateSession(userId, sessionId);
-    const { location, code_content } = dbSession;
+    const aiGeneratedCode = await getAiCodeBySession(sessionId);
 
-    await createAiWritenCode({
-      session_id: sessionId,
-      code: code_content,
-      location,
-    });
+    if (aiGeneratedCode.length > 0) {
+      // Get the most recent ai generated code that the location is not set to
+      const findCodeReadyToWrite = aiGeneratedCode.find(
+        (aiCreatedCode) =>
+          aiCreatedCode.location !== null &&
+          aiCreatedCode.code !== null &&
+          aiCreatedCode.path !== null
+      );
 
-    // await resetSession(userId, sessionId);
-
-    return {
-      output: `I've written the code to the location you specified. I've also cleared the session of the code and location so you can write new code.`,
-    };
+      if (findCodeReadyToWrite) {
+        await updateAiWritenCode(findCodeReadyToWrite.id, {
+          completed_at: new Date().toISOString(),
+        });
+        await resetSession(userId, sessionId);
+        return {
+          output: `I've written the code to the location you specified. I've also cleared the session of the code and location so you can write new code.`,
+        };
+      } else {
+        return {
+          output: `I can't find any code to write. You must first generate the code and set the location to write the code to.`,
+        };
+      }
+    } else {
+      return {
+        output: `I can't find any code to write. You must first generate the code and set the location to write the code to.`,
+      };
+    }
   }
   return {
     name: "write code",

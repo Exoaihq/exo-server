@@ -9,7 +9,7 @@ import {
   createAiWritenCode,
   findAiCodeBySessionAndFileName,
   updateAiWritenCode,
-} from "../../aiCreatedCode/aiCreatedCode.service";
+} from "../../aiCreatedCode/aiCreatedCode.repository";
 import { createDirectoryIfNotExists } from "../../codeDirectory/codeDirectory.service";
 import { createMessageWithUser } from "../../message/message.service";
 import { createChatCompletion } from "../../openAi/openai.service";

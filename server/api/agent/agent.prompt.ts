@@ -1,4 +1,5 @@
 import { ChatMessage } from "../../../types/chatMessage.type";
+import { ToolInterface } from "./agent.service";
 
 export const getExpectedNextAction = (
   dbSession: { expected_next_action: any },
@@ -64,3 +65,68 @@ Please return the json object with the format above.
 
 `;
 };
+
+export const getToolInputPrompt = (
+  tool: ToolInterface,
+  task: string,
+  thought: string,
+  question: string
+) => `
+You need to get the argument for this tool: 
+ Name: ${tool.name}. Description: ${tool.description}.
+
+ Arguments are ${
+   tool.arguments && tool.arguments.length > 0
+     ? tool.arguments?.map((arg: any) => `<${arg}>`).join(", ")
+     : "none"
+ }.
+
+ Return just the argument that will be passed into this tool based on the context above and this string: 
+ 
+ ${task}
+
+ Context: 
+ Thought: ${thought}
+  Question: ${question}
+
+
+  <tool argument> = 
+
+`;
+
+export const getTaskInputTask = (plan: any[], thought: string) => `
+
+Here is your goal: ${thought}
+
+Here is a list of the tasks:
+${plan.map((task, index) => `${index + 1}. ${task}`).join("\n")}
+
+Some of the tasks will require inputs from other tasks.
+
+Return the tasks in the order they should be completed with the input task numbers in order to complete the goal. Some tasks will not require any inputs. 
+
+For example: 
+
+{
+  "task": {
+    inputTask: null,
+    reason: "this task does not require any inputs"
+  },
+  "task": {
+    inputTask: [1], 
+    reason: "this task requires the output of task 1 because it needs to know the value of x"
+  },
+  "task": {
+    inputTask: null,
+    reason: "this task does not require any inputs"
+  },
+  "task": {
+    inputTask: [1,2],
+    reason: "this task requires the output of task 1 and task 2 because it needs to know the value of x and y"
+  }
+}
+
+  Be sure to include all tasks and return parsable json.
+  Begin:
+
+`;

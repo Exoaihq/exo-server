@@ -1,5 +1,6 @@
 import { ChatUserType } from "../../../../types/chatMessage.type";
 import { EngineName } from "../../../../types/openAiTypes/openAiEngine";
+import { findAndUpdateAiCodeBySession } from "../../aiCreatedCode/aiCreatedCode.service";
 import {
   createChatCompletion,
   createTextCompletion,
@@ -24,22 +25,38 @@ export function generateTestCodeTool(): ToolInterface {
     if (
       isPromptToGenerateCode?.choices[0].text?.toLowerCase().includes("yes")
     ) {
+      const functionality = `Write a test for the following code: ${code}`;
       const response = await createChatCompletion(
         [
           {
             role: ChatUserType.user,
-            content: `Write a test for the following code: ${code}`,
+            content: functionality,
           },
         ],
         EngineName.GPT4
       );
-      const test = response?.choices[0].message?.content
-        ? response?.choices[0].message?.content
-        : "I'm sorry I couldn't generate code for you. Please try again later.";
+      const test =
+        response?.choices[0].message?.content &&
+        response?.choices[0].message?.content;
+
+      if (!test) {
+        return {
+          output: `I'm sorry I couldn't generate code for you. Please try again later.`,
+        };
+      }
 
       await updateSession(userId, sessionId, {
         code_content: test,
       });
+
+      await findAndUpdateAiCodeBySession(
+        sessionId,
+        {
+          code: test,
+          functionality,
+        },
+        "code"
+      );
 
       return {
         output: `Here is the test code that I generated for you: ${test}. I've added this code to the session. When you are ready to write this code to the file use the write file tool.`,

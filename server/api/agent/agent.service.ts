@@ -33,6 +33,7 @@ export interface ToolInterface {
   ) => Promise<ToolResponse>;
   arguments?: string[];
   promptTemplate?: string;
+  outputFunction?: (output: string, sessionId: string) => void;
 }
 
 export interface ToolInfo {
@@ -153,8 +154,6 @@ export async function startNewObjective(
           objective,
           plan,
           tools,
-          userId,
-          sessionId,
           thought,
           question
         );

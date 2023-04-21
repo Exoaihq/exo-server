@@ -9,6 +9,7 @@ import {
   createTaskWithObjective,
   updateTaskById,
 } from "../task/task.repository";
+import { getTaskInputTask, getToolInputPrompt } from "./agent.prompt";
 import {
   FINAL_ANSWER_TOKEN,
   getToolByNames,
@@ -19,24 +20,30 @@ import {
   ToolInfo,
   ToolInterface,
 } from "./agent.service";
-import { allTools } from "./tools";
+import {
+  allTools,
+  searchCodeTool,
+  searchDirectoryTool,
+  setLocationToWriteCodeTool,
+} from "./tools";
 
 export const addPlansTaskListToDb = async (
   objective: Database["public"]["Tables"]["objective"]["Row"],
   plan: string[],
   tools: ToolInterface[],
-  userId: string,
-  sessionId: string,
   thought: string,
   question: string
 ) => {
   let planOutput: string[] = [];
 
   for (let task of plan) {
+    // const taskInputTask = await getCompletionDefaultStopToken(
+    //   getTaskInputTask(plan, thought)
+    // );
+
     const tool = tools.find((tool) => task.includes(tool.name));
     if (tool) {
-      // Execute the tool.
-
+      // Create the task even if the tool doesn't have arguments
       if (tool.arguments && tool.arguments.length === 0) {
         await createTaskWithObjective(
           {
@@ -45,37 +52,16 @@ export const addPlansTaskListToDb = async (
           },
           objective.id
         );
-        // const { output, metadata } = await tool.use(userId, sessionId, task);
-        // console.log("Tool output", output);
-        // planOutput.push(output);
+
         continue;
       }
 
-      const getToolInputPrompt = `
-      You need to get the argument for this tool: 
-       Name: ${tool.name}. Description: ${tool.description}.
+      const toolInputResponse = await getCompletionDefaultStopToken(
+        getToolInputPrompt(tool, task, thought, question)
+      );
 
-       Arguments are ${
-         tool.arguments && tool.arguments.length > 0
-           ? tool.arguments?.map((arg) => `<${arg}>`).join(", ")
-           : "none"
-       }.
-
-       Return just the argument that will be passed into this tool based on the context above and this string: 
-       
-       ${task}
-
-       Context: 
-       Thought: ${thought}
-        Question: ${question}
-
-        <tool argument> = 
-
-      `;
-
-      const res = await getCompletionDefaultStopToken(getToolInputPrompt);
-
-      const toolInput = res.data.choices[0].text;
+      const toolInput = toolInputResponse.data.choices[0].text;
+      console.log("Tool input", toolInput);
 
       if (!toolInput) {
         console.log("No tool input");
@@ -89,9 +75,6 @@ export const addPlansTaskListToDb = async (
           },
           objective.id
         );
-        // const { output, metadata } = await tool.use(userId, sessionId, toolInput);
-        // console.log("Tool output", output);
-        // planOutput.push(output);
         continue;
       }
     }
@@ -103,6 +86,10 @@ export const executeTask = async (
   task: Database["public"]["Tables"]["task"]["Row"]
 ) => {
   const { objective_id, tool_input, tool_name, description } = task;
+
+  updateTaskById(task.id, {
+    started_eval_at: new Date().toISOString(),
+  });
 
   if (!objective_id || !tool_input || !tool_name || !description) {
     console.log("Missing some data. Moving on");
@@ -139,6 +126,16 @@ export const executeTask = async (
     );
 
     if (previousTasks.length > 0) {
+      // All previous task must be completed before this task can be executed.
+      const allPreviousTasksCompleted = previousTasks.every(
+        (task: { completed_at: any }) => task.completed_at
+      );
+
+      if (!allPreviousTasksCompleted) {
+        console.log(task.tool_name, "Previous tasks not completed");
+        return "Previous tasks not completed";
+      }
+
       previouslyCompletedTasksContext = previousTasks
         .map((task: { description: any; tool_name: any; tool_output: any }) => {
           return `You previously ${task.description} with the tool ${task.tool_name} and the output was ${task.tool_output}}`;
@@ -161,7 +158,15 @@ export const executeTask = async (
     return;
   }
 
-  const tools = getToolByNames(allTools);
+  // The set location tool can get confused by all the tools. We may need to create a function for this if other tools have this issue.
+  const tools =
+    tool_name === "set location"
+      ? getToolByNames([
+          setLocationToWriteCodeTool(),
+          searchDirectoryTool(),
+          searchCodeTool(),
+        ])
+      : getToolByNames(allTools);
 
   // This runs the tool once and gets the output that will passed to the task loop for further processing.
   const { output, metadata } = await tools[tool_name].use(
@@ -170,29 +175,38 @@ export const executeTask = async (
     tool_input
   );
 
-  if (output) {
-    const taskOutput = await runTaskLoop(
-      session.user_id,
-      session.id,
-      description,
-      20,
-      tools[tool_name].promptTemplate || "",
-      output,
-      previouslyCompletedTasksContext || ""
-    );
+  const toolToUse = tools[tool_name];
 
-    if (taskOutput) {
-      await updateTaskById(task.id, {
-        tool_output: taskOutput,
-        completed_at: new Date().toISOString(),
-      });
-    } else {
-      // Tasks that don't have a tool output are considered completed but the output is not saved.
-      await updateTaskById(task.id, {
-        completed_at: new Date().toISOString(),
-      });
-    }
+  // if (output) {
+  const taskOutput = await runTaskLoop(
+    session.user_id,
+    session.id,
+    description,
+    5,
+    toolToUse.promptTemplate || "",
+    previouslyCompletedTasksContext || "",
+    output || "",
+    tool_name === "search directory" ? "Observation:" : null
+  );
+
+  if (taskOutput) {
+    // function to update other tasks in the objective with the output of this task
+
+    await updateTaskById(task.id, {
+      tool_output: taskOutput,
+      completed_at: new Date().toISOString(),
+    });
+
+    // Each task should have an output function that is called when the task is completed and should do things like update the sessions and the ai generated code.
+    toolToUse.outputFunction &&
+      toolToUse.outputFunction(taskOutput, session_id);
+  } else {
+    // Tasks that don't have a tool output are considered completed but the output is not saved. These tasks are incomplete
+    await updateTaskById(task.id, {
+      completed_at: new Date().toISOString(),
+    });
   }
+  // }
 };
 
 function parse(generated: string): ToolInfo {
@@ -228,10 +242,11 @@ export async function runTaskLoop(
   inputQuestion: string,
   maxLoops: number,
   promptTemplate: string,
-  initialReponse: string,
-  context: string
+  context: string,
+  output: string = "",
+  stopToken: string | null = null
 ): Promise<string | undefined> {
-  const previousResponses: string[] = [initialReponse];
+  const previousResponses: string[] = [output];
   let numLoops = 0;
   const tools = allTools;
   const toolDescription = getToolDescription(tools);
@@ -245,7 +260,7 @@ export async function runTaskLoop(
     .replace("{question}", inputQuestion)
     .replace("{previous_responses}", "{previous_responses}")
     .replace("{context}", context)
-    .replace("{response}", initialReponse);
+    .replace("{response}", output);
 
   let runMetadata;
   while (numLoops < maxLoops) {
@@ -258,7 +273,7 @@ export async function runTaskLoop(
 
     console.log("currentPrompt>>>>>>>>>>>>", currentPrompt);
     // ***** This is the start of the chat agent *****
-    const generated: string = await chatAgent(currentPrompt);
+    const generated: string = await chatAgent(currentPrompt, stopToken);
 
     const [tool, tool_input] = await decideNextAction(generated);
     console.log("generated: ", generated);
@@ -289,3 +304,5 @@ export async function runTaskLoop(
     }
   }
 }
+// The "set location" tool set the location to the correct value and the generated code was successfully written to the "utils" directory.
+// "utils directory in the code-gen-server repo"

@@ -6,7 +6,7 @@ import {
 import {
   getAiCodeBySession,
   updateAiWritenCode,
-} from "./aiCreatedCode.service";
+} from "./aiCreatedCode.repository";
 
 export const getAiCompletedCode = async (req: Request, res: Response) => {
   try {

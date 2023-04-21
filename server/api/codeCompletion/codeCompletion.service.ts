@@ -8,7 +8,7 @@ import { parseFile } from "../../../utils/treeSitter";
 import {
   createAiWritenCode,
   findOrCreateAiWritenCode,
-} from "../aiCreatedCode/aiCreatedCode.service";
+} from "../aiCreatedCode/aiCreatedCode.repository";
 import {
   createMessagesWithUser,
   createMessageWithUser,

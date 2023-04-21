@@ -1,12 +1,14 @@
 import { Request, Response } from "express";
 import { CodeCompletionRequest } from "../codeCompletion/codeCompletion.types";
 import { getOnlyRoleAndContentMessagesByUserAndSession } from "../message/message.service";
+import { getObjectiveById } from "../objective/objective.service";
+import { getCompletionDefaultStopToken } from "../openAi/openai.service";
 import { findOrUpdateAccount } from "../supabase/account.service";
 import {
   checkSessionOrThrow,
   findOrCreateSession,
 } from "../supabase/supabase.service";
-import { getExpectedNextAction } from "./agent.prompt";
+import { getExpectedNextAction, getTaskInputTask } from "./agent.prompt";
 import { expandContext, startNewObjective } from "./agent.service";
 import {
   allTools,
@@ -101,30 +103,33 @@ export const testAgent = async (req: Request, res: Response) => {
     const { user } = session.data;
 
     const { sessionId } = req.body as CodeCompletionRequest;
-    const tools = [
-      searchCodeTool(),
-      setLocationToWriteCodeTool(),
-      storeMemoryTool(),
-      writeCompletedCodeTool(),
-      findFileTool(),
-      askUserAQuestionTool(),
-      searchDirectoryTool(),
-      findDirectoryTool(),
-      generateNewCodeTool(),
-      retrieveMemoryTool(),
-    ];
-    const plan = [
-      'Use the "set location" tool to set the location to the code-gen-server directory.',
-      'Use the "generate new code" tool to generate js code to loop over a string and return the number of letters using javascript.',
-      'Use the "write code" tool to write the generated code to the code-gen-server directory.',
-      "Test the new controller to ensure it handles updating long term memory correctly.",
-    ];
 
-    const thought =
-      "The user wants to add a new code to the code-gen-server directory that counts the number of letters in a string.";
-    const question =
-      "I need to generate js code for a new controller that handles counting the number of letters in a string using javascript.";
-    // const act = actOnPlan(plan, tools, userId sessionId, thought, question);
+    // const objective = await getObjectiveById(
+    //   "1149bce0-2a76-4ad7-8339-2c6b80339077"
+    // );
+
+    // if (!objective || !objective.task || !objective.thought) {
+    //   return res.status(400).json({ message: "Objective not found" });
+    // }
+
+    // const plan = objective.task.map(
+    //   (task: { description: any }) => task.description
+    // );
+
+    // console.log("Plan", plan);
+    // const input = getTaskInputTask(plan, objective.thought);
+
+    // console.log(input);
+
+    // const taskInputTask = await getCompletionDefaultStopToken(input);
+
+    // console.log("Task input", taskInputTask.data.choices[0].text);
+
+    findFileTool().use(
+      user.id,
+      sessionId,
+      "utils" + "formatToHumanReadableDate"
+    );
 
     return res.status(200).json({
       data: "done",

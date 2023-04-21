@@ -28,7 +28,7 @@ export * from "./searchCode.tool";
 
 export const allTools = [
   searchCodeTool(),
-  setLocationToWriteCodeTool(),
+  // setLocationToWriteCodeTool(),
   storeMemoryTool(),
   searchDirectoryTool(),
   findFileTool(),

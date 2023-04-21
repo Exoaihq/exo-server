@@ -29,7 +29,10 @@ const configuration = new Configuration({
 
 const openai = new OpenAIApi(configuration);
 
-export async function chatAgent(prompt: string) {
+export async function chatAgent(
+  prompt: string,
+  stopToken: string | null = null
+) {
   const res = await openai.createChatCompletion({
     messages: [
       {
@@ -40,6 +43,31 @@ export async function chatAgent(prompt: string) {
     max_tokens: 2048,
     temperature: 0.2,
     model: "gpt-3.5-turbo",
+    stop: stopToken ? [stopToken] : null,
+  });
+
+  if (res.data.error) {
+    console.log(">>>>>>>>>>>>>>error", res.data.error);
+  }
+
+  return res.data.choices[0].message.content;
+}
+
+export async function chatAgentWithStopToken(
+  prompt: string,
+  stopToken: string
+) {
+  const res = await openai.createChatCompletion({
+    messages: [
+      {
+        content: prompt,
+        role: ChatUserType.user,
+      },
+    ],
+    max_tokens: 2048,
+    temperature: 0.2,
+    model: "gpt-3.5-turbo",
+    stop: [stopToken],
   });
 
   if (res.data.error) {
@@ -324,3 +352,6 @@ export async function createChatCompletion(
     throw error;
   }
 }
+// Can you find the utils directory in the /Users/kg/Repos/code-gen-server repo and create a new ts file in that directory that exports a function called isArrayOrObject that takes in a value and returns true if the value is an array or object and false if it is not.
+
+// /Users/kg/Repos/code-gen-server/utils/config.js

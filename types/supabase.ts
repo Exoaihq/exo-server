@@ -313,7 +313,7 @@ export interface Database {
       };
       objective: {
         Row: {
-          [x: string]: any;
+          task: any;
           created_at: string | null;
           criticism: string | null;
           id: string;
@@ -629,6 +629,7 @@ export interface Database {
           description: string | null;
           id: string;
           objective_id: string | null;
+          started_eval_at: string | null;
           tool_input: string | null;
           tool_name: string | null;
           tool_output: string | null;
@@ -639,6 +640,7 @@ export interface Database {
           description?: string | null;
           id?: string;
           objective_id?: string | null;
+          started_eval_at?: string | null;
           tool_input?: string | null;
           tool_name?: string | null;
           tool_output?: string | null;
@@ -649,6 +651,7 @@ export interface Database {
           description?: string | null;
           id?: string;
           objective_id?: string | null;
+          started_eval_at?: string | null;
           tool_input?: string | null;
           tool_name?: string | null;
           tool_output?: string | null;
