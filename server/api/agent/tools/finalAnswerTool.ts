@@ -1,4 +1,5 @@
 import { ToolInterface } from "../agent.service";
+import { finalAnswerPrompt } from "./finalAnswer.prompt";
 
 export function finalAnswerTool(): ToolInterface {
   async function handleFinalAnser(
@@ -11,11 +12,16 @@ export function finalAnswerTool(): ToolInterface {
       metadata: "",
     };
   }
+
+  const name = "final answer";
+
   return {
-    name: "final answer",
+    name,
     description: "Tool to run when you have the final answer.",
     use: async (userId, sessionId, text) =>
       await handleFinalAnser(userId, sessionId, text),
     arguments: ["final answer"],
+    promptTemplate: finalAnswerPrompt,
+    availableTools: [name],
   };
 }

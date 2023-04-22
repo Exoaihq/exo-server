@@ -2,6 +2,8 @@ import { findAndUpdateAiCodeBySession } from "../../aiCreatedCode/aiCreatedCode.
 import { codeDirectorySearch } from "../../codeDirectory/codeDirectory.repository";
 import { findOrUpdateAccount } from "../../supabase/account.service";
 import { ToolInterface } from "../agent.service";
+import { findDirectoryTool } from "./findDirectory.tool";
+import { findFileTool } from "./findFile.tool";
 import { searchDirectoryPrompt } from "./searchDirectory.prompt";
 
 export function searchDirectoryTool(): ToolInterface {
@@ -49,14 +51,17 @@ export function searchDirectoryTool(): ToolInterface {
     return output;
   }
 
+  const name = "search directory";
+
   return {
-    name: "search directory",
+    name,
     description:
-      "Searches the users directories for the given directory name or query and return up to ten directories. This does not return the contents of the directory.",
+      "Searches or finds the users directories for the given directory name or query and return up to ten directories. This does not return the contents of the directory.",
     use: async (userId, sessionId, query) =>
       await handleSearchDirectory(userId, sessionId, query),
     arguments: ["search query"],
     promptTemplate: searchDirectoryPrompt,
+    availableTools: [name, findFileTool().name, findDirectoryTool().name],
     outputFunction,
   };
 }

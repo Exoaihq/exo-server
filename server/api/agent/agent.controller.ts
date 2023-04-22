@@ -1,15 +1,30 @@
 import { Request, Response } from "express";
+import { ChatUserType } from "../../../types/chatMessage.type";
 import { CodeCompletionRequest } from "../codeCompletion/codeCompletion.types";
 import { getOnlyRoleAndContentMessagesByUserAndSession } from "../message/message.service";
 import { getObjectiveById } from "../objective/objective.service";
-import { getCompletionDefaultStopToken } from "../openAi/openai.service";
+import {
+  createChatCompletion,
+  createTextCompletion,
+  getCompletionDefaultStopToken,
+} from "../openAi/openai.service";
+import { handleSearch } from "../search/search.service";
 import { findOrUpdateAccount } from "../supabase/account.service";
 import {
   checkSessionOrThrow,
   findOrCreateSession,
 } from "../supabase/supabase.service";
-import { getExpectedNextAction, getTaskInputTask } from "./agent.prompt";
-import { expandContext, startNewObjective } from "./agent.service";
+import {
+  getExpectedNextAction,
+  getQuickAction,
+  getTaskInputTask,
+} from "./agent.prompt";
+import {
+  expandContext,
+  getToolByNames,
+  getToolNames,
+  startNewObjective,
+} from "./agent.service";
 import {
   allTools,
   askUserAQuestionTool,
@@ -23,6 +38,7 @@ import {
   storeMemoryTool,
   writeCompletedCodeTool,
 } from "./tools";
+import { writeCodeToScratchPadTool } from "./tools/writeCodeToScarchPad.tool";
 
 export const useAgent = async (req: Request, res: Response) => {
   try {
@@ -53,21 +69,56 @@ export const useAgent = async (req: Request, res: Response) => {
       });
     }
 
-    const expandedContext = await expandContext(
-      sessionMessages,
-      account?.id,
-      user.id,
-      sessionId
-    );
-    console.log("Context", expandedContext);
+    // For specific actions that don't require an agent
 
-    const agentResponse = await startNewObjective(
-      user.id,
-      sessionId,
-      allTools,
-      getExpectedNextAction(dbSession, sessionMessages, expandedContext),
-      20
-    );
+    const lastMessage = sessionMessages[sessionMessages.length - 1].content;
+
+    const quickActions = [
+      searchDirectoryTool(),
+      searchCodeTool(),
+      writeCodeToScratchPadTool(),
+    ];
+
+    const quickActionPrompt = getQuickAction(lastMessage, quickActions);
+
+    console.log("Quick action prompt", quickActionPrompt);
+
+    const isQuicActionRes = await createChatCompletion([
+      { content: quickActionPrompt, role: ChatUserType.user },
+    ]);
+
+    const isQuickAction =
+      isQuicActionRes.choices[0].message.content.toLowerCase();
+
+    console.log("Is quick action", isQuickAction);
+
+    if (isQuickAction.includes("null")) {
+      const expandedContext = await expandContext(
+        sessionMessages,
+        account?.id,
+        user.id,
+        sessionId
+      );
+      console.log("Context", expandedContext);
+      await startNewObjective(
+        user.id,
+        sessionId,
+        allTools,
+        getExpectedNextAction(dbSession, sessionMessages, expandedContext),
+        20
+      );
+    } else {
+      const tool = quickActions.find((tool) =>
+        isQuickAction.includes(tool.name)
+      );
+
+      if (tool?.name === "search code" || tool?.name === "search directory") {
+        // Consider creating separate tools for search code and search directory. This method only searches code
+        return res.status(200).json(await handleSearch(user.id, sessionId));
+      } else {
+        tool?.use(user.id, sessionId, lastMessage);
+      }
+    }
 
     return res.status(200).json({
       data: {

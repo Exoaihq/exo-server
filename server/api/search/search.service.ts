@@ -19,15 +19,15 @@ export async function handleSearch(userId: string, sessionId: string) {
 
   const account = await findOrUpdateAccount(userId);
 
-  // const response = await findCodeByQuery(
-  //   userMessages[userMessages.length - 1].content,
-  //   account?.id ? account.id : ""
-  // );
-
-  const response = await codeDirectorySearch(
+  const response = await findCodeByQuery(
     userMessages[userMessages.length - 1].content,
     account?.id ? account.id : ""
   );
+
+  // const response = await codeDirectorySearch(
+  //   userMessages[userMessages.length - 1].content,
+  //   account?.id ? account.id : ""
+  // );
 
   const templateResponse = {
     data: {

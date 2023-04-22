@@ -19,12 +19,16 @@ export function storeMemoryTool(): ToolInterface {
     };
   }
 
+  const name = "store text";
+
   return {
-    name: "store text",
+    name,
     description:
       "Stores text for longer tasks that require multiple steps or loops to complete.",
     use: async (userId, sessionId, memory) =>
       handleStoreMemory(userId, sessionId, memory),
     arguments: ["memory text"],
+    promptTemplate: "",
+    availableTools: [name],
   };
 }

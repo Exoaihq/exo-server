@@ -4,6 +4,7 @@
 import { ChatUserType } from "../../../../types/chatMessage.type";
 import { createMessageWithUser } from "../../message/message.service";
 import { ToolInterface } from "../agent.service";
+import { askUserAQuestionPrompt } from "./askUserAQuestion.prompt";
 
 export function askUserAQuestionTool(): ToolInterface {
   async function handleSearchDirectory(
@@ -27,11 +28,15 @@ export function askUserAQuestionTool(): ToolInterface {
     };
   }
 
+  const name = "ask user";
+
   return {
-    name: "ask user",
+    name,
     description: "Asks the user a question and waits for a response",
     use: async (userId, sessionId, question) =>
       await handleSearchDirectory(userId, sessionId, question),
     arguments: ["question"],
+    promptTemplate: askUserAQuestionPrompt,
+    availableTools: [name],
   };
 }

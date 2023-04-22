@@ -1,7 +1,10 @@
 import { findCodeByQuery } from "../../search/search.service";
 import { findOrUpdateAccount } from "../../supabase/account.service";
 import { ToolInterface } from "../agent.service";
+import { findDirectoryTool } from "./findDirectory.tool";
 import { findFilePrompt } from "./findFile.prompt";
+import { searchCodeTool } from "./searchCode.tool";
+import { searchDirectoryTool } from "./searchDirectory.tool";
 
 export function findFileTool(): ToolInterface {
   async function handleSearchCode(
@@ -21,14 +24,21 @@ export function findFileTool(): ToolInterface {
       metadata: response,
     };
   }
+  const name = "find one file";
 
   return {
-    name: "find one file",
+    name,
     description:
       "Finds the users code file for the given name or query and returns one code file result",
     use: async (userId, sessionId, text) =>
       await handleSearchCode(userId, sessionId, text),
     arguments: ["query"],
     promptTemplate: findFilePrompt,
+    availableTools: [
+      name,
+      "search code",
+      "find one directory",
+      "search directory",
+    ],
   };
 }

@@ -1,6 +1,8 @@
+import { searchCode } from "../../search/search.controller";
 import { findCodeByQuery } from "../../search/search.service";
 import { findOrUpdateAccount } from "../../supabase/account.service";
 import { ToolInterface } from "../agent.service";
+import { searchCodeTool } from "./searchCode.tool";
 
 export function searchTestsTool(): ToolInterface {
   async function handleSearchCode(
@@ -22,12 +24,16 @@ export function searchTestsTool(): ToolInterface {
     };
   }
 
+  const name = "search for tests";
+
   return {
-    name: "search for tests",
+    name,
     description:
       "Searches for test files in a given directory. Returns all the test files in the directory and subdirectories.",
     use: async (userId, sessionId, text) =>
       await handleSearchCode(userId, sessionId, text),
     arguments: ["directory path"],
+    promptTemplate: "",
+    availableTools: [name, searchCodeTool().name],
   };
 }

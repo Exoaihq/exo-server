@@ -8,10 +8,8 @@ import {
 import { updateSession } from "../../supabase/supabase.service";
 import { ToolInterface } from "../agent.service";
 import { generateNewCodePrompt } from "./generateNewCode.prompt";
-import { searchCodeTool } from "./searchCode.tool";
-import { setLocationToWriteCodeTool } from "./setLocationToWriteCode.tool";
 
-export function generateNewCodeTool(): ToolInterface {
+export function writeCodeToScratchPadTool(): ToolInterface {
   async function handleWriteCode(
     userId: string,
     sessionId: string,
@@ -20,7 +18,13 @@ export function generateNewCodeTool(): ToolInterface {
     // This is an expensive and time consuming operation. We should only do this when we are sure that the functionality is valid.
 
     const isPromptToGenerateCode = await createTextCompletion(
-      `Is this an example of a prompt to generate code? ${functionality}. Return yes or no`,
+      `Is this an example of a prompt to generate code? 
+      
+      Prompt: ${functionality}.
+
+      Is that prompt an example of a prompt to generate code?
+      
+      Return yes or no`,
       0.2
     );
 
@@ -32,7 +36,7 @@ export function generateNewCodeTool(): ToolInterface {
         [
           {
             role: ChatUserType.user,
-            content: `Wrtie the following code: ${functionality}`,
+            content: functionality,
           },
         ],
         EngineName.GPT4
@@ -57,6 +61,7 @@ export function generateNewCodeTool(): ToolInterface {
         sessionId,
         {
           code: improvedCode,
+          location: "scratchPad",
         },
         "code"
       );
@@ -71,20 +76,16 @@ export function generateNewCodeTool(): ToolInterface {
     }
   }
 
-  const name = "generate new code";
+  const name = "write code to scratch pad";
 
   return {
     name,
     description:
-      "Generates new code based on the functionality requested and adds the code to the session so it can be written to the location. Before using this tool you must set the location to write code. Arguments should be as specific as possible.",
+      "Generates new code based on the functionality requested and adds the code to the scratch pad. Arguments should be as specific as possible, outlining what the code should do.",
     use: async (userId, sessionId, functionality) =>
       await handleWriteCode(userId, sessionId, functionality),
     arguments: ["code functionality"],
     promptTemplate: generateNewCodePrompt,
-    availableTools: [
-      name,
-      searchCodeTool().name,
-      setLocationToWriteCodeTool().name,
-    ],
+    availableTools: [name],
   };
 }

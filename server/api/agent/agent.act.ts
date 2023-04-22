@@ -157,6 +157,7 @@ export const executeTask = async (
     console.log("No session found");
     return;
   }
+  const allToolsAvailable = getToolByNames(allTools);
 
   // The set location tool can get confused by all the tools. We may need to create a function for this if other tools have this issue.
   const tools =
@@ -166,16 +167,16 @@ export const executeTask = async (
           searchDirectoryTool(),
           searchCodeTool(),
         ])
-      : getToolByNames(allTools);
+      : allToolsAvailable;
 
   // This runs the tool once and gets the output that will passed to the task loop for further processing.
-  const { output, metadata } = await tools[tool_name].use(
+  const { output, metadata } = await allToolsAvailable[tool_name].use(
     session.user_id,
     session_id,
     tool_input
   );
 
-  const toolToUse = tools[tool_name];
+  const toolToUse = allToolsAvailable[tool_name];
 
   // if (output) {
   const taskOutput = await runTaskLoop(
@@ -183,7 +184,7 @@ export const executeTask = async (
     session.id,
     description,
     5,
-    toolToUse.promptTemplate || "",
+    toolToUse,
     previouslyCompletedTasksContext || "",
     output || "",
     tool_name === "search directory" ? "Observation:" : null
@@ -241,11 +242,13 @@ export async function runTaskLoop(
   sessionId: string,
   inputQuestion: string,
   maxLoops: number,
-  promptTemplate: string,
+  tool: ToolInterface,
   context: string,
   output: string = "",
   stopToken: string | null = null
 ): Promise<string | undefined> {
+  const { promptTemplate } = tool;
+
   const previousResponses: string[] = [output];
   let numLoops = 0;
   const tools = allTools;

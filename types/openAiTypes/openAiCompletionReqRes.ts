@@ -49,7 +49,7 @@ export interface CompletionRequest extends BaseModel {
   user?: string;
 }
 export interface CompletionChoice {
-  text?: string;
+  text: string;
   index: number;
   logprobs: null | {
     tokens: string[];

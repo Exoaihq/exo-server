@@ -9,7 +9,7 @@ export async function findAndExecuteTasks() {
 
   // Execute each task
   for (const task of tasks) {
-    if (task.objective_id === "0552e20a-76b2-4b9f-9514-88a90bb78bbd") {
+    if (task.id === "d63b2cd3-ae2e-4640-9fe2-7fd88b99f7e1") {
       executeTask(task);
     }
   }

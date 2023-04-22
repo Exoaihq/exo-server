@@ -16,12 +16,16 @@ export function retrieveMemoryTool(): ToolInterface {
     };
   }
 
+  const name = "retrieve text";
+
   return {
-    name: "retrieve text",
+    name,
     description:
       "Retrieves stored text for longer tasks that require multiple steps or loops to complete.",
     use: async (userId, sessionId, id) =>
       handleStoreMemory(userId, sessionId, id),
     arguments: ["text id"],
+    promptTemplate: "",
+    availableTools: [name],
   };
 }

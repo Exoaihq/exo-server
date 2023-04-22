@@ -41,12 +41,17 @@ export function writeCompletedCodeTool(): ToolInterface {
       };
     }
   }
+
+  const name = "write code";
+
   return {
-    name: "write code",
+    name,
     description:
       "Writes the given code functionality to the the location specified by the `set location` tool. Before using this tool you must set the location to write code to and generate the code.",
     use: async (userId, sessionId, text) =>
       await handleWriteCode(userId, sessionId, text),
     arguments: [],
+    promptTemplate: "",
+    availableTools: [name],
   };
 }

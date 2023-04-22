@@ -31,8 +31,9 @@ export interface ToolInterface {
     sessionId: string,
     input: string
   ) => Promise<ToolResponse>;
-  arguments?: string[];
-  promptTemplate?: string;
+  arguments: string[];
+  promptTemplate: string;
+  availableTools: string[];
   outputFunction?: (output: string, sessionId: string) => void;
 }
 
@@ -127,7 +128,7 @@ export async function startNewObjective(
       createMessageWithUser(
         userId,
         {
-          content: `Here is the question I'm trying to answer: ${question}. And my plan is: ${plan
+          content: `Here is the question I'm trying to answer: ${question} And my plan is: ${plan
             .map((item: string, index: any) => `${item}`)
             .join("\n")}`,
           role: ChatUserType.assistant,

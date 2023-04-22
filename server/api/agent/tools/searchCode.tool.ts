@@ -1,6 +1,8 @@
 import { findCodeByQuery } from "../../search/search.service";
 import { findOrUpdateAccount } from "../../supabase/account.service";
 import { ToolInterface } from "../agent.service";
+import { searchCodePrompt } from "./searchCode.prompt";
+import { searchDirectoryTool } from "./searchDirectory.tool";
 
 export function searchCodeTool(): ToolInterface {
   async function handleSearchCode(
@@ -22,12 +24,16 @@ export function searchCodeTool(): ToolInterface {
     };
   }
 
+  const name = "search code";
+
   return {
-    name: "search code",
+    name,
     description:
-      "Searches the users code for the given query and return up to ten results for code locations.",
+      "Searches or finds the users code for the given query and return up to ten results for code locations.",
     use: async (userId, sessionId, text) =>
       await handleSearchCode(userId, sessionId, text),
     arguments: ["search query"],
+    promptTemplate: searchCodePrompt(name),
+    availableTools: [name, "search directory"],
   };
 }

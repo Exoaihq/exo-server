@@ -1,6 +1,7 @@
 import { findCodeByQuery } from "../../search/search.service";
 import { findOrUpdateAccount } from "../../supabase/account.service";
 import { ToolInterface } from "../agent.service";
+import { getCodePrompt } from "./getCode.prompt";
 
 export function getExisitingCodeTool(): ToolInterface {
   async function handleSearchCode(
@@ -19,12 +20,16 @@ export function getExisitingCodeTool(): ToolInterface {
     };
   }
 
+  const name = "get existing code";
+
   return {
-    name: "get existing code",
+    name,
     description:
       "Finds the users code snippet given the code explaination. This is useful for when you want to reuse code you've already written or write tests for existing code.",
     use: async (userId, sessionId, text) =>
       await handleSearchCode(userId, sessionId, text),
     arguments: ["search query"],
+    promptTemplate: getCodePrompt(name),
+    availableTools: [name],
   };
 }

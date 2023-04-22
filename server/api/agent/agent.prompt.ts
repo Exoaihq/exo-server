@@ -1,5 +1,5 @@
 import { ChatMessage } from "../../../types/chatMessage.type";
-import { ToolInterface } from "./agent.service";
+import { getToolDescription, ToolInterface } from "./agent.service";
 
 export const getExpectedNextAction = (
   dbSession: { expected_next_action: any },
@@ -130,3 +130,41 @@ For example:
   Begin:
 
 `;
+
+const exampleQuickActions = `
+
+  Here are some examples of quick actions:
+  Can you find the file that renders the login component? Quick action: "search code"
+  Can you write a function that returns the value of x to the scratch pad? Quick action: "write code to scratch pad"
+  Can you find the code that handles user authentication? Quick action: "search code"
+  Can you find the repo that stores the find code controller? Quick action: "search directory"
+  Can you write a new find file prompt to the agent directory in the code-gen-server that is similar to the search directory prompt? Quick action: null (this message can't be solved with a quick action because it takes multiple steps)
+
+`;
+
+export const getQuickAction = (
+  message: string,
+  quickTools: ToolInterface[]
+) => {
+  return `
+
+  Message:
+  ${message}
+
+  Can this message be solved with a quick action?
+
+Here are some examples of quick actions:
+${exampleQuickActions}
+
+Here are a list of the quick actions:
+
+${getToolDescription(quickTools)}
+
+Searches can be done with the quick action search tools: "search code" or "search directory". 
+
+The message has to contain the word "scratch pad" to be solved with the "write code to scratch pad" a quick action.
+
+If the message can be solved with just one of these actions, return the action. If the message takes multiple steps or can't be solved by a quick action, return null.
+
+  `;
+};

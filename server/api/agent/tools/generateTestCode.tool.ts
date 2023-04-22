@@ -8,6 +8,8 @@ import {
 import { updateSession } from "../../supabase/supabase.service";
 import { ToolInterface } from "../agent.service";
 import { generateNewCodePrompt } from "./generateNewCode.prompt";
+import { searchCodeTool } from "./searchCode.tool";
+import { writeCompletedCodeTool } from "./writeCompletedCode.tool";
 
 export function generateTestCodeTool(): ToolInterface {
   async function handleWriteTestCode(
@@ -68,13 +70,20 @@ export function generateTestCodeTool(): ToolInterface {
     }
   }
 
+  const name = "generate test code";
+
   return {
-    name: "generate test code",
+    name,
     description:
       "Generates test code based on the code passed into the tool. Argument 'code' should be the exact code you want to write a test for.",
     use: async (userId, sessionId, code) =>
       await handleWriteTestCode(userId, sessionId, code),
     arguments: ["code"],
     promptTemplate: generateNewCodePrompt,
+    availableTools: [
+      name,
+      searchCodeTool().name,
+      writeCompletedCodeTool().name,
+    ],
   };
 }
