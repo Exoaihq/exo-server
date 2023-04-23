@@ -1,3 +1,6 @@
+import { ToolName } from ".";
+import { extractPath } from "../../../../utils/fileOperations.service";
+import { findAndUpdateAiCodeBySession } from "../../aiCreatedCode/aiCreatedCode.service";
 import { findCodeByQuery } from "../../search/search.service";
 import { findOrUpdateAccount } from "../../supabase/account.service";
 import { ToolInterface } from "../agent.service";
@@ -24,7 +27,20 @@ export function findFileTool(): ToolInterface {
       metadata: response,
     };
   }
-  const name = "find one file";
+  const name = ToolName.findFile;
+
+  function outputFunction(output: string, sessionId: string) {
+    findAndUpdateAiCodeBySession(
+      sessionId,
+      {
+        location: output,
+        path: extractPath(output),
+      },
+      "location"
+    );
+
+    return output;
+  }
 
   return {
     name,
@@ -36,9 +52,11 @@ export function findFileTool(): ToolInterface {
     promptTemplate: findFilePrompt,
     availableTools: [
       name,
-      "search code",
-      "find one directory",
-      "search directory",
+      ToolName.searchCode,
+      ToolName.searchDirectory,
+      ToolName.findDirectory,
+      ToolName.finalAnswer,
     ],
+    outputFunction,
   };
 }

@@ -110,8 +110,15 @@ export const findAndUpdateAiCodeBySession = async (
       (aiCreatedCode) => aiCreatedCode[property] === null
     );
 
+    // If there is an ai generated code that has not been set to the property
     if (aiGeneratedCodeWithProperyNotSet) {
       await updateAiWritenCode(aiGeneratedCodeWithProperyNotSet.id, {
+        ...updates,
+      });
+    } else {
+      // If there is not an ai generated code, create one
+      await createAiWritenCode({
+        session_id: sessionId,
         ...updates,
       });
     }

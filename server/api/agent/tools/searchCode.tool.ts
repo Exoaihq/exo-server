@@ -1,3 +1,4 @@
+import { ToolName } from ".";
 import { findCodeByQuery } from "../../search/search.service";
 import { findOrUpdateAccount } from "../../supabase/account.service";
 import { ToolInterface } from "../agent.service";
@@ -24,7 +25,7 @@ export function searchCodeTool(): ToolInterface {
     };
   }
 
-  const name = "search code";
+  const name = ToolName.searchCode;
 
   return {
     name,

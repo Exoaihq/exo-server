@@ -1,3 +1,4 @@
+import { ToolName } from ".";
 import { findAndUpdateAiCodeBySession } from "../../aiCreatedCode/aiCreatedCode.service";
 import { updateSession } from "../../supabase/supabase.service";
 import { ToolInterface } from "../agent.service";
@@ -27,7 +28,7 @@ export function setLocationToWriteCodeTool(): ToolInterface {
     };
   }
 
-  const name = "set location";
+  const name = ToolName.setLocationToWriteCode;
 
   return {
     name,
@@ -37,6 +38,6 @@ export function setLocationToWriteCodeTool(): ToolInterface {
       handleGetLocation(userId, sessionId, text),
     arguments: ["location"],
     promptTemplate: setLocationPrompt,
-    availableTools: [name, "search code"],
+    availableTools: [name, ToolName.searchCode, ToolName.finalAnswer],
   };
 }

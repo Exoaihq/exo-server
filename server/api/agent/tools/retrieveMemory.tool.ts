@@ -1,3 +1,4 @@
+import { ToolName } from ".";
 import { getMemoriesById } from "../../memory/memory.service";
 import { ToolInterface } from "../agent.service";
 
@@ -16,7 +17,7 @@ export function retrieveMemoryTool(): ToolInterface {
     };
   }
 
-  const name = "retrieve text";
+  const name = ToolName.retrieveText;
 
   return {
     name,

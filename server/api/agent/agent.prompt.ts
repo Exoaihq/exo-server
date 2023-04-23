@@ -139,6 +139,7 @@ const exampleQuickActions = `
   Can you find the code that handles user authentication? Quick action: "search code"
   Can you find the repo that stores the find code controller? Quick action: "search directory"
   Can you write a new find file prompt to the agent directory in the code-gen-server that is similar to the search directory prompt? Quick action: null (this message can't be solved with a quick action because it takes multiple steps)
+  Can you write a new ts file to the agent directory in the code-gen-server that counts the number of letters in a string? Quick action: null (this message can't be solved with a quick action because it takes multiple steps)
 
 `;
 

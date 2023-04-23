@@ -1,3 +1,4 @@
+import { ToolName } from ".";
 import { ChatUserType } from "../../../../types/chatMessage.type";
 import { EngineName } from "../../../../types/openAiTypes/openAiEngine";
 import { findAndUpdateAiCodeBySession } from "../../aiCreatedCode/aiCreatedCode.service";
@@ -71,7 +72,7 @@ export function generateNewCodeTool(): ToolInterface {
     }
   }
 
-  const name = "generate new code";
+  const name = ToolName.generateNewCode;
 
   return {
     name,

@@ -12,6 +12,7 @@ import {
 import { findCodeByQuery } from "../search/search.service";
 import { addPlansTaskListToDb } from "./agent.act";
 import { parseToJsonPrompt, promptTemplate } from "./agent.prompt";
+import { ToolName } from "./tools";
 
 export interface ToolResponse {
   output: string;
@@ -24,7 +25,7 @@ export interface RunResponse {
 }
 
 export interface ToolInterface {
-  name: string;
+  name: ToolName;
   description: string;
   use: (
     userId: string,
@@ -33,7 +34,7 @@ export interface ToolInterface {
   ) => Promise<ToolResponse>;
   arguments: string[];
   promptTemplate: string;
-  availableTools: string[];
+  availableTools: ToolName[];
   outputFunction?: (output: string, sessionId: string) => void;
 }
 

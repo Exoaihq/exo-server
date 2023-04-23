@@ -1,3 +1,4 @@
+import { ToolName } from ".";
 import { ToolInterface } from "../agent.service";
 import { finalAnswerPrompt } from "./finalAnswer.prompt";
 
@@ -13,7 +14,7 @@ export function finalAnswerTool(): ToolInterface {
     };
   }
 
-  const name = "final answer";
+  const name = ToolName.finalAnswer;
 
   return {
     name,

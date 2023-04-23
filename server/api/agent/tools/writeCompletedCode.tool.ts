@@ -1,3 +1,4 @@
+import { ToolName } from ".";
 import {
   getAiCodeBySession,
   updateAiWritenCode,
@@ -42,7 +43,7 @@ export function writeCompletedCodeTool(): ToolInterface {
     }
   }
 
-  const name = "write code";
+  const name = ToolName.writeCompletedCode;
 
   return {
     name,

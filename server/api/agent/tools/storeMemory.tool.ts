@@ -1,3 +1,4 @@
+import { ToolName } from ".";
 import { createMemoryWithSession } from "../../memory/memory.service";
 import { ToolInterface } from "../agent.service";
 
@@ -19,7 +20,7 @@ export function storeMemoryTool(): ToolInterface {
     };
   }
 
-  const name = "store text";
+  const name = ToolName.storeText;
 
   return {
     name,

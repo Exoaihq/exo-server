@@ -1,3 +1,6 @@
+import { ToolName } from ".";
+import { extractPath } from "../../../../utils/fileOperations.service";
+import { findAndUpdateAiCodeBySession } from "../../aiCreatedCode/aiCreatedCode.service";
 import { codeDirectorySearch } from "../../codeDirectory/codeDirectory.repository";
 import { findOrUpdateAccount } from "../../supabase/account.service";
 import { ToolInterface } from "../agent.service";
@@ -32,7 +35,20 @@ export function findDirectoryTool(): ToolInterface {
     };
   }
 
-  const name = "find one directory";
+  function outputFunction(output: string, sessionId: string) {
+    findAndUpdateAiCodeBySession(
+      sessionId,
+      {
+        location: output,
+        path: extractPath(output),
+      },
+      "location"
+    );
+
+    return output;
+  }
+
+  const name = ToolName.findDirectory;
 
   return {
     name,
@@ -41,6 +57,12 @@ export function findDirectoryTool(): ToolInterface {
       await handleSearchDirectory(userId, sessionId, query),
     arguments: ["search query"],
     promptTemplate: findDirectoryPrompt,
-    availableTools: [name, "search code", "search directory", "set location"],
+    availableTools: [
+      name,
+      ToolName.searchCode,
+      ToolName.searchDirectory,
+      ToolName.setLocationToWriteCode,
+    ],
+    outputFunction,
   };
 }

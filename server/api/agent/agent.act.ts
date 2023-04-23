@@ -159,16 +159,6 @@ export const executeTask = async (
   }
   const allToolsAvailable = getToolByNames(allTools);
 
-  // The set location tool can get confused by all the tools. We may need to create a function for this if other tools have this issue.
-  const tools =
-    tool_name === "set location"
-      ? getToolByNames([
-          setLocationToWriteCodeTool(),
-          searchDirectoryTool(),
-          searchCodeTool(),
-        ])
-      : allToolsAvailable;
-
   // This runs the tool once and gets the output that will passed to the task loop for further processing.
   const { output, metadata } = await allToolsAvailable[tool_name].use(
     session.user_id,
@@ -251,7 +241,9 @@ export async function runTaskLoop(
 
   const previousResponses: string[] = [output];
   let numLoops = 0;
-  const tools = allTools;
+  const tools = tool.availableTools.map((toolName) => {
+    return allTools.find((tool) => tool.name === toolName);
+  }) as ToolInterface[];
   const toolDescription = getToolDescription(tools);
   const toolNames = getToolNames(tools);
   const toolByNames = getToolByNames(tools);
@@ -307,5 +299,3 @@ export async function runTaskLoop(
     }
   }
 }
-// The "set location" tool set the location to the correct value and the generated code was successfully written to the "utils" directory.
-// "utils directory in the code-gen-server repo"

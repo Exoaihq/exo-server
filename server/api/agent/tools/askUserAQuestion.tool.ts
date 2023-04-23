@@ -1,6 +1,7 @@
 // session holds location, file name and file path
 // Once the file name and file path (or scatchpad) are known and the functionality is known you can write to the ai generated code table
 
+import { ToolName } from ".";
 import { ChatUserType } from "../../../../types/chatMessage.type";
 import { createMessageWithUser } from "../../message/message.service";
 import { ToolInterface } from "../agent.service";
@@ -28,7 +29,7 @@ export function askUserAQuestionTool(): ToolInterface {
     };
   }
 
-  const name = "ask user";
+  const name = ToolName.askUser;
 
   return {
     name,

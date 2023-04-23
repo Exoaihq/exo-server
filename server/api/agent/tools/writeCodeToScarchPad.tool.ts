@@ -1,3 +1,4 @@
+import { ToolName } from ".";
 import { ChatUserType } from "../../../../types/chatMessage.type";
 import { EngineName } from "../../../../types/openAiTypes/openAiEngine";
 import { findAndUpdateAiCodeBySession } from "../../aiCreatedCode/aiCreatedCode.service";
@@ -76,7 +77,7 @@ export function writeCodeToScratchPadTool(): ToolInterface {
     }
   }
 
-  const name = "write code to scratch pad";
+  const name = ToolName.writeCodeToScarchPad;
 
   return {
     name,
@@ -86,6 +87,6 @@ export function writeCodeToScratchPadTool(): ToolInterface {
       await handleWriteCode(userId, sessionId, functionality),
     arguments: ["code functionality"],
     promptTemplate: generateNewCodePrompt,
-    availableTools: [name],
+    availableTools: [name, ToolName.finalAnswer],
   };
 }

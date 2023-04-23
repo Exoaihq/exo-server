@@ -1,3 +1,4 @@
+import { ToolName } from ".";
 import { searchCode } from "../../search/search.controller";
 import { findCodeByQuery } from "../../search/search.service";
 import { findOrUpdateAccount } from "../../supabase/account.service";
@@ -24,7 +25,7 @@ export function searchTestsTool(): ToolInterface {
     };
   }
 
-  const name = "search for tests";
+  const name = ToolName.searchTests;
 
   return {
     name,

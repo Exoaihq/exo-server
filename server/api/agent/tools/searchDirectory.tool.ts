@@ -1,3 +1,5 @@
+import { ToolName } from ".";
+import { extractPath } from "../../../../utils/fileOperations.service";
 import { findAndUpdateAiCodeBySession } from "../../aiCreatedCode/aiCreatedCode.service";
 import { codeDirectorySearch } from "../../codeDirectory/codeDirectory.repository";
 import { findOrUpdateAccount } from "../../supabase/account.service";
@@ -43,7 +45,7 @@ export function searchDirectoryTool(): ToolInterface {
       sessionId,
       {
         location: output,
-        path: output,
+        path: extractPath(output),
       },
       "location"
     );
@@ -51,7 +53,7 @@ export function searchDirectoryTool(): ToolInterface {
     return output;
   }
 
-  const name = "search directory";
+  const name = ToolName.searchDirectory;
 
   return {
     name,
@@ -61,7 +63,12 @@ export function searchDirectoryTool(): ToolInterface {
       await handleSearchDirectory(userId, sessionId, query),
     arguments: ["search query"],
     promptTemplate: searchDirectoryPrompt,
-    availableTools: [name, findFileTool().name, findDirectoryTool().name],
+    availableTools: [
+      name,
+      ToolName.findFile
+      ToolName.findDirectory,
+      ToolName.finalAnswer,
+    ],
     outputFunction,
   };
 }

@@ -1,3 +1,4 @@
+import { ToolName } from ".";
 import { findCodeByQuery } from "../../search/search.service";
 import { findOrUpdateAccount } from "../../supabase/account.service";
 import { ToolInterface } from "../agent.service";
@@ -20,7 +21,7 @@ export function getExisitingCodeTool(): ToolInterface {
     };
   }
 
-  const name = "get existing code";
+  const name = ToolName.getExisitingCode;
 
   return {
     name,

@@ -26,9 +26,27 @@ export * from "./writeCompletedCode.tool";
 export * from "./getCode.tool";
 export * from "./searchCode.tool";
 
+export enum ToolName {
+  searchCode = "search code",
+  searchDirectory = "search directory",
+  searchTests = "search tests",
+  findFile = "find one file",
+  findDirectory = "find one directory",
+  generateNewCode = "generate new code",
+  generateTestCode = "generate test code",
+  askUser = "ask user",
+  storeText = "store text",
+  retrieveText = "retrieve text",
+  writeCompletedCode = "write completed code",
+  getExisitingCode = "get exisiting code",
+  finalAnswer = "final answer",
+  setLocationToWriteCode = "set location to write code",
+  writeCodeToScarchPad = "write code to scratch pad",
+}
+
 export const allTools = [
   searchCodeTool(),
-  // setLocationToWriteCodeTool(),
+  setLocationToWriteCodeTool(),
   storeMemoryTool(),
   searchDirectoryTool(),
   findFileTool(),
