@@ -2,41 +2,20 @@ import { Request, Response } from "express";
 import { ChatUserType } from "../../../types/chatMessage.type";
 import { CodeCompletionRequest } from "../codeCompletion/codeCompletion.types";
 import { getOnlyRoleAndContentMessagesByUserAndSession } from "../message/message.service";
-import { getObjectiveById } from "../objective/objective.service";
-import {
-  createChatCompletion,
-  createTextCompletion,
-  getCompletionDefaultStopToken,
-} from "../openAi/openai.service";
+import { createChatCompletion } from "../openAi/openai.service";
 import { handleSearch } from "../search/search.service";
 import { findOrUpdateAccount } from "../supabase/account.service";
 import {
   checkSessionOrThrow,
   findOrCreateSession,
 } from "../supabase/supabase.service";
-import {
-  getExpectedNextAction,
-  getQuickAction,
-  getTaskInputTask,
-} from "./agent.prompt";
-import {
-  expandContext,
-  getToolByNames,
-  getToolNames,
-  startNewObjective,
-} from "./agent.service";
+import { getExpectedNextAction, getQuickAction } from "./agent.prompt";
+import { expandContext, startNewObjective } from "./agent.service";
 import {
   allTools,
-  askUserAQuestionTool,
-  findDirectoryTool,
   findFileTool,
-  generateNewCodeTool,
-  retrieveMemoryTool,
   searchCodeTool,
   searchDirectoryTool,
-  setLocationToWriteCodeTool,
-  storeMemoryTool,
-  writeCompletedCodeTool,
 } from "./tools";
 import { writeCodeToScratchPadTool } from "./tools/writeCodeToScarchPad.tool";
 
@@ -104,8 +83,7 @@ export const useAgent = async (req: Request, res: Response) => {
         user.id,
         sessionId,
         allTools,
-        getExpectedNextAction(dbSession, sessionMessages, expandedContext),
-        20
+        getExpectedNextAction(dbSession, sessionMessages, expandedContext)
       );
     } else {
       const tool = quickActions.find((tool) =>

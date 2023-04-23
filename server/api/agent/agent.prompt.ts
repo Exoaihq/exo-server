@@ -76,7 +76,7 @@ You need to get the argument for this tool:
  Name: ${tool.name}. Description: ${tool.description}.
 
  Arguments are ${
-   tool.arguments && tool.arguments.length > 0
+   tool && tool.arguments && tool.arguments.length > 0
      ? tool.arguments?.map((arg: any) => `<${arg}>`).join(", ")
      : "none"
  }.
@@ -149,10 +149,7 @@ export const getQuickAction = (
 ) => {
   return `
 
-  Message:
-  ${message}
 
-  Can this message be solved with a quick action?
 
 Here are some examples of quick actions:
 ${exampleQuickActions}
@@ -165,7 +162,16 @@ Searches can be done with the quick action search tools: "search code" or "searc
 
 The message has to contain the word "scratch pad" to be solved with the "write code to scratch pad" a quick action.
 
+If the message wants to write code to a location other than the scratch pad, return null.
+
 If the message can be solved with just one of these actions, return the action. If the message takes multiple steps or can't be solved by a quick action, return null.
+
+Message:
+${message}
+
+Can this message be solved with a quick action? If no return null. If yes, return the quick action that solves the message.
+
+
 
   `;
 };

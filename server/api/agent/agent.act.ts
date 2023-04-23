@@ -9,7 +9,7 @@ import {
   createTaskWithObjective,
   updateTaskById,
 } from "../task/task.repository";
-import { getTaskInputTask, getToolInputPrompt } from "./agent.prompt";
+import { getToolInputPrompt } from "./agent.prompt";
 import {
   FINAL_ANSWER_TOKEN,
   getToolByNames,
@@ -20,12 +20,7 @@ import {
   ToolInfo,
   ToolInterface,
 } from "./agent.service";
-import {
-  allTools,
-  searchCodeTool,
-  searchDirectoryTool,
-  setLocationToWriteCodeTool,
-} from "./tools";
+import { allTools } from "./tools";
 
 export const addPlansTaskListToDb = async (
   objective: Database["public"]["Tables"]["objective"]["Row"],
@@ -44,7 +39,7 @@ export const addPlansTaskListToDb = async (
     const tool = tools.find((tool) => task.includes(tool.name));
     if (tool) {
       // Create the task even if the tool doesn't have arguments
-      if (tool.arguments && tool.arguments.length === 0) {
+      if (tool && tool.arguments && tool.arguments.length === 0) {
         await createTaskWithObjective(
           {
             description: task,
@@ -177,7 +172,7 @@ export const executeTask = async (
     toolToUse,
     previouslyCompletedTasksContext || "",
     output || "",
-    tool_name === "search directory" ? "Observation:" : null
+    "\nObservation:"
   );
 
   if (taskOutput) {
@@ -258,7 +253,8 @@ export async function runTaskLoop(
     .replace("{response}", output);
 
   let runMetadata;
-  while (numLoops < maxLoops) {
+  let stop = false;
+  while (numLoops < maxLoops && !stop) {
     numLoops++;
 
     const currentPrompt = prompt.replace(
@@ -292,9 +288,11 @@ export async function runTaskLoop(
       );
       if (metadata) {
         runMetadata = metadata;
+        if (metadata.stop) {
+          stop = true;
+        }
       }
       const response = `${generated}\n${OBSERVATION_TOKEN} ${output}\n${THOUGHT_TOKEN}`;
-      console.log(response);
       previousResponses.push(response);
     }
   }

@@ -1,5 +1,5 @@
 import { executeTask, runTaskLoop } from "../agent/agent.act";
-import { getIncompleteTasks } from "./task.repository";
+import { getIncompleteTasks, updateTaskById } from "./task.repository";
 
 export async function findAndExecuteTasks() {
   // Find all tasks that are not completed, have an input and no output
@@ -9,8 +9,11 @@ export async function findAndExecuteTasks() {
 
   // Execute each task
   for (const task of tasks) {
-    if (task.id === "6e42db03-298a-4f39-87a7-cd5d3108eaf3") {
-      executeTask(task);
-    }
+    executeTask(task);
+
+    // Completes all the outstanding tasks - good for reseting the database
+    // await updateTaskById(task.id, {
+    //   completed_at: new Date().toISOString(),
+    // });
   }
 }

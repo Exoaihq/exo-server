@@ -46,8 +46,8 @@ export enum ToolName {
 
 export const allTools = [
   searchCodeTool(),
-  setLocationToWriteCodeTool(),
-  storeMemoryTool(),
+  // setLocationToWriteCodeTool(),
+  // storeMemoryTool(),
   searchDirectoryTool(),
   findFileTool(),
   generateNewCodeTool(),

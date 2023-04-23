@@ -82,7 +82,7 @@ export function writeCodeToScratchPadTool(): ToolInterface {
   return {
     name,
     description:
-      "Generates new code based on the functionality requested and adds the code to the scratch pad. Arguments should be as specific as possible, outlining what the code should do.",
+      "If the user wants to add code to the scrarch pad, this generates new code based on the functionality requested and adds the code to the scratch pad. Arguments should be as specific as possible, outlining what the code should do.",
     use: async (userId, sessionId, functionality) =>
       await handleWriteCode(userId, sessionId, functionality),
     arguments: ["code functionality"],

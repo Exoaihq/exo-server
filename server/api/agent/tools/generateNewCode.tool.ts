@@ -2,15 +2,10 @@ import { ToolName } from ".";
 import { ChatUserType } from "../../../../types/chatMessage.type";
 import { EngineName } from "../../../../types/openAiTypes/openAiEngine";
 import { findAndUpdateAiCodeBySession } from "../../aiCreatedCode/aiCreatedCode.service";
-import {
-  createChatCompletion,
-  createTextCompletion,
-} from "../../openAi/openai.service";
+import { createChatCompletion } from "../../openAi/openai.service";
 import { updateSession } from "../../supabase/supabase.service";
 import { ToolInterface } from "../agent.service";
 import { generateNewCodePrompt } from "./generateNewCode.prompt";
-import { searchCodeTool } from "./searchCode.tool";
-import { setLocationToWriteCodeTool } from "./setLocationToWriteCode.tool";
 
 export function generateNewCodeTool(): ToolInterface {
   async function handleWriteCode(
@@ -20,14 +15,17 @@ export function generateNewCodeTool(): ToolInterface {
   ) {
     // This is an expensive and time consuming operation. We should only do this when we are sure that the functionality is valid.
 
-    const isPromptToGenerateCode = await createTextCompletion(
-      `Is this an example of a prompt to generate code? ${functionality}. Return yes or no`,
-      0.2
-    );
+    const isPromptToGenerateCode = await createChatCompletion([
+      {
+        content: `Is this an example of a prompt to generate code? ${functionality}. Return yes or no`,
+        role: ChatUserType.user,
+      },
+    ]);
 
-    console.log("isPromptToGenerateCode", isPromptToGenerateCode);
     if (
-      isPromptToGenerateCode?.choices[0].text?.toLowerCase().includes("yes")
+      isPromptToGenerateCode?.choices[0].message.content
+        ?.toLowerCase()
+        .includes("yes")
     ) {
       const response = await createChatCompletion(
         [
@@ -54,16 +52,25 @@ export function generateNewCodeTool(): ToolInterface {
         code_content: improvedCode,
       });
 
+      const stringSpacesToUnderscores = (str: string) => {
+        return str.replace(/\s/g, "_").slice(0, 50);
+      };
+
       await findAndUpdateAiCodeBySession(
         sessionId,
         {
           code: improvedCode,
+          functionality,
+          file_name: stringSpacesToUnderscores(functionality),
         },
         "code"
       );
 
       return {
         output: `Here is the code that I generated for you: ${improvedCode}. I've added this code to the session. When you are ready to write this code to the file use the write file tool.`,
+        metadata: {
+          stop: true,
+        },
       };
     } else {
       return {
@@ -82,10 +89,6 @@ export function generateNewCodeTool(): ToolInterface {
       await handleWriteCode(userId, sessionId, functionality),
     arguments: ["code functionality"],
     promptTemplate: generateNewCodePrompt,
-    availableTools: [
-      name,
-      searchCodeTool().name,
-      setLocationToWriteCodeTool().name,
-    ],
+    availableTools: [name, ToolName.searchCode, ToolName.finalAnswer],
   };
 }

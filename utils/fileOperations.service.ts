@@ -9,7 +9,11 @@ export function findFileAndReturnContents(fullFilePathAndName: string) {
 // ```ts
 export function extractPath(input: string): string {
   const pathMatch = input.match(/\/[\w\-\./]+/);
-  return pathMatch ? pathMatch[0] : "";
+  const removeTailingPeriod = (path: string) => {
+    return path[path.length - 1] === "." ? path.slice(0, -1) : path;
+  };
+
+  return pathMatch ? removeTailingPeriod(pathMatch[0]) : "";
 }
 
 // Example usage:

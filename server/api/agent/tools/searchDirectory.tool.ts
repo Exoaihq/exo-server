@@ -36,7 +36,7 @@ export function searchDirectoryTool(): ToolInterface {
 
     return {
       output,
-      metadata: response,
+      metadata: { ...response },
     };
   }
 
@@ -65,7 +65,7 @@ export function searchDirectoryTool(): ToolInterface {
     promptTemplate: searchDirectoryPrompt,
     availableTools: [
       name,
-      ToolName.findFile
+      ToolName.findFile,
       ToolName.findDirectory,
       ToolName.finalAnswer,
     ],

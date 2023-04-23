@@ -29,11 +29,10 @@ export const getIncompleteTasks = async (): Promise<
   const { data, error } = await supabase
     .from("task")
     .select("*")
-    // .eq("tool_name", "search directory")
     .is("completed_at", null)
     .is("started_eval_at", null)
     .is("tool_output", null)
-    .not("tool_input", "is", null)
+    // .not("tool_input", "is", null)
     .not("tool_name", "is", null);
 
   if (error || !data) {

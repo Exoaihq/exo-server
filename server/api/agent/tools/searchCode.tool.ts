@@ -35,6 +35,11 @@ export function searchCodeTool(): ToolInterface {
       await handleSearchCode(userId, sessionId, text),
     arguments: ["search query"],
     promptTemplate: searchCodePrompt(name),
-    availableTools: [name, "search directory"],
+    availableTools: [
+      name,
+      ToolName.searchDirectory,
+      ToolName.findFile,
+      ToolName.finalAnswer,
+    ],
   };
 }
