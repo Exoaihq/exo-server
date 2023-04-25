@@ -1,12 +1,18 @@
 import { Request, Response } from "express";
 import { ChatUserType } from "../../../types/chatMessage.type";
+import { chunkString } from "../../../utils/chunkString";
+import { createFile } from "../../../utils/createfile";
+import { getSubstringFromMultilineCode } from "../../../utils/getSubstringFromMultilineCode";
+import { parseFile } from "../../../utils/treeSitter";
 import { CodeCompletionRequest } from "../codeCompletion/codeCompletion.types";
+import { findFileByAccountIdAndFullFilePath } from "../codeFile/codeFile.repository";
 import { getOnlyRoleAndContentMessagesByUserAndSession } from "../message/message.service";
 import { createChatCompletion } from "../openAi/openai.service";
-import { handleSearch } from "../search/search.service";
+import { findCodeByQuery, handleSearch } from "../search/search.service";
 import { findOrUpdateAccount } from "../supabase/account.service";
 import {
   checkSessionOrThrow,
+  compareAndUpdateSnippets,
   findOrCreateSession,
 } from "../supabase/supabase.service";
 import { getExpectedNextAction, getQuickAction } from "./agent.prompt";
@@ -14,10 +20,21 @@ import { expandContext, startNewObjective } from "./agent.service";
 import {
   allTools,
   findFileTool,
+  generateNewCodeTool,
   searchCodeTool,
   searchDirectoryTool,
 } from "./tools";
 import { writeCodeToScratchPadTool } from "./tools/writeCodeToScarchPad.tool";
+import { Element, ParseCode, ParsedCode } from "../../../types/parseCode.types";
+import { updateExistingCodeTool } from "./tools/updateExistingCode.tool";
+import {
+  addCodeToSupabase,
+  deleteSnippetById,
+  updateSnippetById,
+} from "../codeSnippet/codeSnippet.repository";
+import { writeFile, writeFileSync } from "fs";
+
+const fs = require("fs");
 
 export const useAgent = async (req: Request, res: Response) => {
   try {
@@ -132,32 +149,180 @@ export const testAgent = async (req: Request, res: Response) => {
     const { user } = session.data;
 
     const { sessionId } = req.body as CodeCompletionRequest;
+    const account = await findOrUpdateAccount(user.id);
+    if (!account) {
+      return res.status(400).json({
+        data: {
+          choices: [
+            {
+              text: "Please login to use the agent",
+            },
+          ],
+        },
+      });
+    }
 
-    // const objective = await getObjectiveById(
-    //   "1149bce0-2a76-4ad7-8339-2c6b80339077"
-    // );
+    const path =
+      "/Users/kg/Repos/code-gen-server/server/api/aiCreatedCode/aiCreatedCode.repository.ts";
 
-    // if (!objective || !objective.task || !objective.thought) {
-    //   return res.status(400).json({ message: "Objective not found" });
-    // }
+    const testPath =
+      "/Users/kg/Repos/code-gen-server/server/api/aiCreatedCode/test.ts";
 
-    // const plan = objective.task.map(
-    //   (task: { description: any }) => task.description
-    // );
+    const fileWithSnippets = await findFileByAccountIdAndFullFilePath(
+      account?.id ? account.id : "",
+      path
+    );
 
-    // console.log("Plan", plan);
-    // const input = getTaskInputTask(plan, objective.thought);
+    if (
+      !fileWithSnippets ||
+      !fileWithSnippets.file_name ||
+      !fileWithSnippets.file_path
+    ) {
+      return res.status(400).json({
+        data: {
+          choices: [
+            {
+              text: "You need to create the file first",
+            },
+          ],
+        },
+      });
+    }
 
-    // console.log(input);
+    if (!fileWithSnippets?.code_snippet) {
+      // Create the snippets
+    } else {
+      // Check the snippets
+      const { code_snippet } = fileWithSnippets;
 
-    // const taskInputTask = await getCompletionDefaultStopToken(input);
+      let codeSnippets: any[] = [];
 
-    // console.log("Task input", taskInputTask.data.choices[0].text);
+      if (!Array.isArray(code_snippet)) {
+        codeSnippets = [code_snippet];
+      } else {
+        codeSnippets = [...code_snippet];
+      }
 
-    findFileTool().use(
+      // const contentToWrite: any[] = [];
+
+      // for await (const snippet of codeSnippets) {
+      //   contentToWrite.splice(snippet.start_row, 0, snippet.code_string);
+      // }
+
+      // console.log("Content to write", contentToWrite.join("\n\n"));
+      // fs.writeFileSync(testPath, contentToWrite.join("\n\n"));
+
+      const fileContent = await fs.readFileSync(path, "utf-8");
+      console.log("File content", typeof fileContent);
+      const lines = fileContent.split("\n");
+      const parsed = await parseFile(fileContent);
+
+      console.log("Snippets", codeSnippets.length);
+      console.log("Parsed", parsed.rootNode.children.length);
+
+      let numberFound = 0;
+      let numberNotFound = 0;
+      let matchedSnippets: any[] = [];
+      let snippetsToUpdate: { id: any }[] = [];
+      let elementsToUpdate: ParsedCode[] = [];
+
+      for await (const element of parsed.rootNode.children) {
+        const { startPosition, endPosition, type }: Element = element;
+        const parsedCodeSnippet = getSubstringFromMultilineCode(
+          lines,
+          startPosition.row,
+          startPosition.column,
+          endPosition.row,
+          endPosition.column
+        );
+
+        const dbSnippetFound = codeSnippets.find((dbSnippet) => {
+          return (
+            dbSnippet.start_row === startPosition.row &&
+            dbSnippet.end_row === endPosition.row &&
+            dbSnippet.start_column === startPosition.column &&
+            dbSnippet.end_column === endPosition.column
+          );
+        });
+        if (!dbSnippetFound) {
+          numberNotFound++;
+          elementsToUpdate.push({
+            code: parsedCodeSnippet,
+            metadata: {
+              element,
+              filePath: fileWithSnippets.file_path,
+              type,
+              fileName: fileWithSnippets.file_name,
+            },
+          });
+        } else {
+          const match = parsedCodeSnippet === dbSnippetFound?.code_string;
+
+          if (match) {
+            numberFound++;
+            matchedSnippets.push(dbSnippetFound.id);
+          } else {
+            numberNotFound++;
+            elementsToUpdate.push({
+              code: parsedCodeSnippet,
+              metadata: {
+                element,
+                filePath: fileWithSnippets.file_path,
+                type,
+                fileName: fileWithSnippets.file_name,
+              },
+            });
+          }
+        }
+      }
+      console.log("Number found", numberFound);
+      console.log("Number not found", numberNotFound);
+      console.log("Matched snippets", matchedSnippets);
+      console.log("Snippets to update", snippetsToUpdate);
+      console.log("Elements to update", elementsToUpdate);
+      // console.log("Elements to update", elementsToUpdate);
+      const snippetsToDelete = codeSnippets.filter((snippet) => {
+        return !matchedSnippets.includes(snippet.id);
+      });
+      console.log(
+        "Snippets to delete",
+        snippetsToDelete.map((s) => s.id)
+      );
+
+      snippetsToDelete.forEach(async (snippet) => {
+        await deleteSnippetById(snippet.id);
+      });
+
+      elementsToUpdate.forEach(async (element) => {
+        await addCodeToSupabase(element, account.id);
+      });
+    }
+
+    return res.status(200).json({
+      data: "done",
+    });
+  } catch (error: any) {
+    console.log(error);
+    res.status(500).json({ message: error.message });
+  }
+};
+
+export const testUpdateExisting = async (req: Request, res: Response) => {
+  try {
+    const session = await checkSessionOrThrow(req, res);
+
+    const { user } = session.data;
+
+    const { sessionId } = req.body as CodeCompletionRequest;
+    const account = await findOrUpdateAccount(user.id);
+
+    const path =
+      "/Users/kg/Repos/code-gen-server/server/api/aiCreatedCode/aiCreatedCode.repository.ts";
+
+    await updateExistingCodeTool().use(
       user.id,
       sessionId,
-      "utils" + "formatToHumanReadableDate"
+      "Add a select statement to the updateAiWritenCode function"
     );
 
     return res.status(200).json({

@@ -2,7 +2,7 @@ import { Database } from "../../../types/supabase";
 import { extractFileNameAndPathFromFullPath } from "../../../utils/getFileName";
 import {
   findAllFilesWhereParentIsNull,
-  findFileByAccountId,
+  findFilesByAccountId,
   findFilesByAccountIdAndDirectoryId,
   updateFileById,
 } from "../codeFile/codeFile.repository";
@@ -38,7 +38,7 @@ export const findFilesForSavedDirectories = async () => {
   const savedDirectories = await getSavedCodeDirectoriesByAccount();
 
   for (let [accountId, directory] of savedDirectories) {
-    const filesByAccount = await findFileByAccountId(accountId);
+    const filesByAccount = await findFilesByAccountId(accountId);
     console.log(filesByAccount?.length, accountId);
 
     if (!filesByAccount) {

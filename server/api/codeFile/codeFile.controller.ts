@@ -3,12 +3,12 @@ import { ParseCode } from "../../../types/parseCode.types";
 import { rootProjectDirectory } from "../../../utils/envVariable";
 import { iterateOverFolderAndHandleAndUpdateFileContents } from "../../../utils/iterateOverFolders";
 import { parseCode } from "../../../utils/treeSitter";
+import { addCodeToSupabase } from "../codeSnippet/codeSnippet.repository";
 
 import { createMessageWithUser } from "../message/message.service";
 import { findCodeByQuery } from "../search/search.service";
 import { findOrUpdateAccount } from "../supabase/account.service";
 import {
-  addCodeToSupabase,
   checkSessionOrThrow,
   findOrCreateSession,
 } from "../supabase/supabase.service";

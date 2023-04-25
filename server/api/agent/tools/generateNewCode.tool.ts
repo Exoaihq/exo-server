@@ -1,8 +1,11 @@
 import { ToolName } from ".";
 import { ChatUserType } from "../../../../types/chatMessage.type";
 import { EngineName } from "../../../../types/openAiTypes/openAiEngine";
+import { getAiCodeBySession } from "../../aiCreatedCode/aiCreatedCode.repository";
 import { findAndUpdateAiCodeBySession } from "../../aiCreatedCode/aiCreatedCode.service";
 import { createChatCompletion } from "../../openAi/openai.service";
+import { findCodeByQuery } from "../../search/search.service";
+import { findOrUpdateAccount } from "../../supabase/account.service";
 import { updateSession } from "../../supabase/supabase.service";
 import { ToolInterface } from "../agent.service";
 import { generateNewCodePrompt } from "./generateNewCode.prompt";
@@ -13,7 +16,33 @@ export function generateNewCodeTool(): ToolInterface {
     sessionId: string,
     functionality: string
   ) {
-    // This is an expensive and time consuming operation. We should only do this when we are sure that the functionality is valid.
+    // Find the ai generated code for this session
+
+    let codeForContext = "";
+
+    const aiGeneratedCode = await getAiCodeBySession(sessionId);
+
+    if (aiGeneratedCode && aiGeneratedCode.length > 0) {
+      const aiGeneratedCodeWithoutCode = aiGeneratedCode.find(
+        (aiCreatedCode) => aiCreatedCode.code === null
+      );
+
+      if (aiGeneratedCodeWithoutCode && aiGeneratedCodeWithoutCode.path) {
+        // Find details on neighboring files/code
+        const { path } = aiGeneratedCodeWithoutCode;
+        const account = await findOrUpdateAccount(userId);
+        const searchResult = await findCodeByQuery(
+          path,
+          account?.id ? account.id : "",
+          3
+        );
+
+        codeForContext = searchResult
+          .map((code: { code_string: any }) => code.code_string)
+          .join("\n");
+      }
+    }
+    console.log("Context code>>>>>>>>>>", codeForContext);
 
     const isPromptToGenerateCode = await createChatCompletion([
       {
@@ -31,7 +60,10 @@ export function generateNewCodeTool(): ToolInterface {
         [
           {
             role: ChatUserType.user,
-            content: `Wrtie the following code: ${functionality}`,
+            content: `
+            Here is some code for context: ${codeForContext}\n
+
+            Write the following code: ${functionality}`,
           },
         ],
         EngineName.GPT4
@@ -48,20 +80,24 @@ export function generateNewCodeTool(): ToolInterface {
           output: `I'm sorry I couldn't generate code for you. Please try again later.`,
         };
       }
+
+      const getFileNameRes = await createChatCompletion([
+        {
+          role: ChatUserType.user,
+          content: `What is an appropriate file name for this code? ${improvedCode}. Return only the file name.`,
+        },
+      ]);
+
       await updateSession(userId, sessionId, {
         code_content: improvedCode,
       });
-
-      const stringSpacesToUnderscores = (str: string) => {
-        return str.replace(/\s/g, "_").slice(0, 50);
-      };
 
       await findAndUpdateAiCodeBySession(
         sessionId,
         {
           code: improvedCode,
           functionality,
-          file_name: stringSpacesToUnderscores(functionality),
+          file_name: getFileNameRes.choices[0].message.content,
         },
         "code"
       );

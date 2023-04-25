@@ -16,13 +16,13 @@ import { parseCode } from "../../../utils/treeSitter";
 import { findFilesWithoutExplaination } from "../codeFile/codeFile.repository";
 import { createTextCompletion } from "../openAi/openai.service";
 import {
-  addCodeToSupabase,
   addFileToSupabase,
   assignCodeSnippetToFile,
   assignExplainationsForFilesWhereNull,
   findAllSnippetWithoutFiles,
   findFileId,
 } from "../supabase/supabase.service";
+import { addCodeToSupabase } from "./codeSnippet.repository";
 import {
   codeSnippetSearch,
   findSnippetsWithoutFilesAndAssignFiles,

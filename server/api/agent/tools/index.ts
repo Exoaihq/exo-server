@@ -9,22 +9,18 @@ import { retrieveMemoryTool } from "./retrieveMemory.tool";
 import { searchCodeTool } from "./searchCode.tool";
 import { searchDirectoryTool } from "./searchDirectory.tool";
 import { searchTestsTool } from "./searchTests.tool";
-import { setLocationToWriteCodeTool } from "./setLocationToWriteCode.tool";
-import { storeMemoryTool } from "./storeMemory.tool";
 import { writeCompletedCodeTool } from "./writeCompletedCode.tool";
 
 export * from "./askUserAQuestion.tool";
-export * from "./findFile.tool";
 export * from "./findDirectory.tool";
+export * from "./findFile.tool";
 export * from "./generateNewCode.tool";
+export * from "./getCode.tool";
 export * from "./retrieveMemory.tool";
 export * from "./searchCode.tool";
 export * from "./searchDirectory.tool";
-export * from "./setLocationToWriteCode.tool";
 export * from "./storeMemory.tool";
 export * from "./writeCompletedCode.tool";
-export * from "./getCode.tool";
-export * from "./searchCode.tool";
 
 export enum ToolName {
   searchCode = "search code",
@@ -40,21 +36,19 @@ export enum ToolName {
   writeCompletedCode = "write completed code",
   getExisitingCode = "get exisiting code",
   finalAnswer = "final answer",
-  setLocationToWriteCode = "set location to write code",
+  updateExistingCode = "update existing code",
   writeCodeToScarchPad = "write code to scratch pad",
 }
 
 export const allTools = [
   searchCodeTool(),
-  // setLocationToWriteCodeTool(),
-  // storeMemoryTool(),
   searchDirectoryTool(),
   findFileTool(),
   generateNewCodeTool(),
   askUserAQuestionTool(),
   findDirectoryTool(),
   retrieveMemoryTool(),
-  writeCompletedCodeTool(),
+  // writeCompletedCodeTool(),
   getExisitingCodeTool(),
   finalAnswerTool(),
   generateTestCodeTool(),

@@ -100,7 +100,9 @@ export const executeTask = async (
 
   let previouslyCompletedTasksContext = "";
 
+  // @ts-ignore
   if (objective.task && objective.task.length > 0 && task.created_at) {
+    // @ts-ignore
     const previousTasks = objective.task.filter(
       (siblingTask: {
         tool_output: string;

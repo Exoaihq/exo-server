@@ -2,6 +2,7 @@ import { createClient, PostgrestError } from "@supabase/supabase-js";
 import { SnippetByFileName } from "../../../types/parseCode.types";
 import { Database } from "../../../types/supabase";
 import { supabaseKey, supabaseUrl } from "../../../utils/envVariable";
+import { extractFileNameAndPathFromFullPath } from "../../../utils/getFileName";
 
 const supabase = createClient<Database>(supabaseUrl, supabaseKey);
 
@@ -27,7 +28,7 @@ export async function findSnippetByFileNameAndAccount(
   return data;
 }
 
-export async function findFileByAccountId(
+export async function findFilesByAccountId(
   accountId: string
 ): Promise<Partial<Database["public"]["Tables"]["code_file"]["Row"]>[] | null> {
   const { data, error } = await supabase
@@ -43,6 +44,31 @@ export async function findFileByAccountId(
     return null;
   }
   return data;
+}
+
+export async function findFileByAccountIdAndFullFilePath(
+  accountId: string,
+  fullFilePath: string
+) {
+  const { fileName, extractedPath } =
+    extractFileNameAndPathFromFullPath(fullFilePath);
+  const { data, error } = await supabase
+    .from("code_file")
+    .select(
+      "id, file_name, account_id, file_path, code_directory_id, code_snippet(id, code_string, code_explaination, start_row, start_column, end_row, end_column, parsed_code_type)"
+    )
+    .eq("account_id", accountId)
+    .eq("file_name", fileName)
+    .eq("file_path", extractedPath);
+
+  if (error) {
+    console.log(error);
+    return null;
+  }
+  if (!data) {
+    return null;
+  }
+  return data[0];
 }
 
 export async function findFilesByAccountIdAndDirectoryId(

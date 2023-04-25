@@ -5,9 +5,6 @@ import { codeDirectorySearch } from "../../codeDirectory/codeDirectory.repositor
 import { findOrUpdateAccount } from "../../supabase/account.service";
 import { ToolInterface } from "../agent.service";
 import { findDirectoryPrompt } from "./findDirectory.prompt";
-import { searchCodeTool } from "./searchCode.tool";
-import { searchDirectoryTool } from "./searchDirectory.tool";
-import { setLocationToWriteCodeTool } from "./setLocationToWriteCode.tool";
 
 export function findDirectoryTool(): ToolInterface {
   async function handleSearchDirectory(
@@ -57,12 +54,7 @@ export function findDirectoryTool(): ToolInterface {
       await handleSearchDirectory(userId, sessionId, query),
     arguments: ["search query"],
     promptTemplate: findDirectoryPrompt,
-    availableTools: [
-      name,
-      ToolName.searchCode,
-      ToolName.searchDirectory,
-      ToolName.setLocationToWriteCode,
-    ],
+    availableTools: [name, ToolName.searchCode, ToolName.searchDirectory],
     outputFunction,
   };
 }

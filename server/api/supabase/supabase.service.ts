@@ -4,16 +4,16 @@ import { AddModel } from "../../../types/openAiTypes/openAiEngine";
 import {
   Element,
   ParseCode,
-  ParsedCode,
   ParsedDirectory,
   ParsedFile,
   SnippetByFileName,
 } from "../../../types/parseCode.types";
-import { Database, Json } from "../../../types/supabase";
+import { Database } from "../../../types/supabase";
 import { supabaseKey, supabaseUrl } from "../../../utils/envVariable";
 import { extractFileNameAndPathFromFullPath } from "../../../utils/getFileName";
 import { getSubstringFromMultilineCode } from "../../../utils/getSubstringFromMultilineCode";
 import { parseFile } from "../../../utils/treeSitter";
+import { addCodeToSupabase } from "../codeSnippet/codeSnippet.repository";
 import {
   createEmbeddings,
   createTextCompletion,
@@ -208,75 +208,6 @@ export async function compareAndUpdateSnippets(
   }
 
   return { updateCount, matchedCount, notFound };
-}
-
-export async function addCodeToSupabase(
-  snippet: ParsedCode,
-  accountId: string,
-  dbSnippetId?: number
-) {
-  console.log("snippet", snippet);
-
-  const codeExplaination = await createTextCompletion(
-    "What does this code do:" + snippet.code
-  );
-
-  console.log("codeExplaination", codeExplaination);
-
-  const code_embedding = await createEmbeddings([snippet.code]);
-
-  let code_explaination = null;
-  let code_explaination_embedding = null;
-
-  if (
-    codeExplaination &&
-    codeExplaination.choices &&
-    codeExplaination.choices[0] &&
-    codeExplaination.choices[0].text
-  ) {
-    const { choices } = codeExplaination;
-    if (!choices[0].text) {
-      return;
-    }
-    code_explaination = choices[0].text.trim();
-    const e = await createEmbeddings([code_explaination]);
-    code_explaination_embedding = e[0];
-  }
-
-  code_explaination_embedding = await createEmbeddings([code_explaination]);
-
-  const fileId = await findFileId(snippet.metadata.fileName);
-
-  const dbRecord = {
-    code_string: snippet.code,
-    code_explaination,
-    code_explaination_embedding,
-    code_embedding,
-    relative_file_path: snippet.metadata.filePath,
-    parsed_code_type: snippet.metadata.type,
-    start_row: snippet.metadata.element.startPosition.row,
-    start_column: snippet.metadata.element.startPosition.column,
-    end_row: snippet.metadata.element.endPosition.row,
-    end_column: snippet.metadata.element.endPosition.column,
-    file_name: snippet.metadata.fileName,
-    code_file_id: fileId,
-    account_id: accountId,
-  };
-
-  if (dbSnippetId) {
-    const { data, error } = await supabase
-      .from("code_snippet")
-      .update(dbRecord)
-      .eq("id", dbSnippetId);
-
-    console.log(data, error);
-  }
-
-  const { data, error } = await supabase
-    .from("code_snippet")
-    .insert([dbRecord]);
-
-  console.log(data, error);
 }
 
 export async function addDirectoryToSupabase(directory: ParsedDirectory) {

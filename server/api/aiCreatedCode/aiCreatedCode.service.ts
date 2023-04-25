@@ -1,5 +1,6 @@
 import { ChatUserType } from "../../../types/chatMessage.type";
 import { EngineName } from "../../../types/openAiTypes/openAiEngine";
+import { Database } from "../../../types/supabase";
 import { deserializeJson } from "../../../utils/deserializeJson";
 import {
   createNewCodePrompt,
@@ -76,20 +77,7 @@ export const createAiCodeFromNewFilePrompt = async (
 
 export const findAndUpdateAiCodeBySession = async (
   sessionId: string,
-  updates:
-    | Partial<{
-        code?: string | null | undefined;
-        completed_at?: string | null | undefined;
-        created_at?: string | null | undefined;
-        file_name?: string | null | undefined;
-        functionality?: string | null | undefined;
-        id?: string | undefined;
-        location?: string | null | undefined;
-        path?: string | null | undefined;
-        session_id?: string | null | undefined;
-        writen_to_file_at?: string | null | undefined;
-      }>
-    | undefined,
+  updates: Partial<Database["public"]["Tables"]["ai_created_code"]["Update"]>,
   property:
     | "code"
     | "completed_at"
