@@ -1,5 +1,4 @@
 import { ToolName } from ".";
-import { searchCode } from "../../search/search.controller";
 import { findCodeByQuery } from "../../search/search.service";
 import { findOrUpdateAccount } from "../../supabase/account.service";
 import { ToolInterface } from "../agent.service";

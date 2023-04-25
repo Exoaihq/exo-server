@@ -8,7 +8,9 @@ import { findDirectoryTool } from "./findDirectory.tool";
 import { findFileTool } from "./findFile.tool";
 import { searchDirectoryPrompt } from "./searchDirectory.prompt";
 
-export function searchDirectoryTool(): ToolInterface {
+// Need toflesh this out
+
+export function searchFilesTool(): ToolInterface {
   async function handleSearchDirectory(
     userId: string,
     sessionId: string,
@@ -53,12 +55,12 @@ export function searchDirectoryTool(): ToolInterface {
     return output;
   }
 
-  const name = ToolName.searchDirectory;
+  const name = ToolName.searchFiles;
 
   return {
     name,
     description:
-      "Searches or finds the users directories for the given directory name or query and return up to ten directories. This does not return the contents of the directory. To find files use the 'search files' tool.",
+      "Searches or finds the users files for the given file name or query and return up to ten files. This does not return the contents of the files. To find the contents of a file use the 'find one file' tool.",
     use: async (userId, sessionId, query) =>
       await handleSearchDirectory(userId, sessionId, query),
     arguments: ["search query"],
@@ -68,7 +70,6 @@ export function searchDirectoryTool(): ToolInterface {
       ToolName.findFile,
       ToolName.findDirectory,
       ToolName.finalAnswer,
-      ToolName.searchFiles,
     ],
     outputFunction,
   };

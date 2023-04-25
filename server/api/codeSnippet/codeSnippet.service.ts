@@ -1,13 +1,18 @@
 import { createClient } from "@supabase/supabase-js";
 import { Database } from "../../../types/supabase";
 import { supabaseKey, supabaseUrl } from "../../../utils/envVariable";
-import { createCodeFile } from "../codeFile/codeFile.repository";
+import {
+  createCodeFile,
+  findFileByAccountIdAndFullFilePath,
+} from "../codeFile/codeFile.repository";
 import { createEmbeddings } from "../openAi/openai.service";
 import {
   assignCodeSnippetToFile,
   findAllSnippetWithoutFiles,
   findFileId,
 } from "../supabase/supabase.service";
+import { writeFile, writeFileSync } from "fs";
+import { findOrUpdateAccount } from "../supabase/account.service";
 
 const supabase = createClient(supabaseUrl, supabaseKey);
 
@@ -22,30 +27,6 @@ export async function codeSnippetSearch(code: string) {
 
   const { data, error } = await supabase.rpc("match_code", query);
 
-  return data;
-}
-
-export async function findFileByExplainationEmbedding(
-  embedding: number[]
-): Promise<
-  Partial<Database["public"]["Tables"]["code_snippet"]["Row"]>[] | []
-> {
-  console.log("find File By Explaination Embedding", embedding);
-  const query = {
-    query_embedding: embedding,
-    similarity_threshold: 0.5,
-    match_count: 10,
-  };
-
-  const { data, error } = await supabase.rpc("match_code_file", query);
-
-  if (error) {
-    console.log(error);
-    return [];
-  }
-  if (!data) {
-    return [];
-  }
   return data;
 }
 
@@ -110,3 +91,64 @@ export async function findSnippetsWithoutFilesAndAssignFiles() {
     }
   }
 }
+
+export const createNewFileFromSnippets = async (
+  path: string,
+  userId: string
+) => {
+  const account = await findOrUpdateAccount(userId);
+  const fileWithSnippets = await findFileByAccountIdAndFullFilePath(
+    account?.id ? account.id : "",
+    path
+  );
+
+  if (
+    !fileWithSnippets ||
+    !fileWithSnippets.file_name ||
+    !fileWithSnippets.file_path
+  ) {
+    return null;
+  }
+
+  if (!fileWithSnippets?.code_snippet) {
+    // Create the snippets
+  } else {
+    // Check the snippets
+    const { code_snippet } = fileWithSnippets;
+
+    let codeSnippets: any[] = [];
+
+    if (!Array.isArray(code_snippet)) {
+      codeSnippets = [code_snippet];
+    } else {
+      codeSnippets = [...code_snippet];
+    }
+
+    const orderByStartRow = codeSnippets.sort((a, b) => {
+      return a.start_row - b.start_row;
+    });
+
+    const array: any[] = [];
+
+    let previousStopRow = 0;
+
+    for await (const snippet of orderByStartRow) {
+      const emptyLinesToAdd = snippet.start_row - previousStopRow - 1;
+
+      if (emptyLinesToAdd > 0) {
+        array.splice(previousStopRow + 1, emptyLinesToAdd, "\n");
+      }
+      array.splice(
+        snippet.start_row,
+        snippet.end_row - snippet.start_row,
+        snippet.code_string
+      );
+      previousStopRow = snippet.end_row;
+    }
+
+    // fs.writeFileSync(testPath, array.join(" "));
+
+    const fileContent = array.join(" ");
+    return fileContent;
+  }
+};

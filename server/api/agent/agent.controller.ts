@@ -203,38 +203,30 @@ export const testAgent = async (req: Request, res: Response) => {
         codeSnippets = [...code_snippet];
       }
 
-      // const contentToWrite: any[] = [];
-
-      // for await (const snippet of codeSnippets) {
-      //   contentToWrite.splice(snippet.start_row, 0, snippet.code_string);
-      // }
-
-      // console.log("Content to write", contentToWrite.join("\n\n"));
-      // fs.writeFileSync(testPath, contentToWrite.join("\n\n"));
-
       const fileContent = await fs.readFileSync(path, "utf-8");
-      console.log("File content", typeof fileContent);
-      const lines = fileContent.split("\n");
-      const parsed = await parseFile(fileContent);
 
-      console.log("Snippets", codeSnippets.length);
-      console.log("Parsed", parsed.rootNode.children.length);
+      const linesSplit = fileContent.split("\n");
+      const addBackNewLine = linesSplit.map((line: any) => `${line}\n`);
+
+      const parsed = await parseFile(fileContent);
 
       let numberFound = 0;
       let numberNotFound = 0;
       let matchedSnippets: any[] = [];
-      let snippetsToUpdate: { id: any }[] = [];
+
       let elementsToUpdate: ParsedCode[] = [];
 
       for await (const element of parsed.rootNode.children) {
         const { startPosition, endPosition, type }: Element = element;
         const parsedCodeSnippet = getSubstringFromMultilineCode(
-          lines,
+          addBackNewLine,
           startPosition.row,
           startPosition.column,
           endPosition.row,
           endPosition.column
         );
+
+        // console.log("Parsed code snippet", parsedCodeSnippet);
 
         const dbSnippetFound = codeSnippets.find((dbSnippet) => {
           return (
@@ -278,16 +270,16 @@ export const testAgent = async (req: Request, res: Response) => {
       console.log("Number found", numberFound);
       console.log("Number not found", numberNotFound);
       console.log("Matched snippets", matchedSnippets);
-      console.log("Snippets to update", snippetsToUpdate);
+
       console.log("Elements to update", elementsToUpdate);
       // console.log("Elements to update", elementsToUpdate);
       const snippetsToDelete = codeSnippets.filter((snippet) => {
         return !matchedSnippets.includes(snippet.id);
       });
-      console.log(
-        "Snippets to delete",
-        snippetsToDelete.map((s) => s.id)
-      );
+      // console.log(
+      //   "Snippets to delete",
+      //   snippetsToDelete.map((s) => s.id)
+      // );
 
       snippetsToDelete.forEach(async (snippet) => {
         await deleteSnippetById(snippet.id);

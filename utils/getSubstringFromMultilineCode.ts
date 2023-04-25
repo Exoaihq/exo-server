@@ -16,7 +16,7 @@ export function getSubstringFromMultilineCode(
     return startPosition;
   } else {
     for (let i = startRow; i < endRow; i++) {
-      result = result + lines[i].trim();
+      result = result + lines[i];
     }
     return result + endPosition;
   }

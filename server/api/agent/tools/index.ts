@@ -8,6 +8,7 @@ import { getExisitingCodeTool } from "./getCode.tool";
 import { retrieveMemoryTool } from "./retrieveMemory.tool";
 import { searchCodeTool } from "./searchCode.tool";
 import { searchDirectoryTool } from "./searchDirectory.tool";
+import { searchFilesTool } from "./searchFiles.tool";
 import { searchTestsTool } from "./searchTests.tool";
 import { writeCompletedCodeTool } from "./writeCompletedCode.tool";
 
@@ -38,6 +39,7 @@ export enum ToolName {
   finalAnswer = "final answer",
   updateExistingCode = "update existing code",
   writeCodeToScarchPad = "write code to scratch pad",
+  searchFiles = "search files",
 }
 
 export const allTools = [
@@ -53,4 +55,5 @@ export const allTools = [
   finalAnswerTool(),
   generateTestCodeTool(),
   searchTestsTool(),
+  searchFilesTool(),
 ];

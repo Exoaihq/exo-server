@@ -7,7 +7,7 @@ const supabase = createClient<Database>(supabaseUrl, supabaseKey);
 
 export const findOrUpdateAccount = async (
   userId: string
-): Promise<Database["public"]["Tables"]["account"]["Row"] | null> => {
+): Promise<Database["public"]["Tables"]["account"]["Row"]> => {
   const { data, error } = await supabase
     .from("account")
     .select("*")
@@ -28,7 +28,7 @@ export const findOrUpdateAccount = async (
 
     if (!data || !data[0]) {
       console.log("Error creating session for user: ", userId);
-      return null;
+      throw new Error("Error creating account for user: " + userId);
     } else {
       return data[0] as Database["public"]["Tables"]["account"]["Row"];
     }

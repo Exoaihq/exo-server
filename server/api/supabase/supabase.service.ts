@@ -4,6 +4,7 @@ import { AddModel } from "../../../types/openAiTypes/openAiEngine";
 import {
   Element,
   ParseCode,
+  ParsedCode,
   ParsedDirectory,
   ParsedFile,
   SnippetByFileName,
@@ -13,7 +14,10 @@ import { supabaseKey, supabaseUrl } from "../../../utils/envVariable";
 import { extractFileNameAndPathFromFullPath } from "../../../utils/getFileName";
 import { getSubstringFromMultilineCode } from "../../../utils/getSubstringFromMultilineCode";
 import { parseFile } from "../../../utils/treeSitter";
-import { addCodeToSupabase } from "../codeSnippet/codeSnippet.repository";
+import {
+  addCodeToSupabase,
+  deleteSnippetById,
+} from "../codeSnippet/codeSnippet.repository";
 import {
   createEmbeddings,
   createTextCompletion,
@@ -125,28 +129,26 @@ export async function compareAndUpdateSnippets(
 ) {
   const tree = await parseFile(contents.contents);
   const lines = contents.contents.split("\n");
+  const addBackNewLine = lines.map((line: any) => `${line}\n`);
 
   const { fileName, extractedPath } = extractFileNameAndPathFromFullPath(
     contents.filePath
   );
 
-  let updateCount = 0;
-  let matchedCount = 0;
-  let notFound = 0;
+  let numberFound = 0;
+  let numberNotFound = 0;
+  let matchedSnippets: any[] = [];
+  let elementsToUpdate: ParsedCode[] = [];
 
   for await (const [index, element] of tree.rootNode.children.entries()) {
     const { startPosition, endPosition, type }: Element = element;
     const codeSnippet = getSubstringFromMultilineCode(
-      lines,
+      addBackNewLine,
       startPosition.row,
       startPosition.column,
       endPosition.row,
       endPosition.column
     );
-
-    const found =
-      snippets &&
-      snippets.find((snippet) => snippet.code_string === codeSnippet);
 
     if (
       type === "ERROR" ||
@@ -158,56 +160,75 @@ export async function compareAndUpdateSnippets(
     ) {
       continue;
     }
-
-    if (found) {
-      if (
-        startPosition.row === found.start_row &&
-        endPosition.row === found.end_row &&
-        startPosition.column === found.start_column &&
-        endPosition.column === found.end_column
-      ) {
-        matchedCount++;
-        // Do not need to update db
-        continue;
-      } else {
-        // update db entry
-        updateCount++;
-        if (!printTotalsOnly) {
-          await addCodeToSupabase(
-            {
-              code: codeSnippet,
-              metadata: {
-                element,
-                filePath: extractedPath,
-                type,
-                fileName,
-              },
-            },
-            accountId,
-            found.id
-          );
-        }
-      }
-    } else {
-      notFound++;
-      if (!printTotalsOnly) {
-        await addCodeToSupabase(
-          {
-            code: codeSnippet,
-            metadata: {
-              element,
-              filePath: extractedPath,
-              type,
-              fileName,
-            },
-          },
-          accountId
+    const dbSnippetFound =
+      snippets &&
+      snippets.find((dbSnippet) => {
+        return (
+          dbSnippet.start_row === startPosition.row &&
+          dbSnippet.end_row === endPosition.row &&
+          dbSnippet.start_column === startPosition.column &&
+          dbSnippet.end_column === endPosition.column
         );
+      });
+
+    if (!dbSnippetFound) {
+      numberNotFound++;
+      elementsToUpdate.push({
+        code: codeSnippet,
+        metadata: {
+          element,
+          filePath: extractedPath,
+          type,
+          fileName,
+        },
+      });
+    } else {
+      const match = codeSnippet === dbSnippetFound?.code_string;
+
+      if (match) {
+        numberFound++;
+        matchedSnippets.push(dbSnippetFound.id);
+      } else {
+        numberNotFound++;
+        elementsToUpdate.push({
+          code: codeSnippet,
+          metadata: {
+            element,
+            filePath: extractedPath,
+            type,
+            fileName,
+          },
+        });
       }
     }
   }
 
-  return { updateCount, matchedCount, notFound };
+  console.log("Number found", numberFound);
+  console.log("Number not found", numberNotFound);
+  console.log("Matched snippets", matchedSnippets);
+
+  console.log("Elements to update", elementsToUpdate);
+  // console.log("Elements to update", elementsToUpdate);
+  const snippetsToDelete =
+    snippets &&
+    snippets.filter((snippet) => {
+      return !matchedSnippets.includes(snippet.id);
+    });
+
+  snippetsToDelete &&
+    snippetsToDelete.forEach(async (snippet) => {
+      await deleteSnippetById(snippet.id);
+    });
+
+  elementsToUpdate.forEach(async (element) => {
+    await addCodeToSupabase(element, accountId);
+  });
+
+  return {
+    updateCount: elementsToUpdate.length,
+    matchedCount: numberFound,
+    notFound: elementsToUpdate.length,
+  };
 }
 
 export async function addDirectoryToSupabase(directory: ParsedDirectory) {
