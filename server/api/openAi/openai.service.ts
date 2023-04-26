@@ -252,7 +252,6 @@ export async function createEmbeddings(documents: Array<any>): Promise<any> {
       return truncateStringTokens(d.replace("\n", " "), 8191);
     }),
   });
-  console.log(response.data);
   const [{ embedding }] = response?.data?.data;
   return embedding;
 }

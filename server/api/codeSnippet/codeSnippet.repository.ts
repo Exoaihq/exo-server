@@ -46,8 +46,6 @@ export const deleteSnippetById = async (id: number) => {
     return error;
   }
 
-  console.log("Deleted code snippet", data);
-
   return data[0] as Database["public"]["Tables"]["code_snippet"]["Row"];
 };
 
@@ -56,13 +54,9 @@ export async function addCodeToSupabase(
   accountId: string,
   dbSnippetId?: number
 ) {
-  console.log("snippet", snippet);
-
   const codeExplaination = await createTextCompletion(
     "What does this code do:" + snippet.code
   );
-
-  console.log("codeExplaination", codeExplaination);
 
   const code_embedding = await createEmbeddings([snippet.code]);
 
@@ -105,17 +99,8 @@ export async function addCodeToSupabase(
   };
 
   if (dbSnippetId) {
-    const { data, error } = await supabase
-      .from("code_snippet")
-      .update(dbRecord)
-      .eq("id", dbSnippetId);
-
-    console.log(data, error);
+    await supabase.from("code_snippet").update(dbRecord).eq("id", dbSnippetId);
+  } else {
+    await supabase.from("code_snippet").insert([dbRecord]);
   }
-
-  const { data, error } = await supabase
-    .from("code_snippet")
-    .insert([dbRecord]);
-
-  console.log(data, error);
 }

@@ -271,8 +271,6 @@ export const testAgent = async (req: Request, res: Response) => {
       console.log("Number not found", numberNotFound);
       console.log("Matched snippets", matchedSnippets);
 
-      console.log("Elements to update", elementsToUpdate);
-      // console.log("Elements to update", elementsToUpdate);
       const snippetsToDelete = codeSnippets.filter((snippet) => {
         return !matchedSnippets.includes(snippet.id);
       });

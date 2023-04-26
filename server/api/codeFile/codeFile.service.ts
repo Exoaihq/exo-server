@@ -16,9 +16,9 @@ import {
 } from "./codeFile.repository";
 
 export const handleAndFilesToDb = async (
-  directoryId: number,
   files: ParseCode[],
-  account: Database["public"]["Tables"]["account"]["Row"]
+  account: Database["public"]["Tables"]["account"]["Row"],
+  directoryId?: number
 ) => {
   let totalUpdateCount = 0;
   let totalMatchedCount = 0;
@@ -50,10 +50,12 @@ export const handleAndFilesToDb = async (
     totalNotFound += notFound;
   });
 
-  await updateCodeDirectoryById(directoryId, {
-    updated_at: new Date().toISOString(),
-    indexed_at: new Date().toISOString(),
-  });
+  if (directoryId) {
+    await updateCodeDirectoryById(directoryId, {
+      updated_at: new Date().toISOString(),
+      indexed_at: new Date().toISOString(),
+    });
+  }
 
   console.log("totalUpdateCount", totalUpdateCount);
   console.log("totalMatchedCount", totalMatchedCount);
