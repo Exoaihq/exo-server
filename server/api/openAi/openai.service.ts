@@ -33,6 +33,7 @@ export async function chatAgent(
   prompt: string,
   stopToken: string | null = null
 ) {
+  const interval = commandLineLoading("Create chat agent");
   const res = await openai.createChatCompletion({
     messages: [
       {
@@ -45,7 +46,7 @@ export async function chatAgent(
     model: "gpt-3.5-turbo",
     stop: stopToken ? [stopToken] : null,
   });
-
+  clearLoading(interval, `${raisingHands} Query completed ${raisingHands}`);
   if (res.data.error) {
     console.log(">>>>>>>>>>>>>>error", res.data.error);
   }
@@ -57,6 +58,8 @@ export async function chatAgentWithStopToken(
   prompt: string,
   stopToken: string
 ) {
+  const interval = commandLineLoading("Create chat agent with stop token");
+
   const res = await openai.createChatCompletion({
     messages: [
       {
@@ -73,7 +76,7 @@ export async function chatAgentWithStopToken(
   if (res.data.error) {
     console.log(">>>>>>>>>>>>>>error", res.data.error);
   }
-
+  clearLoading(interval, `${raisingHands} Query completed ${raisingHands}`);
   return res.data.choices[0].message.content;
 }
 
@@ -154,22 +157,6 @@ export async function getCompletionDefaultStopToken(
   }
 }
 
-export async function getCodeCompletion(prompt: string) {
-  try {
-    const res = await openai.createCompletion({
-      model: "text-davinci-002",
-      prompt,
-      temperature: 0,
-      max_tokens: 1000,
-      stop: "/* Command:",
-    });
-    return res;
-  } catch (error: any) {
-    console.log(error);
-    throw error;
-  }
-}
-
 export async function queryClassification(query: string) {
   const prompt = `You need to classify a query into three buckets: {code}, {question} or {chat}. Here are some examples of queries you might need to classify:\
     """\
@@ -212,7 +199,6 @@ export async function handlePromptAfterClassification(messages: ChatMessage[]) {
 
   switch (getTextAfterClassification) {
     case "code":
-      // const code = await getCodeCompletion(lastMessage)
       return {
         data: {
           choices: [
@@ -245,6 +231,8 @@ export async function handlePromptAfterClassification(messages: ChatMessage[]) {
 }
 
 export async function createEmbeddings(documents: Array<any>): Promise<any> {
+  const interval = commandLineLoading("Creating embeddings");
+
   const response = await openai.createEmbedding({
     model: "text-embedding-ada-002",
     input: documents.map((d) => {
@@ -253,6 +241,7 @@ export async function createEmbeddings(documents: Array<any>): Promise<any> {
     }),
   });
   const [{ embedding }] = response?.data?.data;
+  clearLoading(interval, `${raisingHands} Query completed ${raisingHands}`);
   return embedding;
 }
 
@@ -299,7 +288,7 @@ export async function createTextCompletion(
   loadingMessage: string = "Loading",
   type: string = "completion"
 ): Promise<CompletionResponse> {
-  const interval = commandLineLoading(loadingMessage);
+  const interval = commandLineLoading(loadingMessage + "creat text completion");
 
   try {
     const remainingRequests = await limiter.removeTokens(1);
@@ -332,8 +321,7 @@ export async function createChatCompletion(
   temperature: number = 1,
   maxTokens: number = 2048
 ): Promise<OpenAiChatCompletionResponse> {
-  const interval = commandLineLoading("Loading");
-
+  const interval = commandLineLoading("Loading create chat completion");
   try {
     const remainingRequests = await limiter.removeTokens(1);
     const res = model
@@ -352,6 +340,3 @@ export async function createChatCompletion(
     throw error;
   }
 }
-// Can you find the utils directory in the /Users/kg/Repos/code-gen-server repo and create a new ts file in that directory that exports a function called isArrayOrObject that takes in a value and returns true if the value is an array or object and false if it is not.
-
-// /Users/kg/Repos/code-gen-server/utils/config.js
