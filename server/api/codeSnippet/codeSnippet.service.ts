@@ -13,6 +13,11 @@ import {
 } from "../supabase/supabase.service";
 import { writeFile, writeFileSync } from "fs";
 import { findOrUpdateAccount } from "../supabase/account.service";
+import {
+  findAllSnippetsWhereNameIsNull,
+  updateSnippetById,
+} from "./codeSnippet.repository";
+import { extractFunctionName } from "../../../utils/getMethodName";
 
 const supabase = createClient(supabaseUrl, supabaseKey);
 
@@ -152,3 +157,45 @@ export const createNewFileFromSnippets = async (
     return fileContent;
   }
 };
+
+export async function updateCodeSnippetNames() {
+  const allSnippetsWhereNameIsNotSet = await findAllSnippetsWhereNameIsNull();
+
+  console.log(allSnippetsWhereNameIsNotSet.length);
+
+  let matchedCount = 0;
+  let notMatchedCount = 0;
+  let matchedSnippets: {
+    id: number;
+    name: string | null;
+  }[] = [];
+
+  allSnippetsWhereNameIsNotSet.forEach(async (snippet) => {
+    if (!snippet.code_string) {
+      return;
+    }
+    const matched = extractFunctionName(snippet.code_string);
+    if (!matched) {
+      console.log("Not Matched: ", snippet.code_string);
+      notMatchedCount++;
+      return;
+    } else {
+      matchedCount++;
+      matchedSnippets.push({
+        id: snippet.id,
+        name: matched,
+      });
+    }
+  });
+
+  matchedSnippets.forEach(async (snippet) => {
+    await updateSnippetById(snippet.id, {
+      name: snippet.name,
+      updated_at: new Date().toISOString(),
+    });
+  });
+
+  console.log("Matched: ", matchedCount);
+  console.log("Not Matched: ", notMatchedCount);
+  console.log("Total: ", matchedSnippets);
+}

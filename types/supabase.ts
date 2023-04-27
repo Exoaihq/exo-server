@@ -182,6 +182,7 @@ export interface Database {
           end_row: number | null
           file_name: string | null
           id: number
+          name: string | null
           parsed_code_type: string | null
           relative_file_path: string | null
           start_column: number | null
@@ -200,6 +201,7 @@ export interface Database {
           end_row?: number | null
           file_name?: string | null
           id?: number
+          name?: string | null
           parsed_code_type?: string | null
           relative_file_path?: string | null
           start_column?: number | null
@@ -218,6 +220,7 @@ export interface Database {
           end_row?: number | null
           file_name?: string | null
           id?: number
+          name?: string | null
           parsed_code_type?: string | null
           relative_file_path?: string | null
           start_column?: number | null

@@ -99,16 +99,16 @@ export const findAndUpdateFilesFromClient = async (
 
     handleAndFilesToDb(files, account, directoryId);
 
-    if (directoryId) {
-      await createMessageWithUser(
-        user.id,
-        {
-          content: `Started indexing your directroy. This may take a while. The directory indexed date will be updated when the indexing is completed.`,
-          role: "assistant",
-        },
-        sessionId
-      );
-    }
+    // if (directoryId) {
+    //   await createMessageWithUser(
+    //     user.id,
+    //     {
+    //       content: `Started indexing your directroy. This may take a while. The directory indexed date will be updated when the indexing is completed.`,
+    //       role: "assistant",
+    //     },
+    //     sessionId
+    //   );
+    // }
 
     return res.status(200).json({ data: "done" });
   } catch (error: any) {

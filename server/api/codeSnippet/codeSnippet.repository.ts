@@ -2,6 +2,7 @@ import { createClient, PostgrestError } from "@supabase/supabase-js";
 import { ParsedCode } from "../../../types/parseCode.types";
 import { Database } from "../../../types/supabase";
 import { supabaseKey, supabaseUrl } from "../../../utils/envVariable";
+import { extractFunctionName } from "../../../utils/getMethodName";
 import {
   createEmbeddings,
   createTextCompletion,
@@ -28,8 +29,6 @@ export const updateSnippetById = async (
     console.log("Error updating code snippet", error);
     return error;
   }
-
-  console.log("Updated code snippet", data);
 
   return data[0] as Database["public"]["Tables"]["code_snippet"]["Row"];
 };
@@ -82,6 +81,8 @@ export async function addCodeToSupabase(
 
   const fileId = await findFileId(snippet.metadata.fileName);
 
+  const matched = extractFunctionName(snippet.code);
+
   const dbRecord = {
     code_string: snippet.code,
     code_explaination,
@@ -96,6 +97,7 @@ export async function addCodeToSupabase(
     file_name: snippet.metadata.fileName,
     code_file_id: fileId,
     account_id: accountId,
+    name: matched ? matched : null,
   };
 
   if (dbSnippetId) {
@@ -104,3 +106,31 @@ export async function addCodeToSupabase(
     await supabase.from("code_snippet").insert([dbRecord]);
   }
 }
+
+export const findAllSnippetsWhereNameIsNull = async () => {
+  const { data, error } = await supabase
+    .from("code_snippet")
+    .select("code_string, id, name, file_name")
+    .is("name", null)
+    .in("parsed_code_type", [
+      "expression_statement",
+      "export_statement",
+      "lexical_declaration",
+    ])
+    .not("code_string", "is", null)
+    .not("file_name", "is", null)
+    .neq("file_name", "yarn.lock")
+    .order("updated_at", { ascending: true })
+    .limit(1000);
+
+  if (error) {
+    console.log("Error finding snippets", error);
+    return [];
+  }
+
+  if (!data) {
+    return [];
+  }
+
+  return data;
+};
