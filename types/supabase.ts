@@ -242,6 +242,26 @@ export interface Database {
           stripe_customer_id?: string | null
         }
       }
+      export_import_snippet_map: {
+        Row: {
+          created_at: string | null
+          export_id: number | null
+          id: string
+          import_id: number | null
+        }
+        Insert: {
+          created_at?: string | null
+          export_id?: number | null
+          id?: string
+          import_id?: number | null
+        }
+        Update: {
+          created_at?: string | null
+          export_id?: number | null
+          id?: string
+          import_id?: number | null
+        }
+      }
       long_term_memory: {
         Row: {
           account_id: string | null

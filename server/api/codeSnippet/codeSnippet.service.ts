@@ -14,10 +14,19 @@ import {
 import { writeFile, writeFileSync } from "fs";
 import { findOrUpdateAccount } from "../supabase/account.service";
 import {
+  createImportExportMap,
+  findAllSnippetsImportStatements,
   findAllSnippetsWhereNameIsNull,
+  findExportSnippetByNameAndPath,
   updateSnippetById,
 } from "./codeSnippet.repository";
-import { extractFunctionName } from "../../../utils/getMethodName";
+import {
+  extractFunctionName,
+  getImportMethodNames,
+  stripPath,
+  stripPrefix,
+} from "../../../utils/getMethodName";
+import { extractFileNameAndPathFromFullPath } from "../../../utils/getFileName";
 
 const supabase = createClient(supabaseUrl, supabaseKey);
 
@@ -198,4 +207,105 @@ export async function updateCodeSnippetNames() {
   console.log("Matched: ", matchedCount);
   console.log("Not Matched: ", notMatchedCount);
   console.log("Total: ", matchedSnippets);
+}
+
+export const findAllImportStatements = async () => {
+  const imports = await findAllSnippetsImportStatements();
+
+  let matchedCount = 0;
+  let notMatchedCount = 0;
+  let matchedSnippets: {
+    id: number;
+    exportId: number;
+    code_string: string;
+    exportSnippet: string | null;
+  }[] = [];
+
+  for (let importSnippet of imports) {
+    const matchWithImport = await matchImportSnippetWithExport(importSnippet);
+    matchedCount = matchedCount + matchWithImport.matched;
+    notMatchedCount = notMatchedCount + matchWithImport.notMatched;
+    matchedSnippets.push(...matchWithImport.matchedSnippet);
+  }
+
+  console.log("Matched: ", matchedCount);
+  console.log("Not Matched: ", notMatchedCount);
+  console.log("Total: ", matchedSnippets.length);
+
+  matchedSnippets.forEach(async (snippet) => {
+    createImportExportMap({
+      import_id: snippet.id,
+      export_id: snippet.exportId,
+    });
+  });
+};
+
+export async function matchImportSnippetWithExport(importSnippet: {
+  account_id?: any;
+  code_string?: any;
+  id?: any;
+  relative_file_path?: any;
+}): Promise<{
+  matched: number;
+  notMatched: number;
+  matchedSnippet: any[];
+}> {
+  let matched = 0;
+  let notMatched = 0;
+  let matchedSnippet: {
+    id: any;
+    exportId: number;
+    code_string: any;
+    exportSnippet: string | null;
+  }[] = [];
+
+  const { code_string, id, relative_file_path } = importSnippet;
+  // console.log(importSnippet.code_string);
+  if (!code_string || !id || !relative_file_path) {
+    return {
+      matched,
+      notMatched,
+      matchedSnippet,
+    };
+  }
+  const foundIndividualImports = getImportMethodNames(code_string);
+  if (foundIndividualImports) {
+    const { methodNames } = foundIndividualImports;
+
+    for (let importNames of methodNames) {
+      const exportSnippet = await findExportSnippetByNameAndPath(
+        importNames.trim()
+      );
+
+      if (!exportSnippet) {
+        notMatched++;
+        continue;
+      } else {
+        matched++;
+
+        if (exportSnippet.account_id !== importSnippet.account_id) {
+          // console.log("Account ID not matched");
+          continue;
+        } else {
+          // console.log(exportSnippet.name, code_string);
+          matchedSnippet.push({
+            id,
+            exportId: exportSnippet.id,
+            code_string,
+            exportSnippet: exportSnippet.name,
+          });
+        }
+      }
+    }
+
+    // Get the export snippet by the import path and method name
+  } else {
+    notMatched++;
+  }
+
+  return {
+    matched,
+    notMatched,
+    matchedSnippet,
+  };
 }

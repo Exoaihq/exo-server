@@ -8,6 +8,7 @@ import {
   createTextCompletion,
 } from "../openAi/openai.service";
 import { findFileId } from "../supabase/supabase.service";
+import { matchImportSnippetWithExport } from "./codeSnippet.service";
 
 const supabase = createClient<Database>(supabaseUrl, supabaseKey);
 
@@ -100,17 +101,50 @@ export async function addCodeToSupabase(
     name: matched ? matched : null,
   };
 
+  let updatedOrCreated;
   if (dbSnippetId) {
-    await supabase.from("code_snippet").update(dbRecord).eq("id", dbSnippetId);
+    const { data, error } = await supabase
+      .from("code_snippet")
+      .update(dbRecord)
+      .eq("id", dbSnippetId)
+      .select("*");
+    if (data && data[0]) {
+      updatedOrCreated = data[0];
+    }
   } else {
-    await supabase.from("code_snippet").insert([dbRecord]);
+    const { data, error } = await supabase
+      .from("code_snippet")
+      .insert([dbRecord])
+      .select("*");
+
+    if (data && data[0]) {
+      updatedOrCreated = data[0];
+    }
+  }
+
+  if (
+    updatedOrCreated &&
+    updatedOrCreated.parsed_code_type === "import_statement"
+  ) {
+    const { matchedSnippet } = await matchImportSnippetWithExport(
+      updatedOrCreated
+    );
+
+    if (matchedSnippet) {
+      matchedSnippet.forEach(async (snippet) => {
+        createImportExportMap({
+          import_id: snippet.id,
+          export_id: snippet.exportId,
+        });
+      });
+    }
   }
 }
 
 export const findAllSnippetsWhereNameIsNull = async () => {
   const { data, error } = await supabase
     .from("code_snippet")
-    .select("code_string, id, name, file_name")
+    .select("code_string, id, name, file_name, parsed_code_type")
     .is("name", null)
     .in("parsed_code_type", [
       "expression_statement",
@@ -133,4 +167,72 @@ export const findAllSnippetsWhereNameIsNull = async () => {
   }
 
   return data;
+};
+
+export const findExportSnippetByNameAndPath = async (name: string) => {
+  const { data, error } = await supabase
+    .from("code_snippet")
+    .select(
+      "code_string, id, name, file_name, parsed_code_type, relative_file_path, updated_at, account_id"
+    )
+    .not("name", "is", null)
+    .not("account_id", "is", null)
+    .in("parsed_code_type", ["export_statement"])
+    .not("code_string", "is", null)
+    .eq("name", name)
+    .neq("file_name", "yarn.lock")
+    .order("updated_at", { ascending: true })
+    .limit(1);
+
+  if (error) {
+    console.log("Error finding snippets", error);
+    return null;
+  }
+
+  if (!data) {
+    return null;
+  }
+
+  return data[0];
+};
+
+export const findAllSnippetsImportStatements = async () => {
+  const { data, error } = await supabase
+    .from("code_snippet")
+    .select(
+      "code_string, id, name, file_name, name, relative_file_path, account_id, parsed_code_type "
+    )
+    .is("name", null)
+    .in("parsed_code_type", ["import_statement"])
+    .not("code_string", "is", null)
+    .not("file_name", "is", null)
+    .neq("file_name", "yarn.lock")
+    .not("account_id", "is", null)
+    .order("updated_at", { ascending: true })
+    .limit(1000);
+
+  if (error) {
+    console.log("Error finding import snippets", error);
+    return [];
+  }
+
+  if (!data) {
+    return [];
+  }
+
+  return data;
+};
+
+export const createImportExportMap = async (value: any) => {
+  const found = await supabase
+    .from("export_import_snippet_map")
+    .select("id, export_id, import_id")
+    .eq("export_id", value.export_id)
+    .eq("import_id", value.import_id);
+
+  if (found.data && found.data.length > 0) {
+    return;
+  } else {
+    await supabase.from("export_import_snippet_map").insert([value]);
+  }
 };

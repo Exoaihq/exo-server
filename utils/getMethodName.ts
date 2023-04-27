@@ -34,3 +34,46 @@ export function extractFunctionName(code: string): string | null {
 // ```
 
 // This function uses a regular expression to search for function names in the form of `function functionName` or `object.prototype.functionName`. It returns the found function name or `null` if there's no match. Keep in mind that this might not cover all possible use-cases, but it should work for most typical JavaScript functions.
+
+export const getImportMethodNames = (code: string) => {
+  const regexPattern = /import\s+{(.+)}\s+from\s+["']([^"']+)["']/;
+  const match = code.match(regexPattern);
+  if (!match) return null;
+  const [, methodNames, importPath] = match;
+  return {
+    methodNames: methodNames.split(",").map((name) => name.trim()),
+    importPath,
+  };
+};
+
+export function stripPrefix(filePath: string): {
+  filePath: string;
+  removedCount: number;
+} {
+  const prefix = "../";
+  let result = filePath;
+  let removedCount = 0;
+  while (result.startsWith(prefix)) {
+    removedCount++;
+    result = result.slice(prefix.length);
+  }
+  return {
+    filePath: result,
+    removedCount,
+  };
+}
+
+export function stripPath(filePath: string, n: number): string {
+  const segments = filePath.split("/");
+  const numSegments = segments.length;
+
+  if (numSegments <= n) {
+    // If the path has fewer segments than the number to be removed,
+    // return an empty string (or throw an error, depending on your use case)
+    return "";
+  } else {
+    // Remove the last n segments from the path and rejoin the remaining segments
+    const newSegments = segments.slice(0, numSegments - n);
+    return newSegments.join("/");
+  }
+}
