@@ -93,13 +93,13 @@ export async function findSnippetsWithoutFilesAndAssignFiles() {
 }
 
 export const createNewFileFromSnippets = async (
-  path: string,
+  fullPath: string,
   userId: string
 ) => {
   const account = await findOrUpdateAccount(userId);
   const fileWithSnippets = await findFileByAccountIdAndFullFilePath(
     account?.id ? account.id : "",
-    path
+    fullPath
   );
 
   if (

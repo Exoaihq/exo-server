@@ -117,36 +117,3 @@ export const handleCodeCompletion = async (req: Request, res: Response) => {
     res.status(500).json({ message: error.message });
   }
 };
-
-export const handleFileUpload = async (req: Request, res: Response) => {
-  try {
-    const session = await checkSessionOrThrow(req, res);
-
-    const { user } = session.data;
-
-    const { fullFilePathWithName, sessionId, codeContent } =
-      req.body as CodeCompletionRequest;
-
-    const sessionMessages = await getOnlyRoleAndContentMessagesByUserAndSession(
-      user.id,
-      sessionId
-    );
-    const dbSession = await findOrCreateSession(user.id, sessionId);
-
-    const response = await handleFileUploadWithSession(
-      sessionMessages,
-      fullFilePathWithName,
-      user.id,
-      sessionId,
-      codeContent,
-      dbSession
-    );
-
-    return res.status(200).json({
-      data: response,
-    });
-  } catch (error: any) {
-    console.log(error);
-    res.status(500).json({ message: error.message });
-  }
-};

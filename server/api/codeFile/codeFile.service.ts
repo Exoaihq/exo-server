@@ -1,9 +1,13 @@
+import { ChatUserType } from "../../../types/chatMessage.type";
+import { EngineName } from "../../../types/openAiTypes/openAiEngine";
 import { ParseCode } from "../../../types/parseCode.types";
 import { Database } from "../../../types/supabase";
 import { isTodaysDate } from "../../../utils/dates";
 import { extractFileNameAndPathFromFullPath } from "../../../utils/getFileName";
 import { updateCodeDirectoryById } from "../codeDirectory/codeDirectory.repository";
+import { createNewFileFromSnippets } from "../codeSnippet/codeSnippet.service";
 import {
+  createChatCompletion,
   createEmbeddings,
   summarizeCodeExplaination,
 } from "../openAi/openai.service";
@@ -14,6 +18,8 @@ import {
   findSnippetByFileNameAndAccount,
   updateFileById,
 } from "./codeFile.repository";
+
+const fs = require("fs");
 
 export const handleAndFilesToDb = async (
   files: ParseCode[],
@@ -222,4 +228,34 @@ export const findAndFilterFileExplanations = async (
 
   const nameAndSnippets = `The name of this file is ${file_name} and the code snippets are ${snippetExplaintions}}`;
   return nameAndSnippets;
+};
+
+let ran = false;
+
+export const runImproveCodeScript = async () => {
+  if (!ran) {
+    const path =
+      "/Users/kg/Repos/code-gen-server/server/api/codeSnippet/codeSnippet.service.ts";
+    const newPath =
+      "/Users/kg/Repos/code-gen-server/server/api/codeSnippet/test.service.ts";
+
+    const content = fs.readFileSync(path, "utf8");
+    // const content = await createNewFileFromSnippets(
+    //   path,
+    //   "4ff416c9-4805-4adb-bfe7-ef315ae9536b"
+    // );
+    console.log("content", content);
+
+    const response = await createChatCompletion(
+      [
+        {
+          content: `Improve this code: ${content}`,
+          role: ChatUserType.user,
+        },
+      ],
+      EngineName.GPT4
+    );
+    ran = true;
+    fs.writeFileSync(newPath, response.choices[0].message.content, "utf8");
+  }
 };

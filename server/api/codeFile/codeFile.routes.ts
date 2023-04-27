@@ -11,6 +11,7 @@ import {
 import {
   findAndUpdateFilesFromClient,
   findAndUpdateFilesFromServerFileSys,
+  handleFileUpload,
 } from "./codeFile.controller";
 
 export const routes = Router();
@@ -20,6 +21,7 @@ const codeFileRoutes = Router();
 // Base route: /code-file
 
 codeFileRoutes.post("/", findAndUpdateFilesFromClient);
+codeFileRoutes.post("/add", handleFileUpload);
 
 codeFileRoutes.get("/add", addAllFilesToDb);
 codeFileRoutes.get("/assign-snippet", assignSnippetToFile);
