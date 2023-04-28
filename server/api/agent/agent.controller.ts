@@ -1,38 +1,27 @@
 import { Request, Response } from "express";
 import { ChatUserType } from "../../../types/chatMessage.type";
-import { chunkString } from "../../../utils/chunkString";
-import { createFile } from "../../../utils/createfile";
+import { Element, ParsedCode } from "../../../types/parseCode.types";
 import { getSubstringFromMultilineCode } from "../../../utils/getSubstringFromMultilineCode";
 import { parseFile } from "../../../utils/treeSitter";
 import { CodeCompletionRequest } from "../codeCompletion/codeCompletion.types";
 import { findFileByAccountIdAndFullFilePath } from "../codeFile/codeFile.repository";
+import {
+  addCodeToSupabase,
+  deleteSnippetById,
+} from "../codeSnippet/codeSnippet.repository";
 import { getOnlyRoleAndContentMessagesByUserAndSession } from "../message/message.service";
 import { createChatCompletion } from "../openAi/openai.service";
-import { findCodeByQuery, handleSearch } from "../search/search.service";
+import { handleSearch } from "../search/search.service";
 import { findOrUpdateAccount } from "../supabase/account.service";
 import {
   checkSessionOrThrow,
-  compareAndUpdateSnippets,
   findOrCreateSession,
 } from "../supabase/supabase.service";
 import { getExpectedNextAction, getQuickAction } from "./agent.prompt";
 import { expandContext, startNewObjective } from "./agent.service";
-import {
-  allTools,
-  findFileTool,
-  generateNewCodeTool,
-  searchCodeTool,
-  searchDirectoryTool,
-} from "./tools";
-import { writeCodeToScratchPadTool } from "./tools/writeCodeToScarchPad.tool";
-import { Element, ParseCode, ParsedCode } from "../../../types/parseCode.types";
+import { allTools, searchCodeTool, searchDirectoryTool } from "./tools";
 import { updateExistingCodeTool } from "./tools/updateExistingCode.tool";
-import {
-  addCodeToSupabase,
-  deleteSnippetById,
-  updateSnippetById,
-} from "../codeSnippet/codeSnippet.repository";
-import { writeFile, writeFileSync } from "fs";
+import { writeCodeToScratchPadTool } from "./tools/writeCodeToScarchPad.tool";
 
 const fs = require("fs");
 

@@ -4,6 +4,7 @@ import { EngineName } from "../../../../types/openAiTypes/openAiEngine";
 import { convertToTestFileName } from "../../../../utils/getFileName";
 import { findAndUpdateAiCodeBySession } from "../../aiCreatedCode/aiCreatedCode.service";
 import { findFileByAccountIdAndFullFilePath } from "../../codeFile/codeFile.repository";
+import { createTestBasedOnExistingCode } from "../../codeFile/codeFile.service";
 import { createNewFileFromSnippets } from "../../codeSnippet/codeSnippet.service";
 import { createChatCompletion } from "../../openAi/openai.service";
 import { findOrUpdateAccount } from "../../supabase/account.service";
@@ -36,22 +37,14 @@ export function generateTestCodeTool(): ToolInterface {
       };
     }
 
-    const functionality = `Write a test for the following code: ${await createNewFileFromSnippets(
-      path,
-      userId
-    )}`;
-    const response = await createChatCompletion(
-      [
-        {
-          role: ChatUserType.user,
-          content: functionality,
-        },
-      ],
-      EngineName.GPT4
-    );
-    const test =
-      response?.choices[0].message?.content &&
-      response?.choices[0].message?.content;
+    const fullFileContent = await createNewFileFromSnippets(path, userId);
+
+    if (!fullFileContent) {
+      return {
+        output: `I'm sorry I couldn't find the code file to generate a test for. `,
+      };
+    }
+    const test = await createTestBasedOnExistingCode(fullFileContent);
 
     if (!test) {
       return {
@@ -67,7 +60,7 @@ export function generateTestCodeTool(): ToolInterface {
       sessionId,
       {
         code: test,
-        functionality,
+        functionality: "Write test code based on existing code",
         file_name: convertToTestFileName(
           fileContent?.file_name ? fileContent.file_name : ""
         ),

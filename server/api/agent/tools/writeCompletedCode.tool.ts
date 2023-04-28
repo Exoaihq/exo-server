@@ -1,6 +1,6 @@
 import { ToolName } from ".";
 import {
-  getAiCodeBySession,
+  getAiCodeBySessionOrAccount,
   updateAiWritenCode,
 } from "../../aiCreatedCode/aiCreatedCode.repository";
 import { resetSession } from "../../supabase/supabase.service";
@@ -12,7 +12,7 @@ export function writeCompletedCodeTool(): ToolInterface {
     sessionId: string,
     text: string
   ) {
-    const aiGeneratedCode = await getAiCodeBySession(sessionId);
+    const aiGeneratedCode = await getAiCodeBySessionOrAccount(sessionId);
 
     if (aiGeneratedCode.length > 0) {
       // Get the most recent ai generated code that the location is not set to

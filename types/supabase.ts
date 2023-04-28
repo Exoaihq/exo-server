@@ -28,6 +28,7 @@ export interface Database {
       }
       ai_created_code: {
         Row: {
+          account_id: string | null
           code: string | null
           completed_at: string | null
           created_at: string | null
@@ -41,6 +42,7 @@ export interface Database {
           writen_to_file_at: string | null
         }
         Insert: {
+          account_id?: string | null
           code?: string | null
           completed_at?: string | null
           created_at?: string | null
@@ -54,6 +56,7 @@ export interface Database {
           writen_to_file_at?: string | null
         }
         Update: {
+          account_id?: string | null
           code?: string | null
           completed_at?: string | null
           created_at?: string | null
@@ -142,6 +145,7 @@ export interface Database {
           file_name: string | null
           file_path: string | null
           id: number
+          test_file_id: number | null
           updated_at: string | null
         }
         Insert: {
@@ -154,6 +158,7 @@ export interface Database {
           file_name?: string | null
           file_path?: string | null
           id?: number
+          test_file_id?: number | null
           updated_at?: string | null
         }
         Update: {
@@ -166,6 +171,7 @@ export interface Database {
           file_name?: string | null
           file_path?: string | null
           id?: number
+          test_file_id?: number | null
           updated_at?: string | null
         }
       }
@@ -726,6 +732,30 @@ export interface Database {
       [_ in never]: never
     }
     Functions: {
+      find_long_snippets: {
+        Args: {
+          line_count: number
+        }
+        Returns: {
+          account_id: string | null
+          code_embedding: string | null
+          code_explaination: string | null
+          code_explaination_embedding: string | null
+          code_file_id: number | null
+          code_string: string | null
+          created_at: string
+          end_column: number | null
+          end_row: number | null
+          file_name: string | null
+          id: number
+          name: string | null
+          parsed_code_type: string | null
+          relative_file_path: string | null
+          start_column: number | null
+          start_row: number | null
+          updated_at: string | null
+        }[]
+      }
       match_code: {
         Args: {
           query_embedding: string

@@ -1,7 +1,7 @@
 import { ToolName } from ".";
 import { ChatUserType } from "../../../../types/chatMessage.type";
 import { EngineName } from "../../../../types/openAiTypes/openAiEngine";
-import { getAiCodeBySession } from "../../aiCreatedCode/aiCreatedCode.repository";
+import { getAiCodeBySessionOrAccount } from "../../aiCreatedCode/aiCreatedCode.repository";
 import { findAndUpdateAiCodeBySession } from "../../aiCreatedCode/aiCreatedCode.service";
 import { createChatCompletion } from "../../openAi/openai.service";
 import { findCodeByQuery } from "../../search/search.service";
@@ -20,7 +20,7 @@ export function generateNewCodeTool(): ToolInterface {
 
     let codeForContext = "";
 
-    const aiGeneratedCode = await getAiCodeBySession(sessionId);
+    const aiGeneratedCode = await getAiCodeBySessionOrAccount(sessionId);
 
     if (aiGeneratedCode && aiGeneratedCode.length > 0) {
       const aiGeneratedCodeWithoutCode = aiGeneratedCode.find(

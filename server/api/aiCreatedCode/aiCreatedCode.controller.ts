@@ -1,10 +1,11 @@
 import { Request, Response } from "express";
+import { findOrUpdateAccount } from "../supabase/account.service";
 import {
   checkSessionOrThrow,
   findOrCreateSession,
 } from "../supabase/supabase.service";
 import {
-  getAiCodeBySession,
+  getAiCodeBySessionOrAccount,
   updateAiWritenCode,
 } from "./aiCreatedCode.repository";
 
@@ -20,7 +21,12 @@ export const getAiCompletedCode = async (req: Request, res: Response) => {
 
     await findOrCreateSession(user.id, sessionId);
 
-    const aiCreatedCode = await getAiCodeBySession(sessionId);
+    const account = await findOrUpdateAccount(user.id);
+
+    const aiCreatedCode = await getAiCodeBySessionOrAccount(
+      sessionId,
+      account.id
+    );
 
     return res.status(200).json({
       data: [...aiCreatedCode],

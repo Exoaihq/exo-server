@@ -42,6 +42,11 @@ export function getFileSuffix(fileName: string): string {
   return split[split.length - 1];
 }
 
+export function getFilePrefix(fileName: string): string {
+  const split = fileName.split(".");
+  return split[0];
+}
+
 export const getDirectoryNameFromPath = (path: string) => {
   const pathArray = path.split("/");
   return pathArray[pathArray.length - 1];

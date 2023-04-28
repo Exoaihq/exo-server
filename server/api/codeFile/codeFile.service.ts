@@ -70,7 +70,6 @@ export const handleAndFilesToDb = async (
     const { updateCount, matchedCount, notFound } =
       await compareAndUpdateSnippets(
         { filePath, contents },
-        false,
         account.id,
         snippets
       );
@@ -288,4 +287,21 @@ export const runImproveCodeScript = async () => {
     ran = true;
     fs.writeFileSync(newPath, response.choices[0].message.content, "utf8");
   }
+};
+
+export const createTestBasedOnExistingCode = async (code: string) => {
+  const functionality = `Write a test for the following code: ${code}`;
+  const response = await createChatCompletion(
+    [
+      {
+        role: ChatUserType.user,
+        content: functionality,
+      },
+    ],
+    EngineName.GPT4
+  );
+  const test = response?.choices[0].message?.content
+    ? response?.choices[0].message?.content
+    : null;
+  return test;
 };

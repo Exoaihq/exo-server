@@ -1,7 +1,7 @@
 import { ToolName } from ".";
 import { ChatUserType } from "../../../../types/chatMessage.type";
 import { EngineName } from "../../../../types/openAiTypes/openAiEngine";
-import { getAiCodeBySession } from "../../aiCreatedCode/aiCreatedCode.repository";
+import { getAiCodeBySessionOrAccount } from "../../aiCreatedCode/aiCreatedCode.repository";
 import { findAndUpdateAiCodeBySession } from "../../aiCreatedCode/aiCreatedCode.service";
 import { findFileByAccountIdAndFullFilePath } from "../../codeFile/codeFile.repository";
 import { updateSnippetById } from "../../codeSnippet/codeSnippet.repository";
@@ -21,7 +21,7 @@ export function updateExistingCodeTool(): ToolInterface {
 
     let existingCodeToUpdate = [];
 
-    const aiGeneratedCode = await getAiCodeBySession(sessionId);
+    const aiGeneratedCode = await getAiCodeBySessionOrAccount(sessionId);
 
     if (!aiGeneratedCode || aiGeneratedCode.length === 0) {
       return {

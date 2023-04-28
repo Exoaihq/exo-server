@@ -123,7 +123,6 @@ export const resetSession = (userId: string, sessionId: any) => {
 // Use this function to update snippets in the database
 export async function compareAndUpdateSnippets(
   contents: ParseCode,
-  printTotalsOnly: boolean = false,
   accountId: string,
   snippets?: SnippetByFileName[] | null
 ) {

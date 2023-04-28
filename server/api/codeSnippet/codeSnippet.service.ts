@@ -1,18 +1,20 @@
 import { createClient } from "@supabase/supabase-js";
-import { Database } from "../../../types/supabase";
 import { supabaseKey, supabaseUrl } from "../../../utils/envVariable";
+import {
+  extractFunctionName,
+  getImportMethodNames,
+} from "../../../utils/getMethodName";
 import {
   createCodeFile,
   findFileByAccountIdAndFullFilePath,
 } from "../codeFile/codeFile.repository";
 import { createEmbeddings } from "../openAi/openai.service";
+import { findOrUpdateAccount } from "../supabase/account.service";
 import {
   assignCodeSnippetToFile,
   findAllSnippetWithoutFiles,
   findFileId,
 } from "../supabase/supabase.service";
-import { writeFile, writeFileSync } from "fs";
-import { findOrUpdateAccount } from "../supabase/account.service";
 import {
   createImportExportMap,
   findAllSnippetsImportStatements,
@@ -20,13 +22,6 @@ import {
   findExportSnippetByNameAndPath,
   updateSnippetById,
 } from "./codeSnippet.repository";
-import {
-  extractFunctionName,
-  getImportMethodNames,
-  stripPath,
-  stripPrefix,
-} from "../../../utils/getMethodName";
-import { extractFileNameAndPathFromFullPath } from "../../../utils/getFileName";
 
 const supabase = createClient(supabaseUrl, supabaseKey);
 

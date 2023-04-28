@@ -218,3 +218,27 @@ export async function findFileByExplainationEmbedding(
   }
   return data;
 }
+
+export async function findTestFile(
+  filePrefix: string,
+  accountId: string
+): Promise<Partial<
+  Database["public"]["Tables"]["code_snippet"]["Row"]
+> | null> {
+  const like = `${filePrefix}%.%test%`;
+
+  const { data, error } = await supabase
+    .from("code_file")
+    .select()
+    .like("file_name", like)
+    .eq("account_id", accountId)
+    .limit(1);
+
+  if (error) {
+    return null;
+  }
+  if (!data) {
+    return null;
+  }
+  return data[0];
+}

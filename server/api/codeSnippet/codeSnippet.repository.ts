@@ -236,3 +236,24 @@ export const createImportExportMap = async (value: any) => {
     await supabase.from("export_import_snippet_map").insert([value]);
   }
 };
+
+export const getLongSnippets = async (minLength: number) => {
+  const { data, error } = await supabase
+    .rpc("find_long_snippets", {
+      line_count: minLength,
+    })
+    .eq("parsed_code_type", "export_statement")
+    .not("code_string", "is", null)
+    .not("file_name", "is", null)
+    .not("account_id", "is", null)
+    .not("code_string", "is", null)
+    .select("*, code_file(*)")
+    .order("updated_at", { ascending: false });
+
+  if (error) {
+    console.log("Error finding long snippets", error);
+    return [];
+  }
+
+  return data;
+};

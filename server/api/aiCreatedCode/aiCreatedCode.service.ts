@@ -13,7 +13,7 @@ import {
 import { getSessionById } from "../supabase/supabase.service";
 import {
   createAiWritenCode,
-  getAiCodeBySession,
+  getAiCodeBySessionOrAccount,
   updateAiWritenCode,
 } from "./aiCreatedCode.repository";
 
@@ -90,7 +90,7 @@ export const findAndUpdateAiCodeBySession = async (
     | "session_id"
     | "writen_to_file_at"
 ) => {
-  const aiGeneratedCode = await getAiCodeBySession(sessionId);
+  const aiGeneratedCode = await getAiCodeBySessionOrAccount(sessionId);
 
   if (aiGeneratedCode.length > 0) {
     // Get the most recent ai generated code that the location is not set to

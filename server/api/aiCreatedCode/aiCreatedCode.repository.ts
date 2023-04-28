@@ -4,13 +4,14 @@ import { supabaseKey, supabaseUrl } from "../../../utils/envVariable";
 
 const supabase = createClient<Database>(supabaseUrl, supabaseKey);
 
-export const getAiCodeBySession = async (
-  sessionId: string
+export const getAiCodeBySessionOrAccount = async (
+  sessionId: string,
+  accountId?: string
 ): Promise<Database["public"]["Tables"]["ai_created_code"]["Row"][]> => {
   const { data, error } = await supabase
     .from("ai_created_code")
     .select("*")
-    .eq("session_id", sessionId)
+    .or(`session_id.eq.${sessionId},account_id.eq.${accountId}`)
     .order("created_at", { ascending: false });
 
   if (error) {
