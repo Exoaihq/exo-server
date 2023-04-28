@@ -2,10 +2,9 @@ import { ChatUserType } from "../../../types/chatMessage.type";
 import { EngineName } from "../../../types/openAiTypes/openAiEngine";
 import { ParseCode } from "../../../types/parseCode.types";
 import { Database } from "../../../types/supabase";
-import { isTodaysDate } from "../../../utils/dates";
+import { isThisHour, isTodaysDate } from "../../../utils/dates";
 import { extractFileNameAndPathFromFullPath } from "../../../utils/getFileName";
 import { updateCodeDirectoryById } from "../codeDirectory/codeDirectory.repository";
-import { createNewFileFromSnippets } from "../codeSnippet/codeSnippet.service";
 import {
   createChatCompletion,
   createEmbeddings,
@@ -13,7 +12,9 @@ import {
 } from "../openAi/openai.service";
 import { compareAndUpdateSnippets } from "../supabase/supabase.service";
 import {
+  createCodeFile,
   findAllFiles,
+  findFileByAccountIdAndFullFilePath,
   findFilesWithoutExplaination,
   findSnippetByFileNameAndAccount,
   updateFileById,
@@ -30,12 +31,35 @@ export const handleAndFilesToDb = async (
   let totalMatchedCount = 0;
   let totalNotFound = 0;
 
-  // TODO - don't index files that are too big
-
   files.forEach(async (file) => {
     const { filePath, contents } = file;
+    const { fileName, extractedPath } =
+      extractFileNameAndPathFromFullPath(filePath);
+    const dbFile = await findFileByAccountIdAndFullFilePath(
+      account.id,
+      filePath
+    );
 
-    const { fileName } = extractFileNameAndPathFromFullPath(filePath);
+    if (!dbFile) {
+      // Create new file
+      await createCodeFile(account.id, {
+        file_name: fileName,
+        file_path: extractedPath,
+        code_directory_id: directoryId ? directoryId : null,
+      });
+    } else {
+      if (!dbFile.updated_at) {
+      } else {
+        const updatedInPastHour = isThisHour(new Date(dbFile.updated_at));
+
+        console.log("File updated in the last hour?", updatedInPastHour);
+        if (updatedInPastHour) {
+          return;
+        }
+      }
+    }
+
+    console.log("dbFile", dbFile?.file_name, dbFile?.updated_at);
 
     // Find all code snippets for this file
     const snippets = await findSnippetByFileNameAndAccount(
@@ -50,6 +74,12 @@ export const handleAndFilesToDb = async (
         account.id,
         snippets
       );
+
+    if (dbFile) {
+      await updateFileById(dbFile.id, {
+        updated_at: new Date().toISOString(),
+      });
+    }
 
     totalUpdateCount += updateCount;
     totalMatchedCount += matchedCount;
