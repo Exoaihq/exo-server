@@ -24,7 +24,7 @@ import {
 } from "../openAi/openai.service";
 
 // Create a single supabase client for interacting with your database
-const supabase = createClient<Database>(supabaseUrl, supabaseKey);
+export const supabase = createClient<Database>(supabaseUrl, supabaseKey);
 
 export async function checkSessionOrThrow(
   req: Request,

@@ -1,10 +1,8 @@
-import { createClient, PostgrestSingleResponse } from "@supabase/supabase-js";
+import { PostgrestSingleResponse } from "@supabase/supabase-js";
 import { ChatMessage, ChatUserType } from "../../../types/chatMessage.type";
 import { Database } from "../../../types/supabase";
-import { supabaseKey, supabaseUrl } from "../../../utils/envVariable";
 import { getGlobalPromptsDb } from "../prompt/prompt.service";
-
-const supabase = createClient<Database>(supabaseUrl, supabaseKey);
+import { supabase } from "../supabase/supabase.service";
 
 export const getMessagesWithUser = async (
   userId: string

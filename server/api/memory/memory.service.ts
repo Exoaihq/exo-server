@@ -1,9 +1,6 @@
-import { createClient } from "@supabase/supabase-js";
 import { Database } from "../../../types/supabase";
-import { supabaseKey, supabaseUrl } from "../../../utils/envVariable";
 import { createEmbeddings } from "../openAi/openai.service";
-
-const supabase = createClient<Database>(supabaseUrl, supabaseKey);
+import { supabase } from "../supabase/supabase.service";
 
 export const getMemoriesBySession = async (
   sessionId: string

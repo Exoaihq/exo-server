@@ -1,8 +1,5 @@
-import { createClient } from "@supabase/supabase-js";
 import { Database } from "../../../types/supabase";
-import { supabaseKey, supabaseUrl } from "../../../utils/envVariable";
-
-const supabase = createClient<Database>(supabaseUrl, supabaseKey);
+import { supabase } from "../supabase/supabase.service";
 
 export const getAiCodeBySessionOrAccount = async (
   sessionId: string,

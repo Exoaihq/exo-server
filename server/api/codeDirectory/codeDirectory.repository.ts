@@ -1,11 +1,8 @@
-import { createClient, PostgrestError } from "@supabase/supabase-js";
+import { PostgrestError } from "@supabase/supabase-js";
 import { Database } from "../../../types/supabase";
-import { supabaseKey, supabaseUrl } from "../../../utils/envVariable";
 import { createEmbeddings } from "../openAi/openai.service";
 import { findOrUpdateAccount } from "../supabase/account.service";
-
-// Create a single supabase client for interacting with your database
-const supabase = createClient<Database>(supabaseUrl, supabaseKey);
+import { supabase } from "../supabase/supabase.service";
 
 export const findAllDirectories = async (): Promise<
   Database["public"]["Tables"]["code_directory"]["Row"][] | null

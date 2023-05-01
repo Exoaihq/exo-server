@@ -261,34 +261,6 @@ export const findAndFilterFileExplanations = async (
 
 let ran = false;
 
-export const runImproveCodeScript = async () => {
-  if (!ran) {
-    const path =
-      "/Users/kg/Repos/code-gen-server/server/api/codeSnippet/codeSnippet.service.ts";
-    const newPath =
-      "/Users/kg/Repos/code-gen-server/server/api/codeSnippet/test.service.ts";
-
-    const content = fs.readFileSync(path, "utf8");
-    // const content = await createNewFileFromSnippets(
-    //   path,
-    //   "4ff416c9-4805-4adb-bfe7-ef315ae9536b"
-    // );
-    console.log("content", content);
-
-    const response = await createChatCompletion(
-      [
-        {
-          content: `Improve this code: ${content}`,
-          role: ChatUserType.user,
-        },
-      ],
-      EngineName.GPT4
-    );
-    ran = true;
-    fs.writeFileSync(newPath, response.choices[0].message.content, "utf8");
-  }
-};
-
 export const createTestBasedOnExistingCode = async (code: string) => {
   const functionality = `Write a test for the following code: ${code}`;
   const response = await createChatCompletion(

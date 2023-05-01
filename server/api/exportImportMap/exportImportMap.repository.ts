@@ -1,9 +1,5 @@
-import { createClient } from "@supabase/supabase-js";
-import { Database } from "../../../types/supabase";
-import { supabaseKey, supabaseUrl } from "../../../utils/envVariable";
 import { findAllSnippetsImportStatements } from "../codeSnippet/codeSnippet.repository";
-
-const supabase = createClient<Database>(supabaseUrl, supabaseKey);
+import { supabase } from "../supabase/supabase.service";
 
 export const getExportImportMaps = async () => {
   const { data, error } = await supabase

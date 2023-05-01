@@ -1,5 +1,4 @@
 import { ChatUserType } from "../../../types/chatMessage.type";
-import { Database } from "../../../types/supabase";
 import { deserializeJson } from "../../../utils/deserializeJson";
 import { codeDirectorySearch } from "../codeDirectory/codeDirectory.repository";
 import { createMessageWithUser } from "../message/message.service";

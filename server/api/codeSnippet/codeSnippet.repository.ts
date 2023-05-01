@@ -1,16 +1,13 @@
-import { createClient, PostgrestError } from "@supabase/supabase-js";
 import { ParsedCode } from "../../../types/parseCode.types";
 import { Database } from "../../../types/supabase";
-import { supabaseKey, supabaseUrl } from "../../../utils/envVariable";
 import { extractFunctionName } from "../../../utils/getMethodName";
 import { findFileByAccountIdAndFullFilePath } from "../codeFile/codeFile.repository";
 import {
   createEmbeddings,
   createTextCompletion,
 } from "../openAi/openai.service";
+import { supabase } from "../supabase/supabase.service";
 import { matchImportSnippetWithExport } from "./codeSnippet.service";
-
-const supabase = createClient<Database>(supabaseUrl, supabaseKey);
 
 export const updateSnippetById = async (
   id: number,
@@ -247,7 +244,7 @@ export const getLongSnippets = async (minLength: number) => {
     .not("account_id", "is", null)
     .not("code_string", "is", null)
     .select("*, code_file(*)")
-    .order("updated_at", { ascending: false });
+    .order("created_at", { ascending: false });
 
   if (error) {
     console.log("Error finding long snippets", error);

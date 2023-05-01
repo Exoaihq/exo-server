@@ -1,15 +1,13 @@
-import { createClient, PostgrestError } from "@supabase/supabase-js";
+import { PostgrestError } from "@supabase/supabase-js";
 import { SnippetByFileName } from "../../../types/parseCode.types";
 import { Database } from "../../../types/supabase";
-import { supabaseKey, supabaseUrl } from "../../../utils/envVariable";
 import { extractFileNameAndPathFromFullPath } from "../../../utils/getFileName";
 import { getParsedSnippetFromCodeBlock } from "../../../utils/treeSitter";
 import { createAiWritenCode } from "../aiCreatedCode/aiCreatedCode.repository";
 import { findCodeDirectoryById } from "../codeDirectory/codeDirectory.repository";
 import { getCodeStandards } from "../codeDirectory/codeDirectory.service";
 import { createCodeSnippet } from "../codeSnippet/codeSnippet.repository";
-
-const supabase = createClient<Database>(supabaseUrl, supabaseKey);
+import { supabase } from "../supabase/supabase.service";
 
 export async function findSnippetByFileNameAndAccount(
   fileName: string,
