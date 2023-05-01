@@ -97,6 +97,8 @@ export const findAndUpdateFilesFromClient = async (
 
     const { files, directoryId } = req.body as CreateFilesRequest;
 
+    console.log("files", files);
+
     handleAndFilesToDb(files, account, directoryId);
 
     // if (directoryId) {

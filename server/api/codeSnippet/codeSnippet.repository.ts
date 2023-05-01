@@ -3,11 +3,11 @@ import { ParsedCode } from "../../../types/parseCode.types";
 import { Database } from "../../../types/supabase";
 import { supabaseKey, supabaseUrl } from "../../../utils/envVariable";
 import { extractFunctionName } from "../../../utils/getMethodName";
+import { findFileByAccountIdAndFullFilePath } from "../codeFile/codeFile.repository";
 import {
   createEmbeddings,
   createTextCompletion,
 } from "../openAi/openai.service";
-import { findFileId } from "../supabase/supabase.service";
 import { matchImportSnippetWithExport } from "./codeSnippet.service";
 
 const supabase = createClient<Database>(supabaseUrl, supabaseKey);
@@ -80,7 +80,10 @@ export async function addCodeToSupabase(
 
   code_explaination_embedding = await createEmbeddings([code_explaination]);
 
-  const fileId = await findFileId(snippet.metadata.fileName);
+  const file = await findFileByAccountIdAndFullFilePath(
+    accountId,
+    snippet.metadata.filePath + "/" + snippet.metadata.fileName
+  );
 
   const matched = extractFunctionName(snippet.code);
 
@@ -96,7 +99,7 @@ export async function addCodeToSupabase(
     end_row: snippet.metadata.element.endPosition.row,
     end_column: snippet.metadata.element.endPosition.column,
     file_name: snippet.metadata.fileName,
-    code_file_id: fileId,
+    code_file_id: file ? file.id : null,
     account_id: accountId,
     name: matched ? matched : null,
   };
@@ -257,3 +260,32 @@ export const getLongSnippets = async (minLength: number) => {
 
   return data;
 };
+
+export const createCodeSnippet = async (
+  values: Database["public"]["Tables"]["code_snippet"]["Insert"]
+) => {
+  const { data, error } = await supabase
+    .from("code_snippet")
+    .insert([{ ...values }])
+    .select("*");
+  return data;
+};
+
+export async function findExoConfigSnippetByCodeDirectoryId(
+  directoryId: number
+): Promise<Partial<Database["public"]["Tables"]["code_file"]["Row"]> | null> {
+  const { data, error } = await supabase
+    .from("code_snippet")
+    .select("*")
+    .eq("file_name", "exo-config.json")
+    .eq("code_directory_id", directoryId)
+    .limit(1);
+
+  if (error) {
+    return null;
+  }
+  if (!data) {
+    return null;
+  }
+  return data[0];
+}

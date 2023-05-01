@@ -1,9 +1,7 @@
 import {
   convertToTestFileName,
   getFilePrefix,
-  getFileSuffix,
 } from "../../../../utils/getFileName";
-import { parseFile } from "../../../../utils/treeSitter";
 import { createAiWritenCode } from "../../aiCreatedCode/aiCreatedCode.repository";
 import {
   createCodeFile,
@@ -69,9 +67,6 @@ export async function findAndAddTestAgent() {
           // Create a test file
           const test = await createTestBasedOnExistingCode(snippet.code_string);
           if (test) {
-            // create ai generated code
-            // Create new snippet
-            // Create new file
             const file_name = convertToTestFileName(codeFile.file_name);
 
             const newAiCode = await createAiWritenCode({

@@ -90,3 +90,31 @@ export async function iterateOverTree(
     }
   }
 }
+
+export const getParsedSnippetFromCodeBlock = async (
+  codeWithLineBreaks: string
+): Promise<ParsedCode> => {
+  const tree = await parseFile(codeWithLineBreaks);
+  const lines = codeWithLineBreaks.split("\n");
+
+  const addBackNewLine = lines.map((line: any) => `${line}\n`);
+
+  const element = tree.rootNode.children.entries().next().value[1];
+  console.log("element", element);
+  const codeSnippet = getSubstringFromMultilineCode(
+    addBackNewLine,
+    element.startPosition.row,
+    element.startPosition.column,
+    element.endPosition.row,
+    element.endPosition.column
+  );
+  return {
+    code: codeSnippet,
+    metadata: {
+      element: element,
+      filePath: "",
+      type: element.type,
+      fileName: "",
+    },
+  };
+};

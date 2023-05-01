@@ -6,7 +6,6 @@ import {
   findAllFilesWithoutExplainations,
   findAllFilesWithoutExplainationsAndAddThem,
   findAllSnippetsWithoutFiles,
-  findFileById,
 } from "../codeSnippet/codeSnippet.controller";
 import {
   findAndUpdateFilesFromClient,
@@ -29,7 +28,6 @@ codeFileRoutes.get(
   "/find-all-snippets-without-files",
   findAllSnippetsWithoutFiles
 );
-codeFileRoutes.get("/find-by-id", findFileById);
 codeFileRoutes.get(
   "/find-without-explaination",
   findAllFilesWithoutExplainations

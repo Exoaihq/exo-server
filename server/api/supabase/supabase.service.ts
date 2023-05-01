@@ -268,19 +268,6 @@ export async function addFileToSupabase(parsedFile: ParsedFile) {
   console.log(data, error);
 }
 
-export async function findFileId(fileName: string): Promise<number | null> {
-  const { data, error } = await supabase
-    .from("code_file")
-    .select("id")
-    .eq("file_name", fileName);
-
-  if (!data || !data[0]) {
-    return null;
-  }
-
-  return data[0].id;
-}
-
 interface SnippetWithoutFiles {
   file_name: string | null;
   id: number;

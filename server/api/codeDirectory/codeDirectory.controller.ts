@@ -1,6 +1,8 @@
 import { Request, Response } from "express";
 import { getDirectoryNameFromPath } from "../../../utils/getFileName";
 import { ExpectedNextAction } from "../codeCompletion/scenerios/codeCompletion.knownNextAction";
+import { findExoConfigFileByCodeDirectoryId } from "../codeFile/codeFile.repository";
+import { findExoConfigSnippetByCodeDirectoryId } from "../codeSnippet/codeSnippet.repository";
 import { createMessageWithUser } from "../message/message.service";
 import { findOrUpdateAccount } from "../supabase/account.service";
 import {
@@ -36,10 +38,27 @@ export const getCodeDirectoriesByAccount = async (
       return res.status(404).json({ message: "Can't find the user account" });
     }
 
-    const directories = (await getCodeDirectories(account.id)) || [];
+    const directories = await getCodeDirectories(account.id);
+
+    if (!directories) {
+      return res.status(404).json({ message: "Can't find the directories" });
+    }
+
+    let directoryWithExoConfig = [];
+    for await (const directory of directories) {
+      const exoConfig = await findExoConfigFileByCodeDirectoryId(directory.id);
+      if (!exoConfig) {
+        directoryWithExoConfig.push({ ...directory });
+      } else {
+        directoryWithExoConfig.push({
+          ...directory,
+          exoConfig: { ...exoConfig },
+        });
+      }
+    }
 
     return res.status(200).json({
-      data: directories,
+      data: directoryWithExoConfig,
       metadata: getDirectoryFilesAndSnippetCount(directories),
     });
   } catch (error: any) {

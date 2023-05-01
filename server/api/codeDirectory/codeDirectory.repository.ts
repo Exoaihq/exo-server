@@ -67,6 +67,26 @@ export const findCodeDirectoryByPathAndAccountId = async (
   }
 };
 
+export const findCodeDirectoryById = async (
+  directoryId: number
+): Promise<Database["public"]["Tables"]["code_directory"]["Row"] | null> => {
+  const { data, error } = await supabase
+    .from("code_directory")
+    .select("*")
+    .eq("id", directoryId)
+    .limit(1);
+
+  if (error) {
+    console.log("Getting code directory by id error", error);
+  }
+
+  if (!data || !data[0]) {
+    return null;
+  } else {
+    return data[0];
+  }
+};
+
 export const getCodeDirectories = async (
   accountId: string
 ): Promise<Database["public"]["Tables"]["code_directory"]["Row"][] | null> => {

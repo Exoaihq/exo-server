@@ -10,9 +10,7 @@ import { extractFileNameAndPathFromFullPath } from "../../../utils/getFileName";
 import {
   iterateOverFolder,
   iterateOverFolderAndHandleFile,
-  iterateOverFolderAndHandleFileContents,
 } from "../../../utils/iterateOverFolders";
-import { parseCode } from "../../../utils/treeSitter";
 import { findFilesWithoutExplaination } from "../codeFile/codeFile.repository";
 import { createTextCompletion } from "../openAi/openai.service";
 import {
@@ -20,9 +18,7 @@ import {
   assignCodeSnippetToFile,
   assignExplainationsForFilesWhereNull,
   findAllSnippetWithoutFiles,
-  findFileId,
 } from "../supabase/supabase.service";
-import { addCodeToSupabase } from "./codeSnippet.repository";
 import {
   codeSnippetSearch,
   findSnippetsWithoutFilesAndAssignFiles,
@@ -48,50 +44,6 @@ export const getCodeSnippet = async (req: Request, res: Response) => {
     const codeSnippet =
       "Hello, this is Express + asdfsadasdfasdfasdfsadfasdfsadfdsa";
     res.status(200).json({ data });
-  } catch (error: any) {
-    res.status(500).json({ message: error.message });
-  }
-};
-
-export const createCodeSnippet = async (req: Request, res: Response) => {
-  try {
-    // Loop through the code base and add each code snippet to the database
-    // Include the code emdedding, the code explaination and the code explaination embedding
-
-    const { data, error } = await supabase.from("code_snippet").insert([
-      {
-        code_string: "<h2>Another example here</h2>",
-        code_explaination: "Other example of code",
-        code_explaination_embedding: null,
-        code_embedding: null,
-      },
-    ]);
-
-    console.log(data, error);
-
-    res.status(200).json({ data });
-  } catch (error: any) {
-    res.status(500).json({ message: error.message });
-  }
-};
-
-export const testParser = async (req: Request, res: Response) => {
-  try {
-    // Loop through the code base and add each code snippet to the database
-    // Include the code emdedding, the code explaination and the code explaination embedding
-
-    const serverDirectory = rootProjectDirectory + "/server";
-    const utilsDirectory = rootProjectDirectory + "/utils";
-    const exampleDirectory = rootProjectDirectory + "/example";
-    const typeDirectory = rootProjectDirectory + "/types";
-
-    iterateOverFolderAndHandleFileContents(
-      exampleDirectory,
-      parseCode,
-      addCodeToSupabase
-    );
-
-    res.status(200).json({ data: "done" });
   } catch (error: any) {
     res.status(500).json({ message: error.message });
   }
@@ -214,17 +166,6 @@ export const findAllSnippetsWithoutFiles = async (
   try {
     //file name = generateCode.ts
     const response = await findAllSnippetWithoutFiles();
-
-    res.status(200).json({ data: "done" });
-  } catch (error: any) {
-    res.status(500).json({ message: error.message });
-  }
-};
-
-export const findFileById = async (req: Request, res: Response) => {
-  try {
-    //file name = generateCode.ts
-    const response = await findFileId("generateCode.ts");
 
     res.status(200).json({ data: "done" });
   } catch (error: any) {

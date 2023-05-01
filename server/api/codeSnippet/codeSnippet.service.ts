@@ -13,7 +13,6 @@ import { findOrUpdateAccount } from "../supabase/account.service";
 import {
   assignCodeSnippetToFile,
   findAllSnippetWithoutFiles,
-  findFileId,
 } from "../supabase/supabase.service";
 import {
   createImportExportMap,
@@ -74,11 +73,19 @@ export async function findSnippetsWithoutFilesAndAssignFiles() {
   }
   for (let i = 0; i < snippets.length; i++) {
     const snippet = snippets[i];
-    if (!snippet.file_name || !snippet.id) {
+    if (
+      !snippet.file_name ||
+      !snippet.id ||
+      !snippet.relative_file_path ||
+      !snippet.account_id
+    ) {
       continue;
     }
-    const fileId = await findFileId(snippet.file_name);
-    if (!fileId) {
+    const file = await findFileByAccountIdAndFullFilePath(
+      snippet.account_id,
+      snippet.relative_file_path + "/" + snippet.file_name
+    );
+    if (!file || !file.id) {
       // Create file
       if (!snippet.account_id) {
         continue;
@@ -96,7 +103,7 @@ export async function findSnippetsWithoutFilesAndAssignFiles() {
       }
       await assignCodeSnippetToFile(file.id, snippet.id);
     } else {
-      await assignCodeSnippetToFile(fileId, snippet.id);
+      await assignCodeSnippetToFile(file.id, snippet.id);
     }
   }
 }
