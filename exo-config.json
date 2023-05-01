@@ -1,17 +1,10 @@
 {
-  "directoryName": "code-gen-server",
-  "explanation": "\n\nThis directory, code-gen-server, contains code files that are used to handle code completion, file upload, and search requests. The code files contain functions that check the session of the user making the request, extract data from the request body, create a classifier, handle the file upload, search, or create messages with users. If there is an error, the code files will log the error and return a response of status code 500 with an error message.",
-  "codeStandards": [
-    "Naming Conventions: Follow standard naming conventions while naming your TS files. Name your files in a meaningful way so that anyone can understand what the file contains.",
-    "File Organization: Organize your TS files in a structured manner. Create separate folders for different types of files and place them accordingly. This will help you in managing your files easily.",
-    "Use Typings: Use typings in your code to ensure that it is properly typed. This will help you in avoiding errors and also make your code more readable.",
-    "Documentation: Include proper documentation in your TS files. This will help other developers to understand your code and also you in future references.",
-    "Code Linting: Use a code linter to ensure that your code follows the coding standards. This will help you to write clean and consistent code.",
-    "Use Interfaces: Use interfaces to define the structure of data that is passed between functions in your code.",
-    "Use strict mode: Use strict mode in your tsconfig.json file to ensure that your code follows strict syntax rules.",
-    "Use TSLint: Use TSLint to lint your code and enforce coding standards.",
-    "Use Modules and Dependencies Properly: Use modules and dependencies properly. This will help you to manage your code easily and also make it more maintainable.",
-    "Avoid Using any: Avoid using any in your code as much as possible. Use the most specific type that you can instead."
-  ],
-  "testFrameworks": []
-}
+    "directoryName":"code-gen-server",
+    "explanation":"This directory, code-gen-server,  is an express server for the Exo project. The server has endpoints that handle CRUD methods for the various Exo database entities. The server also has a cron scheduler that handles async task such as running async agent tasks and updating code.",
+    "codeStandards":[
+        "File Organization: Organize your TS files in a structured manner. Create separate folders for different types of files and place them accordingly. This will help you in managing your files easily.",
+        "Use Typings: Use typings in your code to ensure that it is properly typed. This will help you in avoiding errors and also make your code more readable.",
+        "Documentation: Include proper documentation in your TS files. This will help other developers to understand your code.",
+        "Code Linting: Use a code linter to ensure that your code follows the coding standards. This will help you to write clean and consistent code\n",
+        "Use Interfaces: Use interfaces to define the structure of data that is passed between functions in your code.","Use TSLint: Use TSLint to lint your code and enforce coding standards.",
+        "Use Modules and Dependencies Properly: Use modules and dependencies properly. This will help you to manage your code easily and also make it more maintainable.","Avoid Using any: Avoid using any in your code as much as possible. Use the most specific type that you can instead.","Use pure functions: A pure function is a function that always returns the same output for the same input, without any side effects. Pure functions are easier to reason about, test, and compose, making your code more functional and modular"],"testFrameworks":[]}

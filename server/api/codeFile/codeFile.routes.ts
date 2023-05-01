@@ -9,7 +9,6 @@ import {
 } from "../codeSnippet/codeSnippet.controller";
 import {
   findAndUpdateFilesFromClient,
-  findAndUpdateFilesFromServerFileSys,
   handleFileUpload,
 } from "./codeFile.controller";
 
@@ -36,7 +35,5 @@ codeFileRoutes.get(
   "/find-without-explaination-add-them",
   findAllFilesWithoutExplainationsAndAddThem
 );
-
-codeFileRoutes.get("/find-and-update", findAndUpdateFilesFromServerFileSys);
 
 export default codeFileRoutes;

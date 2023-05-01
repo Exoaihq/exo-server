@@ -1,5 +1,5 @@
-import { getOrCreateExoConfig } from "../../codeFile/exoConfig.service";
 import { getLongSnippets } from "../../codeSnippet/codeSnippet.repository";
+import { getOrCreateExoConfig } from "../../exoConfig/exoConfig.service";
 
 export async function improveCodeAgent() {
   const longSnippets = await getLongSnippets(30);

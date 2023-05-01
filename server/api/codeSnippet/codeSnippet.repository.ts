@@ -15,11 +15,7 @@ const supabase = createClient<Database>(supabaseUrl, supabaseKey);
 export const updateSnippetById = async (
   id: number,
   values?: Partial<Database["public"]["Tables"]["code_snippet"]["Update"]>
-): Promise<
-  Partial<
-    Database["public"]["Tables"]["code_snippet"]["Update"] | PostgrestError
-  >
-> => {
+): Promise<Partial<Database["public"]["Tables"]["code_snippet"]["Update"]>> => {
   const { data, error } = await supabase
     .from("code_snippet")
     .update({ ...values })
@@ -28,7 +24,7 @@ export const updateSnippetById = async (
 
   if (error || !data) {
     console.log("Error updating code snippet", error);
-    return error;
+    throw new Error(error.message);
   }
 
   return data[0] as Database["public"]["Tables"]["code_snippet"]["Row"];

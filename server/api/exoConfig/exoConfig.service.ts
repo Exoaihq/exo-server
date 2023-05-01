@@ -2,7 +2,7 @@ import {
   createExoConfig,
   findExoConfigFileByCodeDirectoryId,
   findFileById,
-} from "./codeFile.repository";
+} from "../codeFile/codeFile.repository";
 
 export const getOrCreateExoConfig = async (codeFileId: number) => {
   const codeFile = await findFileById(codeFileId);

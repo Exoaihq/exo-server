@@ -1,15 +1,9 @@
 import { Request, Response } from "express";
 import { ParseCode } from "../../../types/parseCode.types";
-import { rootProjectDirectory } from "../../../utils/envVariable";
-import { iterateOverFolderAndHandleAndUpdateFileContents } from "../../../utils/iterateOverFolders";
-import { parseCode } from "../../../utils/treeSitter";
 import { CodeCompletionRequest } from "../codeCompletion/codeCompletion.types";
-import { addCodeToSupabase } from "../codeSnippet/codeSnippet.repository";
 
-import {
-  createMessageWithUser,
-  getOnlyRoleAndContentMessagesByUserAndSession,
-} from "../message/message.service";
+import { handleFileUploadWithSession } from "../codeCompletion/codeCompletion.service";
+import { getOnlyRoleAndContentMessagesByUserAndSession } from "../message/message.service";
 import { findCodeByQuery } from "../search/search.service";
 import { findOrUpdateAccount } from "../supabase/account.service";
 import {
@@ -17,10 +11,6 @@ import {
   findOrCreateSession,
 } from "../supabase/supabase.service";
 import { handleAndFilesToDb } from "./codeFile.service";
-import {
-  checkDbSession,
-  handleFileUploadWithSession,
-} from "../codeCompletion/codeCompletion.service";
 
 export const findCodeFile = async (req: Request, res: Response) => {
   try {
@@ -38,29 +28,6 @@ export const findCodeFile = async (req: Request, res: Response) => {
     const response = await findCodeByQuery(query, account.id);
 
     res.status(200).json({ data: response });
-  } catch (error: any) {
-    res.status(500).json({ message: error.message });
-  }
-};
-
-export const findAndUpdateFilesFromServerFileSys = async (
-  req: Request,
-  res: Response
-) => {
-  try {
-    // /Users/kg/Repos/code-gen-server
-    const serverDirectory = rootProjectDirectory;
-    // code-gen-server
-    const serverRoot = serverDirectory.split("/").pop();
-
-    iterateOverFolderAndHandleAndUpdateFileContents(
-      serverDirectory,
-      parseCode,
-      addCodeToSupabase,
-      true
-    );
-
-    res.status(200).json({ data: "done" });
   } catch (error: any) {
     res.status(500).json({ message: error.message });
   }
@@ -96,8 +63,6 @@ export const findAndUpdateFilesFromClient = async (
     }
 
     const { files, directoryId } = req.body as CreateFilesRequest;
-
-    console.log("files", files);
 
     handleAndFilesToDb(files, account, directoryId);
 
