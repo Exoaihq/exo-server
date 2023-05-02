@@ -1,10 +1,7 @@
 import { ChatMessage, ChatUserType } from "../../../types/chatMessage.type";
 import { EngineName } from "../../../types/openAiTypes/openAiEngine";
-import { parseCodeTypes } from "../../../types/parseCode.types";
-import { Database, Json } from "../../../types/supabase";
-import { findFileAndReturnContents } from "../../../utils/fileOperations.service";
+import { Database } from "../../../types/supabase";
 import { extractFileNameAndPathFromFullPath } from "../../../utils/getFileName";
-import { parseFile } from "../../../utils/treeSitter";
 import {
   createAiWritenCode,
   findOrCreateAiWritenCode,
@@ -349,44 +346,6 @@ function getNameOfAFunction(fullFunction: string) {
     : "const";
   const functionIndex = splitFunction.indexOf(functionOrConst);
   return splitFunction[functionIndex + 1].replace(/[{()}]/g, "");
-}
-
-// Takes a file name, parsed the code and uses it to prompt a new function
-export async function refactorFunctionInAFile(
-  prompt: string,
-  filePath: string,
-  functionName: string
-) {
-  const prefix = "Here is a function you can refactor:";
-
-  let response = null;
-
-  const fileContents = findFileAndReturnContents(filePath);
-
-  const tree = await parseFile(fileContents);
-
-  for await (const element of tree.rootNode.children) {
-    const { type, text, startPosition, endPosition } = element;
-
-    const fullElement = element.text;
-    const namedChild = element.namedChildren;
-
-    if (
-      parseCodeTypes.find((type) => type.name === element.type && type.parse)
-    ) {
-      const nameOfFunction = getNameOfAFunction(fullElement);
-      const match = functionName.includes(nameOfFunction);
-
-      if (match) {
-        console.log(">>>>>>>>>>", fullElement);
-        return fullElement;
-      } else {
-        console.log("Function does not exist in file");
-      }
-    }
-  }
-
-  return response;
 }
 
 export const hasFileNameAndPath = (filePath: string) => {

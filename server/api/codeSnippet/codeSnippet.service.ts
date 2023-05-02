@@ -6,7 +6,6 @@ import {
   extractFunctionName,
   getImportMethodNames,
 } from "../../../utils/getMethodName";
-import { iterateOverTree, parseFile } from "../../../utils/treeSitter";
 import {
   createCodeFile,
   findFileByAccountIdAndFullFilePath,
@@ -16,7 +15,6 @@ import {
   createChatCompletion,
   createEmbeddings,
 } from "../openAi/openai.service";
-import { findOrUpdateAccount } from "../supabase/account.service";
 import {
   assignCodeSnippetToFile,
   findAllSnippetWithoutFiles,
@@ -25,10 +23,8 @@ import {
   createImportExportMap,
   findAllSnippetsImportStatements,
   findAllSnippetsWhereNameIsNull,
-  findCodeSnippetById,
   findExportSnippetByNameAndPath,
   findSnippetByMethodNameAndAccount,
-  getLongExportSnippets,
   getLongSnippetsWhereExternalMethodNull,
   updateSnippetById,
 } from "./codeSnippet.repository";

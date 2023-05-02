@@ -53,16 +53,16 @@ export const runScheduledTasks = () => {
   //   runImproveCodeScript();
   // });
 
-  cron.schedule("*/10 * * * * ", () => {
-    console.log("Running update code names script");
-    updateCodeSnippetNames();
-  });
+  // cron.schedule("*/10 * * * * ", () => {
+  //   console.log("Running update code names script");
+  //   updateCodeSnippetNames();
+  // });
 
-  // Maps imports and exports (many to many) in the db.
-  cron.schedule("*/12 * * * * ", () => {
-    console.log("Running match imports with exports script");
-    findAllImportStatements();
-  });
+  // // Maps imports and exports (many to many) in the db.
+  // cron.schedule("*/12 * * * * ", () => {
+  //   console.log("Running match imports with exports script");
+  //   findAllImportStatements();
+  // });
 
   // This gets the export snippets that are imported the most
   // cron.schedule("*/12 * * * *  ", () => {

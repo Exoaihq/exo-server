@@ -13,7 +13,7 @@ import { Database } from "../../../types/supabase";
 import { supabaseKey, supabaseUrl } from "../../../utils/envVariable";
 import { extractFileNameAndPathFromFullPath } from "../../../utils/getFileName";
 import { getSubstringFromMultilineCode } from "../../../utils/getSubstringFromMultilineCode";
-import { parseFile } from "../../../utils/treeSitter";
+import { getProgrammingLanguage, parseFile } from "../../../utils/treeSitter";
 import {
   addCodeToSupabase,
   deleteSnippetById,
@@ -126,13 +126,15 @@ export async function compareAndUpdateSnippets(
   accountId: string,
   snippets?: SnippetByFileName[] | null
 ) {
-  const tree = await parseFile(contents.contents);
-  const lines = contents.contents.split("\n");
-  const addBackNewLine = lines.map((line: any) => `${line}\n`);
-
   const { fileName, extractedPath } = extractFileNameAndPathFromFullPath(
     contents.filePath
   );
+
+  const language = getProgrammingLanguage(fileName);
+
+  const tree = await parseFile(contents.contents, language);
+  const lines = contents.contents.split("\n");
+  const addBackNewLine = lines.map((line: any) => `${line}\n`);
 
   let numberFound = 0;
   let numberNotFound = 0;
@@ -451,8 +453,4 @@ export async function getOpenAiModelsFromDb(): Promise<
   const { data, error } = await supabase.from("openai_models").select("*");
 
   return data;
-}
-
-function parsefile(contents: ParseCode) {
-  throw new Error("Function not implemented.");
 }

@@ -1,8 +1,6 @@
 import { Tree } from "tree-sitter";
-import { Element, ParseCode, ParsedCode } from "../types/parseCode.types";
-import { extractFileNameAndPathFromFullPath } from "./getFileName";
+import { ParsedCode } from "../types/parseCode.types";
 import { getSubstringFromMultilineCode } from "./getSubstringFromMultilineCode";
-import { getDiffAndParse } from "./git.service";
 
 //https://github.com/tree-sitter/tree-sitter-javascript/blob/7a29d06274b7cf87d643212a433d970b73969016/src/node-types.json
 
@@ -11,14 +9,46 @@ import { getDiffAndParse } from "./git.service";
 require("dotenv").config();
 const Parser = require("tree-sitter");
 const TypeScript = require("tree-sitter-typescript").typescript;
+const Python = require("tree-sitter-python").python;
+const Java = require("tree-sitter-java").java;
 const fs = require("fs");
 
-const parser = new Parser();
+const parsers = {
+  typeScript: TypeScript,
+  python: Python,
+  java: Java,
+};
 
-// TODO - will need to dynamically import the language
-parser.setLanguage(TypeScript);
+export enum Language {
+  TypeScript = "typescript",
+  Python = "python",
+  Java = "java",
+}
 
-export async function parseFile(fileContents: string): Promise<Tree> {
+export const getProgrammingLanguage = (fileName: string): Language => {
+  const fileExtension = fileName.split(".").pop();
+
+  // TODO - add more languages. Use LLM to determine language if file extension is not available
+  switch (fileExtension) {
+    case "ts":
+      return Language.TypeScript;
+    case "py":
+      return Language.Python;
+    case "java":
+      return Language.Java;
+    default:
+      return Language.TypeScript;
+  }
+};
+
+export async function parseFile(
+  fileContents: string,
+  language: Language
+): Promise<Tree> {
+  const parser = new Parser();
+
+  parser.setLanguage(parsers[language as keyof typeof parsers]);
+
   return await parser.parse(fileContents);
 }
 
@@ -54,7 +84,7 @@ export function iterateOverTree(
 export const getParsedSnippetFromCodeBlock = async (
   codeWithLineBreaks: string
 ): Promise<ParsedCode> => {
-  const tree = await parseFile(codeWithLineBreaks);
+  const tree = await parseFile(codeWithLineBreaks, Language.TypeScript);
   const lines = codeWithLineBreaks.split("\n");
 
   const addBackNewLine = lines.map((line: any) => `${line}\n`);
