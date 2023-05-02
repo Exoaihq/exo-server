@@ -9,14 +9,14 @@ import {
   updateFileById,
 } from "../../codeFile/codeFile.repository";
 import { createTestBasedOnExistingCode } from "../../codeFile/codeFile.service";
-import { getLongSnippets } from "../../codeSnippet/codeSnippet.repository";
+import { getLongExportSnippets } from "../../codeSnippet/codeSnippet.repository";
 import { compareAndUpdateSnippets } from "../../supabase/supabase.service";
 
 export async function findAndAddTestAgent() {
   // This agent searches the code base for complex code snippets and makes sure there are tests for this code
 
   console.log("Running find and add test agent");
-  const longSnippets = await getLongSnippets(30);
+  const longSnippets = await getLongExportSnippets(30);
   console.log(longSnippets.length);
 
   if (!longSnippets) {

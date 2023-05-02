@@ -111,7 +111,7 @@ export async function getChatCompletion(
     return res;
   } catch (error: any) {
     console.log(">>>>>>>>>>>>>>error", error.reponse);
-    throw error;
+    return error;
   }
 }
 
@@ -334,9 +334,17 @@ export async function createChatCompletion(
     if (error.response) {
       clearLoading(interval, `Error status >>>>>: ${error.response.status}`);
       console.log(error.response.data);
+
+      if (error.response.status === 429) {
+        console.log("Waiting 5 seconds for rate limit to reset");
+        setTimeout(() => {
+          console.log("Done waiting, trying again");
+          return createChatCompletion(messages, model, temperature, maxTokens);
+        }, 5000);
+      }
     } else {
       clearLoading(interval, `Error status: ${error.message}`);
     }
-    throw error;
+    return error;
   }
 }

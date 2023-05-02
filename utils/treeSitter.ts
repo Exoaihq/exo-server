@@ -22,72 +22,32 @@ export async function parseFile(fileContents: string): Promise<Tree> {
   return await parser.parse(fileContents);
 }
 
-export async function parseCode(
-  code: ParseCode,
-  handleSnippet: (parsedCode: ParsedCode) => void
+export function iterateOverTree(
+  parentTree: Tree,
+  handleSnippet?: (text: string) => void
 ) {
-  const { contents, filePath } = code;
+  for (let element of parentTree.rootNode.children) {
+    const {
+      startPosition,
+      endPosition,
+      type,
+      tree,
+      isNamed,
+      text,
+      children,
+      childCount,
+    } = element;
 
-  const tree = await parseFile(contents);
-  // Split the actual code into an array of lines
-  const lines = contents.split("\n");
-
-  await iterateOverTree(tree, lines, filePath, handleSnippet);
-}
-
-export async function iterateOverTree(
-  tree: Tree,
-  lines: string[],
-  filePath: string,
-  handleSnippet: (parsedCode: ParsedCode) => void
-) {
-  const { fileName, extractedPath } =
-    extractFileNameAndPathFromFullPath(filePath);
-
-  // const diff = await getDiffAndParse()
-
-  for await (const element of tree.rootNode.children) {
-    const { startPosition, endPosition, type }: Element = element;
-    const codeSnippet = getSubstringFromMultilineCode(
-      lines,
-      startPosition.row,
-      startPosition.column,
-      endPosition.row,
-      endPosition.column
-    );
-
-    // diff.forEach((element) => {
-    //     const elementFileName = extractFileNameAndPathFromFullPath(element.fileName).fileName
-
-    //     if (elementFileName === fileName) {
-
-    //         element.changedLines.forEach((line) => {
-    //             if (inRange(line, startPosition.row, endPosition.row)) {
-    //                 console.log("match")
-    //                 // This code snippet needs to be update in the DB
-    //                 // TODO - update the code snippet in DB
-    //                 console.log(codeSnippet)
-    //                 console.log(startPosition, endPosition)
-    //             }
-    //         })
-    //         // console.log("match")
-    //         // console.log(element.changedLines)
-    //         // console.log(startPosition, endPosition)
-
-    //     }
-    // })
-
+    console.log("element", element);
     if (handleSnippet) {
-      await handleSnippet({
-        code: codeSnippet,
-        metadata: {
-          element,
-          filePath: extractedPath,
-          type,
-          fileName,
-        },
-      });
+      handleSnippet(text);
     }
+
+    // if (children.length > 0) {
+    //   for (let child of children) {
+    //     iterateOverTree(child.tree, handleSnippet);
+    //   }
+    // }
   }
 }
 

@@ -188,7 +188,9 @@ export interface Database {
           end_column: number | null;
           end_row: number | null;
           file_name: string | null;
+          has_external_methods: boolean | null;
           id: number;
+          language: string | null;
           name: string | null;
           parsed_code_type: string | null;
           relative_file_path: string | null;
@@ -207,7 +209,9 @@ export interface Database {
           end_column?: number | null;
           end_row?: number | null;
           file_name?: string | null;
+          has_external_methods?: boolean | null;
           id?: number;
+          language?: string | null;
           name?: string | null;
           parsed_code_type?: string | null;
           relative_file_path?: string | null;
@@ -226,7 +230,9 @@ export interface Database {
           end_column?: number | null;
           end_row?: number | null;
           file_name?: string | null;
+          has_external_methods?: boolean | null;
           id?: number;
+          language?: string | null;
           name?: string | null;
           parsed_code_type?: string | null;
           relative_file_path?: string | null;
@@ -752,7 +758,9 @@ export interface Database {
           end_column: number | null;
           end_row: number | null;
           file_name: string | null;
+          has_external_methods: boolean | null;
           id: number;
+          language: string | null;
           name: string | null;
           parsed_code_type: string | null;
           relative_file_path: string | null;

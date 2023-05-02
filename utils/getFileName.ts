@@ -61,3 +61,13 @@ export function convertToTestFileName(fileName: string): string {
 
   return `${fileNameWithoutExtension}.test.${fileExtension}`;
 }
+
+export function convertToExoSuggestionFileName(fileName: string): string {
+  const fileExtension = fileName.split(".").pop();
+  const fileNameWithoutExtension = fileName.substring(
+    0,
+    fileName.lastIndexOf(".")
+  );
+
+  return `${fileNameWithoutExtension}.exo-suggestion.${fileExtension}`;
+}

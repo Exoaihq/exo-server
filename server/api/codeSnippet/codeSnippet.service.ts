@@ -1,14 +1,21 @@
 import { createClient } from "@supabase/supabase-js";
+import { ChatUserType } from "../../../types/chatMessage.type";
 import { supabaseKey, supabaseUrl } from "../../../utils/envVariable";
+import { findArray, removeQuotes } from "../../../utils/findArrayInAString";
 import {
   extractFunctionName,
   getImportMethodNames,
 } from "../../../utils/getMethodName";
+import { iterateOverTree, parseFile } from "../../../utils/treeSitter";
 import {
   createCodeFile,
   findFileByAccountIdAndFullFilePath,
 } from "../codeFile/codeFile.repository";
-import { createEmbeddings } from "../openAi/openai.service";
+import { findImportExportMapByImportId } from "../exportImportMap/exportImportMap.repository";
+import {
+  createChatCompletion,
+  createEmbeddings,
+} from "../openAi/openai.service";
 import { findOrUpdateAccount } from "../supabase/account.service";
 import {
   assignCodeSnippetToFile,
@@ -18,7 +25,11 @@ import {
   createImportExportMap,
   findAllSnippetsImportStatements,
   findAllSnippetsWhereNameIsNull,
+  findCodeSnippetById,
   findExportSnippetByNameAndPath,
+  findSnippetByMethodNameAndAccount,
+  getLongExportSnippets,
+  getLongSnippetsWhereExternalMethodNull,
   updateSnippetById,
 } from "./codeSnippet.repository";
 
@@ -110,11 +121,11 @@ export async function findSnippetsWithoutFilesAndAssignFiles() {
 
 export const createNewFileFromSnippets = async (
   fullPath: string,
-  userId: string
+  accountId: string,
+  updates?: any
 ) => {
-  const account = await findOrUpdateAccount(userId);
   const fileWithSnippets = await findFileByAccountIdAndFullFilePath(
-    account?.id ? account.id : "",
+    accountId,
     fullPath
   );
 
@@ -162,7 +173,9 @@ export const createNewFileFromSnippets = async (
       previousStopRow = snippet.end_row;
     }
 
-    // fs.writeFileSync(testPath, array.join(" "));
+    if (updates) {
+      console.log(updates);
+    }
 
     const fileContent = array.join(" ");
     return fileContent;
@@ -310,4 +323,88 @@ export async function matchImportSnippetWithExport(importSnippet: {
     notMatched,
     matchedSnippet,
   };
+}
+
+export async function matchExportsInSnippetBody() {
+  const longSnippets = await getLongSnippetsWhereExternalMethodNull(10);
+  console.log(longSnippets.length);
+
+  let updatedCount = 0;
+
+  for (let snippet of longSnippets) {
+    if (
+      !snippet ||
+      !snippet.code_string ||
+      !snippet.id ||
+      !snippet.account_id
+    ) {
+      return;
+    }
+
+    const importMap = await findImportExportMapByImportId(snippet.id);
+
+    if (!importMap || !importMap.length || importMap.length === 0) {
+      // Match all the methods with exports
+      const externalMethods = await createChatCompletion([
+        {
+          content: `${snippet.code_string}
+
+        return example:
+        [
+          "findAllFiles",
+          "updatedToday"
+        ]
+
+      Find all the methods in the above code that are not defined in the code. Return the list as an array of strings.
+      `,
+          role: ChatUserType.user,
+        },
+      ]);
+
+      if (
+        !externalMethods ||
+        !externalMethods.choices ||
+        externalMethods.choices.length === 0
+      ) {
+        continue;
+      }
+
+      console.log(externalMethods.choices[0].message.content);
+
+      const parsed = findArray(externalMethods.choices[0].message.content);
+      if (!parsed || !parsed.length || parsed.length === 0) {
+        await updateSnippetById(snippet.id, {
+          has_external_methods: false,
+          updated_at: new Date().toISOString(),
+        });
+        continue;
+      }
+
+      if (parsed && parsed.length > 0) {
+        for (let method of parsed) {
+          await updateSnippetById(snippet.id, {
+            has_external_methods: true,
+            updated_at: new Date().toISOString(),
+          });
+
+          console.log("Method: ", removeQuotes(method));
+
+          const exportSnippet = await findSnippetByMethodNameAndAccount(
+            removeQuotes(method),
+            snippet.account_id
+          );
+          console.log("Export Snippet: ", exportSnippet);
+          if (exportSnippet) {
+            const created = await createImportExportMap({
+              import_id: snippet.id,
+              export_id: exportSnippet.id,
+            });
+            console.log("Map created", created);
+            updatedCount++;
+          }
+        }
+      }
+    }
+  }
+  console.log("Updated Count: ", updatedCount);
 }

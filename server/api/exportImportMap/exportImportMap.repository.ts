@@ -21,3 +21,21 @@ export const getExportImportMaps = async () => {
   }
   return withExport;
 };
+
+export const findImportExportMapByImportId = async (importId: number) => {
+  const { data, error } = await supabase
+    .from("export_import_snippet_map")
+    .select("*")
+    .eq("import_id", importId);
+
+  if (error) {
+    console.log("Error finding export import map by import id", error);
+    return null;
+  }
+
+  if (!data || data.length === 0) {
+    return null;
+  }
+
+  return data;
+};

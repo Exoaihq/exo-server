@@ -37,7 +37,7 @@ export function generateTestCodeTool(): ToolInterface {
       };
     }
 
-    const fullFileContent = await createNewFileFromSnippets(path, userId);
+    const fullFileContent = await createNewFileFromSnippets(path, account.id);
 
     if (!fullFileContent) {
       return {

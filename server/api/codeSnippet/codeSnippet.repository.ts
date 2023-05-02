@@ -192,6 +192,32 @@ export const findExportSnippetByNameAndPath = async (name: string) => {
   return data[0];
 };
 
+export const findSnippetByMethodNameAndAccount = async (
+  name: string,
+  accountId: string
+) => {
+  const { data, error } = await supabase
+    .from("code_snippet")
+    .select(
+      "code_string, id, name, file_name, parsed_code_type, relative_file_path, updated_at, account_id"
+    )
+    .not("code_string", "is", null)
+    .eq("name", name)
+    .eq("account_id", accountId)
+    .limit(1);
+
+  if (error) {
+    console.log("Error finding snippet by method name and account", error);
+    return null;
+  }
+
+  if (!data) {
+    return null;
+  }
+
+  return data[0];
+};
+
 export const findAllSnippetsImportStatements = async () => {
   const { data, error } = await supabase
     .from("code_snippet")
@@ -227,13 +253,16 @@ export const createImportExportMap = async (value: any) => {
     .eq("import_id", value.import_id);
 
   if (found.data && found.data.length > 0) {
-    return;
+    return found.data[0];
   } else {
-    await supabase.from("export_import_snippet_map").insert([value]);
+    return await supabase
+      .from("export_import_snippet_map")
+      .insert([value])
+      .select("*");
   }
 };
 
-export const getLongSnippets = async (minLength: number) => {
+export const getLongExportSnippets = async (minLength: number) => {
   const { data, error } = await supabase
     .rpc("find_long_snippets", {
       line_count: minLength,
@@ -243,6 +272,29 @@ export const getLongSnippets = async (minLength: number) => {
     .not("file_name", "is", null)
     .not("account_id", "is", null)
     .not("code_string", "is", null)
+    .select("*, code_file(*)")
+    .order("created_at", { ascending: false });
+
+  if (error) {
+    console.log("Error finding long snippets", error);
+    return [];
+  }
+
+  return data;
+};
+
+export const getLongSnippetsWhereExternalMethodNull = async (
+  minLength: number
+) => {
+  const { data, error } = await supabase
+    .rpc("find_long_snippets", {
+      line_count: minLength,
+    })
+    .not("code_string", "is", null)
+    .not("file_name", "is", null)
+    .not("account_id", "is", null)
+    .not("code_string", "is", null)
+    .is("has_external_methods", null)
     .select("*, code_file(*)")
     .order("created_at", { ascending: false });
 
@@ -272,6 +324,26 @@ export async function findExoConfigSnippetByCodeDirectoryId(
     .select("*")
     .eq("file_name", "exo-config.json")
     .eq("code_directory_id", directoryId)
+    .limit(1);
+
+  if (error) {
+    return null;
+  }
+  if (!data) {
+    return null;
+  }
+  return data[0];
+}
+
+export async function findCodeSnippetById(
+  id: number
+): Promise<Partial<
+  Database["public"]["Tables"]["code_snippet"]["Row"]
+> | null> {
+  const { data, error } = await supabase
+    .from("code_snippet")
+    .select("*")
+    .eq("id", id)
     .limit(1);
 
   if (error) {
