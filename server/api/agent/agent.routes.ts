@@ -1,5 +1,5 @@
 import { Router } from "express";
-import { testAgent, testUpdateExisting, useAgent } from "./agent.controller";
+import { testUpdateExisting, useAgent } from "./agent.controller";
 
 const agentRouter = Router();
 
@@ -7,5 +7,4 @@ const agentRouter = Router();
 
 agentRouter.post("/", useAgent);
 // agentRouter.post("/", testUpdateExisting);
-// agentRouter.post("/", testAgent);
 export default agentRouter;
