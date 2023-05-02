@@ -178,6 +178,7 @@ export interface Database {
       };
       code_snippet: {
         Row: {
+          code_file: any;
           account_id: string | null;
           code_embedding: string | null;
           code_explaination: string | null;

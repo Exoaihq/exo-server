@@ -41,13 +41,27 @@ export const getProgrammingLanguage = (fileName: string): Language => {
   }
 };
 
+function getParser(language: Language) {
+  switch (language) {
+    case Language.TypeScript:
+      return TypeScript;
+    case Language.Python:
+      return Python;
+    case Language.Java:
+      return Java;
+    default:
+      return TypeScript;
+  }
+}
+
 export async function parseFile(
   fileContents: string,
   language: Language
 ): Promise<Tree> {
   const parser = new Parser();
+  console.log("language", language);
 
-  parser.setLanguage(parsers[language as keyof typeof parsers]);
+  parser.setLanguage(getParser(language));
 
   return await parser.parse(fileContents);
 }
