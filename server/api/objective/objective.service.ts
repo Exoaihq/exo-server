@@ -1,5 +1,5 @@
 import { Database } from "../../../types/supabase";
-import { supabase } from "../supabase/supabase.service";
+import { supabase } from "../../../server";
 
 export const getObjectivesBySession = async (
   sessionId: string

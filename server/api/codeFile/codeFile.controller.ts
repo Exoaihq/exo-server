@@ -54,7 +54,7 @@ export const findAndUpdateFilesFromClient = async (
 
     const sessionId = session_id as string;
 
-    await findOrCreateSession(user.id, sessionId);
+    const dbSession = await findOrCreateSession(user.id, sessionId);
 
     const account = await findOrUpdateAccount(user.id);
 

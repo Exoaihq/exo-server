@@ -12,8 +12,6 @@ import {
   handleFileUpload,
 } from "./codeFile.controller";
 
-export const routes = Router();
-
 const codeFileRoutes = Router();
 
 // Base route: /code-file

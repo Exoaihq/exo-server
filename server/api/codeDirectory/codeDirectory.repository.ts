@@ -2,7 +2,7 @@ import { PostgrestError } from "@supabase/supabase-js";
 import { Database } from "../../../types/supabase";
 import { createEmbeddings } from "../openAi/openai.service";
 import { findOrUpdateAccount } from "../supabase/account.service";
-import { supabase } from "../supabase/supabase.service";
+import { supabase } from "../../../server";
 
 export const findAllDirectories = async (): Promise<
   Database["public"]["Tables"]["code_directory"]["Row"][] | null

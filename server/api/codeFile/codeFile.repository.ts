@@ -1,4 +1,5 @@
 import { PostgrestError } from "@supabase/supabase-js";
+import { supabase } from "../../../server";
 import { SnippetByFileName } from "../../../types/parseCode.types";
 import { Database } from "../../../types/supabase";
 import { extractFileNameAndPathFromFullPath } from "../../../utils/getFileName";
@@ -7,7 +8,6 @@ import { createAiWritenCode } from "../aiCreatedCode/aiCreatedCode.repository";
 import { findCodeDirectoryById } from "../codeDirectory/codeDirectory.repository";
 import { getCodeStandards } from "../codeDirectory/codeDirectory.service";
 import { createCodeSnippet } from "../codeSnippet/codeSnippet.repository";
-import { supabase } from "../supabase/supabase.service";
 
 export async function findSnippetByFileNameAndAccount(
   fileName: string,
@@ -54,7 +54,7 @@ export async function findFileById(
 ): Promise<Partial<Database["public"]["Tables"]["code_file"]["Row"]> | null> {
   const { data, error } = await supabase
     .from("code_file")
-    .select("*")
+    .select("*, code_snippet(*)")
     .eq("id", fileId)
     .limit(1);
 

@@ -1,3 +1,4 @@
+import { createClient } from "@supabase/supabase-js";
 import bodyParser from "body-parser";
 import cors from "cors";
 import express, { Express } from "express";
@@ -5,7 +6,6 @@ import { runScheduledTasks } from "./cron";
 import routes from "./routes/routes";
 import agentRouter from "./server/api/agent/agent.routes";
 import aiCreatedCode from "./server/api/aiCreatedCode/aiCreatedCode.routes";
-import codeCompletionRoutes from "./server/api/codeCompletion/codeCompletion.routes";
 import codeDirectoryRoutes from "./server/api/codeDirectory/codeDirectory.routes";
 import codeFileRoutes from "./server/api/codeFile/codeFile.routes";
 import codeSnippetRoutes from "./server/api/codeSnippet/codeSnippet.routes";
@@ -14,7 +14,11 @@ import messageRoutes from "./server/api/message/message.routes";
 import promptRoutes from "./server/api/prompt/prompt.routes";
 import searchRoutes from "./server/api/search/search.routes";
 import slackRoutes from "./server/api/slack/slack.route";
-import { port } from "./utils/envVariable";
+import { Database } from "./types/supabase";
+import { port, supabaseKey, supabaseUrl } from "./utils/envVariable";
+
+// Create a single supabase client for interacting with your database
+export const supabase = createClient<Database>(supabaseUrl, supabaseKey);
 
 const app: Express = express();
 

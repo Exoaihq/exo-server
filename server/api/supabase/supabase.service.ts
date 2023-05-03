@@ -1,5 +1,5 @@
-import { createClient } from "@supabase/supabase-js";
 import { Request, Response } from "express";
+import { supabase } from "../../../server";
 import { AddModel } from "../../../types/openAiTypes/openAiEngine";
 import {
   Element,
@@ -10,7 +10,6 @@ import {
   SnippetByFileName,
 } from "../../../types/parseCode.types";
 import { Database } from "../../../types/supabase";
-import { supabaseKey, supabaseUrl } from "../../../utils/envVariable";
 import { extractFileNameAndPathFromFullPath } from "../../../utils/getFileName";
 import { getSubstringFromMultilineCode } from "../../../utils/getSubstringFromMultilineCode";
 import { getProgrammingLanguage, parseFile } from "../../../utils/treeSitter";
@@ -22,9 +21,6 @@ import {
   createEmbeddings,
   createTextCompletion,
 } from "../openAi/openai.service";
-
-// Create a single supabase client for interacting with your database
-export const supabase = createClient<Database>(supabaseUrl, supabaseKey);
 
 export async function checkSessionOrThrow(
   req: Request,
@@ -74,9 +70,11 @@ export const findOrCreateSession = async (
       .insert([{ user_id: userId, id: sessionId }])
       .select();
 
-    console.log("Session created. ID:", data && data[0].id);
+    if (error || !data) {
+      console.log("Error creating session", error);
+      throw new Error(error.message);
+    }
 
-    // @ts-ignore
     return data[0] as Database["public"]["Tables"]["session"]["Row"];
   }
 };

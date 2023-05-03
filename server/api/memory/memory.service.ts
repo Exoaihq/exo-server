@@ -1,6 +1,6 @@
 import { Database } from "../../../types/supabase";
 import { createEmbeddings } from "../openAi/openai.service";
-import { supabase } from "../supabase/supabase.service";
+import { supabase } from "../../../server";
 
 export const getMemoriesBySession = async (
   sessionId: string

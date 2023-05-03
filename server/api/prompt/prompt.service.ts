@@ -1,10 +1,11 @@
+import { supabase } from "../../../server";
 import { Database } from "../../../types/supabase";
 import { convertToTestFileName } from "../../../utils/getFileName";
 import { createAiCodeFromNewFilePrompt } from "../aiCreatedCode/aiCreatedCode.service";
 import { ExpectedNextAction } from "../codeCompletion/scenerios/codeCompletion.knownNextAction";
 import { handleUpdatingExistingCode } from "../codeCompletion/scenerios/codeCompletion.updateExisting";
 import { createMessageWithUser } from "../message/message.service";
-import { resetSession, supabase } from "../supabase/supabase.service";
+import { resetSession } from "../supabase/supabase.service";
 
 export const getGlobalPromptsDb = async (): Promise<
   Database["public"]["Tables"]["prompt"]["Row"][]

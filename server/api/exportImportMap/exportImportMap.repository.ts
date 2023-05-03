@@ -1,5 +1,5 @@
 import { findAllSnippetsImportStatements } from "../codeSnippet/codeSnippet.repository";
-import { supabase } from "../supabase/supabase.service";
+import { supabase } from "../../../server";
 
 export const getExportImportMaps = async () => {
   const { data, error } = await supabase
@@ -13,7 +13,9 @@ export const getExportImportMaps = async () => {
     for (let map of data) {
       withExport.push({
         ...map,
-        import_snippet: imports.find((i) => i.id === map.import_id),
+        import_snippet: imports.find(
+          (i: { id: number | null }) => i.id === map.import_id
+        ),
       });
     }
   } else {

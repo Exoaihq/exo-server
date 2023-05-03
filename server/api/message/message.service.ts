@@ -2,7 +2,7 @@ import { PostgrestSingleResponse } from "@supabase/supabase-js";
 import { ChatMessage, ChatUserType } from "../../../types/chatMessage.type";
 import { Database } from "../../../types/supabase";
 import { getGlobalPromptsDb } from "../prompt/prompt.service";
-import { supabase } from "../supabase/supabase.service";
+import { supabase } from "../../../server";
 
 export const getMessagesWithUser = async (
   userId: string

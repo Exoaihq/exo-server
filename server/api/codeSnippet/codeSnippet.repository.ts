@@ -1,3 +1,4 @@
+import { supabase } from "../../../server";
 import { ParsedCode } from "../../../types/parseCode.types";
 import { Database } from "../../../types/supabase";
 import { extractFunctionName } from "../../../utils/getMethodName";
@@ -6,7 +7,6 @@ import {
   createEmbeddings,
   createTextCompletion,
 } from "../openAi/openai.service";
-import { supabase } from "../supabase/supabase.service";
 import { matchImportSnippetWithExport } from "./codeSnippet.service";
 
 export const updateSnippetById = async (
@@ -335,22 +335,63 @@ export async function findExoConfigSnippetByCodeDirectoryId(
   return data[0];
 }
 
+export interface CodeSnippet {
+  id: number;
+  name: string;
+  code_string: string;
+  file_name: string;
+  relative_file_path: string;
+  parsed_code_type: string;
+  account_id: string;
+  created_at: string;
+  updated_at: string;
+  code_file_id: number;
+}
+
+export interface ExportImportSnippetMap {
+  id: string;
+  export_id: number;
+  import_id: number;
+  code_snippet: CodeSnippet;
+}
+
+export interface FindCodeSnippetById {
+  id: number;
+  name: string;
+  code_string: string;
+  file_name: string;
+  relative_file_path: string;
+  parsed_code_type: string;
+  account_id: string;
+  created_at: string;
+  updated_at: string;
+  code_file_id: number;
+  start_row: number;
+  end_row: number;
+  code_file: Database["public"]["Tables"]["code_file"]["Row"];
+  export_import_snippet_map?: ExportImportSnippetMap[];
+}
+
 export async function findCodeSnippetById(
   id: number
-): Promise<Partial<
-  Database["public"]["Tables"]["code_snippet"]["Row"]
-> | null> {
+): Promise<FindCodeSnippetById | null> {
+  console.log(id);
   const { data, error } = await supabase
     .from("code_snippet")
-    .select("*")
+    .select(
+      "*, code_file(*), export_import_snippet_map!export_import_snippet_map_export_id_fkey(*, code_snippet!export_import_snippet_map_import_id_fkey(id, code_string))"
+    )
     .eq("id", id)
     .limit(1);
 
   if (error) {
+    console.log("Error finding snippet by id", error);
     return null;
   }
   if (!data) {
+    console.log("No data found for snippet by id", error);
     return null;
   }
-  return data[0];
+  console.log("data", data);
+  return data[0] as any;
 }
