@@ -6,7 +6,6 @@ import { getSubstringFromMultilineCode } from "./getSubstringFromMultilineCode";
 
 // javascript node types ^
 
-require("dotenv").config();
 const Parser = require("tree-sitter");
 const TypeScript = require("tree-sitter-typescript").typescript;
 const Python = require("tree-sitter-python").python;

@@ -4,6 +4,7 @@ import express, { Express } from "express";
 import routes from "./routes/routes";
 import agentRouter from "./server/api/agent/agent.routes";
 import aiCreatedCode from "./server/api/aiCreatedCode/aiCreatedCode.routes";
+import codeCompletionRoutes from "./server/api/codeCompletion/codeCompletion.routes";
 import codeDirectoryRoutes from "./server/api/codeDirectory/codeDirectory.routes";
 import codeFileRoutes from "./server/api/codeFile/codeFile.routes";
 import codeSnippetRoutes from "./server/api/codeSnippet/codeSnippet.routes";
@@ -32,7 +33,7 @@ export function createServer() {
   app.use("/code-file", codeFileRoutes);
   app.use("/code-snippet", codeSnippetRoutes);
   app.use("/messages", messageRoutes);
-  app.use("/code", agentRouter);
+  app.use("/code", codeCompletionRoutes);
   app.use("/agent", agentRouter);
   app.use("/search", searchRoutes);
   app.use("/prompt", promptRoutes);

@@ -1,4 +1,5 @@
-import { Request, Response } from "express";
+import { Response } from "express";
+import { AuthenticatedRequest } from "../../middleware/isAuthenticated";
 import {
   createMessagesWithUser,
   getOnlyRoleAndContentMessagesByUserAndSession,
@@ -6,7 +7,6 @@ import {
 import { createTextCompletion } from "../openAi/openai.service";
 import { handleSearch } from "../search/search.service";
 import {
-  checkSessionOrThrow,
   findOrCreateSession,
   updateSession,
 } from "../supabase/supabase.service";
@@ -14,29 +14,27 @@ import {
   createBaseClassificationPrompt,
   runBaseClassificaitonChatCompletion,
 } from "./codeCompletion.classifier";
-import {
-  checkDbSession,
-  handleFileUploadWithSession,
-} from "./codeCompletion.service";
+import { checkDbSession } from "./codeCompletion.service";
 import { CodeCompletionRequest } from "./codeCompletion.types";
 import { handleKnownNextAction } from "./scenerios/codeCompletion.knownNextAction";
 
-export const handleCodeCompletion = async (req: Request, res: Response) => {
+export const handleCodeCompletion = async (
+  req: AuthenticatedRequest,
+  res: Response
+) => {
   try {
-    const session = await checkSessionOrThrow(req, res);
-
-    const { user } = session.data;
+    const { userId } = req;
 
     const { sessionId, scratchPadContent } = req.body as CodeCompletionRequest;
 
     const sessionMessages = await getOnlyRoleAndContentMessagesByUserAndSession(
-      user.id,
+      userId,
       sessionId
     );
 
-    const dbSession = await findOrCreateSession(user.id, sessionId);
+    const dbSession = await findOrCreateSession(userId, sessionId);
 
-    await updateSession(user.id, sessionId, {
+    await updateSession(userId, sessionId, {
       scratch_pad_content: scratchPadContent,
     });
 
@@ -44,7 +42,7 @@ export const handleCodeCompletion = async (req: Request, res: Response) => {
       return await handleKnownNextAction(
         sessionMessages,
         dbSession,
-        user.id,
+        userId,
         sessionId,
         res
       );
@@ -83,7 +81,7 @@ export const handleCodeCompletion = async (req: Request, res: Response) => {
       ).choices;
 
       await createMessagesWithUser(
-        user.id,
+        userId,
         choices.map((choice) => choice.message),
         sessionId
       );
@@ -97,7 +95,7 @@ export const handleCodeCompletion = async (req: Request, res: Response) => {
       const responseBasedOnDbSession = await checkDbSession(
         dbSession,
         sessionMessages,
-        user.id,
+        userId,
         sessionId
       );
 
@@ -105,7 +103,7 @@ export const handleCodeCompletion = async (req: Request, res: Response) => {
         data: responseBasedOnDbSession,
       });
     } else if (baseClassificaiton === "search") {
-      return res.status(200).json(await handleSearch(user.id, sessionId));
+      return res.status(200).json(await handleSearch(userId, sessionId));
     } else {
       res
         .status(500)

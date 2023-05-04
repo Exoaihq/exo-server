@@ -1,12 +1,11 @@
-import { Request, Response } from "express";
+import { Response } from "express";
 import { getDirectoryNameFromPath } from "../../../utils/getFileName";
+import { AuthenticatedRequest } from "../../middleware/isAuthenticated";
 import { ExpectedNextAction } from "../codeCompletion/scenerios/codeCompletion.knownNextAction";
 import { findExoConfigFileByCodeDirectoryId } from "../codeFile/codeFile.repository";
-import { findExoConfigSnippetByCodeDirectoryId } from "../codeSnippet/codeSnippet.repository";
 import { createMessageWithUser } from "../message/message.service";
 import { findOrUpdateAccount } from "../supabase/account.service";
 import {
-  checkSessionOrThrow,
   findOrCreateSession,
   updateSession,
 } from "../supabase/supabase.service";
@@ -18,21 +17,19 @@ import {
 import { getDirectoryFilesAndSnippetCount } from "./codeDirectory.service";
 
 export const getCodeDirectoriesByAccount = async (
-  req: Request,
+  req: AuthenticatedRequest,
   res: Response
 ) => {
   try {
-    const session = await checkSessionOrThrow(req, res);
-
-    const { user } = session.data;
+    const { userId } = req;
 
     const { session_id } = req.headers;
 
     const sessionId = session_id as string;
 
-    await findOrCreateSession(user.id, sessionId);
+    await findOrCreateSession(userId, sessionId);
 
-    const account = await findOrUpdateAccount(user.id);
+    const account = await findOrUpdateAccount(userId);
 
     if (!account) {
       return res.status(404).json({ message: "Can't find the user account" });
@@ -68,34 +65,35 @@ export const getCodeDirectoriesByAccount = async (
   }
 };
 
-export const createDirectoryByAccount = async (req: Request, res: Response) => {
+export const createDirectoryByAccount = async (
+  req: AuthenticatedRequest,
+  res: Response
+) => {
   try {
     const { directory } = req.body;
-    const session = await checkSessionOrThrow(req, res);
-
-    const { user } = session.data;
+    const { userId } = req;
 
     const { session_id } = req.headers;
 
     const sessionId = session_id as string;
 
-    await findOrCreateSession(user.id, sessionId);
+    await findOrCreateSession(userId, sessionId);
 
-    const account = await findOrUpdateAccount(user.id);
+    const account = await findOrUpdateAccount(userId);
 
     if (!account) {
       return res.status(404).json({ message: "Can't find the user account" });
     }
 
     const directories = await createCodeDirectoryByUser(
-      user.id,
+      userId,
       directory,
       getDirectoryNameFromPath(directory),
       true
     );
 
     await createMessageWithUser(
-      user.id,
+      userId,
       {
         content: `Created directory ${directory}. You can now index the files in this directory by clicking the "Index" button in the Saved Repos section. Then you can search and update the files in this directory!`,
         role: "assistant",
@@ -112,26 +110,27 @@ export const createDirectoryByAccount = async (req: Request, res: Response) => {
   }
 };
 
-export const setDirectoryToAddFile = async (req: Request, res: Response) => {
+export const setDirectoryToAddFile = async (
+  req: AuthenticatedRequest,
+  res: Response
+) => {
   try {
     const { directory } = req.body;
-    const session = await checkSessionOrThrow(req, res);
-
-    const { user } = session.data;
+    const { userId } = req;
 
     const { session_id } = req.headers;
 
     const sessionId = session_id as string;
 
-    await findOrCreateSession(user.id, sessionId);
+    await findOrCreateSession(userId, sessionId);
 
-    const account = await findOrUpdateAccount(user.id);
+    const account = await findOrUpdateAccount(userId);
 
     if (!account) {
       return res.status(404).json({ message: "Can't find the user account" });
     }
 
-    await updateSession(user.id, sessionId, {
+    await updateSession(userId, sessionId, {
       location: "newFile",
       new_file: true,
       file_path: directory,
@@ -139,7 +138,7 @@ export const setDirectoryToAddFile = async (req: Request, res: Response) => {
     });
 
     const newMessage = await createMessageWithUser(
-      user.id,
+      userId,
       {
         content: `Ok I set the directory: ${directory} as the location to add a new file. Let me know what functionality and file name you want to add to the new file and ill create it and add it to the directory.`,
         role: "assistant",
@@ -156,20 +155,21 @@ export const setDirectoryToAddFile = async (req: Request, res: Response) => {
   }
 };
 
-export const updateDirectory = async (req: Request, res: Response) => {
+export const updateDirectory = async (
+  req: AuthenticatedRequest,
+  res: Response
+) => {
   try {
     const { directoryId, values } = req.body;
-    const session = await checkSessionOrThrow(req, res);
-
-    const { user } = session.data;
+    const { userId } = req;
 
     const { session_id } = req.headers;
 
     const sessionId = session_id as string;
 
-    await findOrCreateSession(user.id, sessionId);
+    await findOrCreateSession(userId, sessionId);
 
-    const account = await findOrUpdateAccount(user.id);
+    const account = await findOrUpdateAccount(userId);
 
     if (!account) {
       return res.status(404).json({ message: "Can't find the user account" });
@@ -178,7 +178,7 @@ export const updateDirectory = async (req: Request, res: Response) => {
     await updateCodeDirectoryById(directoryId, values);
 
     await createMessageWithUser(
-      user.id,
+      userId,
       {
         content: `Ok I removed the directory from your saved directories`,
         role: "assistant",
