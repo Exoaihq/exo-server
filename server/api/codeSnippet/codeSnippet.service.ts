@@ -28,6 +28,7 @@ import {
   getLongSnippetsWhereExternalMethodNull,
   updateSnippetById,
 } from "./codeSnippet.repository";
+import { logInfo } from "../../../utils/commandLineColors";
 
 const supabase = createClient(supabaseUrl, supabaseKey);
 
@@ -76,6 +77,7 @@ export async function findSnippetsWithoutFilesAndAssignFiles() {
   const snippets = await findAllSnippetWithoutFiles();
 
   if (!snippets) {
+    logInfo("No snippets without files found");
     return;
   }
   for (let i = 0; i < snippets.length; i++) {
@@ -181,7 +183,9 @@ export const createNewFileFromSnippets = async (
 export async function updateCodeSnippetNames() {
   const allSnippetsWhereNameIsNotSet = await findAllSnippetsWhereNameIsNull();
 
-  console.log(allSnippetsWhereNameIsNotSet.length);
+  logInfo(
+    `Number of snippets without names: ${allSnippetsWhereNameIsNotSet.length}`
+  );
 
   let matchedCount = 0;
   let notMatchedCount = 0;

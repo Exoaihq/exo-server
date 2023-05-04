@@ -56,7 +56,6 @@ export const findFilesForSavedDirectories = async () => {
         continue;
       }
       // Find the directory that matches the file path
-      // @ts-ignore
       const found = directory.find((dir) =>
         // @ts-ignore
         file?.file_path.includes(dir.file_path)
@@ -260,8 +259,7 @@ export const findMissingDirectoryNodes = async () => {
     } = directory;
     if (file_path && account_id && !is_root_directory) {
       // get the parent directory
-      const { fileName, extractedPath } =
-        extractFileNameAndPathFromFullPath(file_path);
+      const { extractedPath } = extractFileNameAndPathFromFullPath(file_path);
 
       if (extractedPath) {
         const parentDirectory = await findCodeDirectoryByPathAndAccountId(

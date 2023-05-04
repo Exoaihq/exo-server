@@ -1,3 +1,4 @@
+import { logInfo } from "../../../utils/commandLineColors";
 import { executeTask, runTaskLoop } from "../agent/agent.act";
 import { getIncompleteTasks, updateTaskById } from "./task.repository";
 
@@ -5,7 +6,7 @@ export async function findAndExecuteTasks() {
   // Find all tasks that are not completed, have an input and no output
 
   const tasks = await getIncompleteTasks();
-  console.log("Incomplete tasks:", tasks.length);
+  logInfo(`Incomplete tasks: ${tasks.length}`);
 
   // Execute each task
   for (const task of tasks) {

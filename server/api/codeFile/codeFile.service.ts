@@ -2,6 +2,7 @@ import { ChatUserType } from "../../../types/chatMessage.type";
 import { EngineName } from "../../../types/openAiTypes/openAiEngine";
 import { ParseCode } from "../../../types/parseCode.types";
 import { Database } from "../../../types/supabase";
+import { logInfo } from "../../../utils/commandLineColors";
 import { isThisHour, isTodaysDate } from "../../../utils/dates";
 import { extractFileNameAndPathFromFullPath } from "../../../utils/getFileName";
 import { updateCodeDirectoryById } from "../codeDirectory/codeDirectory.repository";
@@ -165,7 +166,7 @@ export const updateFileExplanation = async () => {
 export const findFilesWithoutExplainationAndAssignExplaination = async () => {
   const files = await findFilesWithoutExplaination();
   let filesUpdated = 0;
-  console.log("Number of file without explaination:", files?.length);
+  logInfo(`Number of file without explaination: ${files?.length}`);
 
   if (!files) {
     return;
@@ -174,7 +175,6 @@ export const findFilesWithoutExplainationAndAssignExplaination = async () => {
   for (let i = 0; i < files.length; i++) {
     const file = files[i];
 
-    //@ts-ignore
     const { code_snippet, id, file_name, account_id } = file;
 
     if (
@@ -214,7 +214,7 @@ export const findFilesWithoutExplainationAndAssignExplaination = async () => {
       filesUpdated++;
     }
   }
-  console.log("Number of files updated:", filesUpdated);
+  logInfo(`Number of files updated: ${filesUpdated}`);
 };
 
 export const excludedEmbeddingTypes = [
