@@ -1,3 +1,4 @@
+import { AuthResponse, Session, User } from "@supabase/supabase-js";
 import { Request, Response } from "express";
 import { supabase } from "../../../server";
 import { AddModel } from "../../../types/openAiTypes/openAiEngine";
@@ -22,11 +23,22 @@ import {
   createTextCompletion,
 } from "../openAi/openai.service";
 
+export type AuthResponseWithUser = {
+  data: {
+    user: User;
+    session: Session;
+  };
+};
+
 export async function checkSessionOrThrow(
   req: Request,
   res: Response
-): Promise<any> {
+): Promise<AuthResponseWithUser> {
   const { access_token, refresh_token } = req.headers;
+
+  if (!access_token || !refresh_token) {
+    throw new Error("403");
+  }
 
   const access = access_token as string;
   const refresh = refresh_token as string;
@@ -36,13 +48,17 @@ export async function checkSessionOrThrow(
     refresh_token: refresh,
   });
 
-  if (!access_token || !refresh_token || !session || !session.data?.user) {
-    return res
-      .status(401)
-      .json({ message: "You have to be logged in to do that" });
+  if (
+    !session ||
+    !session.data ||
+    !session.data.user ||
+    !session.data.user.id ||
+    session.error
+  ) {
+    throw new Error("403");
   }
 
-  return session;
+  return session as AuthResponseWithUser;
 }
 
 export async function checkSession(session: {

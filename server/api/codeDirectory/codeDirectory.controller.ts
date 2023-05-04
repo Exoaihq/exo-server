@@ -59,6 +59,7 @@ export const getCodeDirectoriesByAccount = async (
 
     return res.status(200).json({
       data: directoryWithExoConfig,
+      // @ts-ignore
       metadata: getDirectoryFilesAndSnippetCount(directories),
     });
   } catch (error: any) {

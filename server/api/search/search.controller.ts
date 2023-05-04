@@ -1,17 +1,15 @@
-import { Request, Response } from "express";
+import { Response } from "express";
+import { AuthenticatedRequest } from "../../middleware/isAuthenticated";
 import { findOrUpdateAccount } from "../supabase/account.service";
-import { checkSessionOrThrow } from "../supabase/supabase.service";
 import { findCodeByQuery } from "./search.service";
 
-export const searchCode = async (req: Request, res: Response) => {
+export const searchCode = async (req: AuthenticatedRequest, res: Response) => {
   try {
-    const session = await checkSessionOrThrow(req, res);
-
-    const { user } = session.data;
+    const { userId } = req;
 
     const { search } = req.body;
 
-    const account = await findOrUpdateAccount(user.id);
+    const account = await findOrUpdateAccount(userId);
     if (!account) {
       return res.status(404).json({ message: "Can't find the user account" });
     }
@@ -20,6 +18,6 @@ export const searchCode = async (req: Request, res: Response) => {
 
     res.status(200).json({ data: response });
   } catch (error: any) {
-    res.status(500).json({ message: error.message });
+    res.status(405).json({ message: error.message });
   }
 };

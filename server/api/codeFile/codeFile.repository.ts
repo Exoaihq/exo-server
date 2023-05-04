@@ -2,6 +2,7 @@ import { PostgrestError } from "@supabase/supabase-js";
 import { supabase } from "../../../server";
 import { SnippetByFileName } from "../../../types/parseCode.types";
 import { Database } from "../../../types/supabase";
+import { logError } from "../../../utils/commandLineColors";
 import { extractFileNameAndPathFromFullPath } from "../../../utils/getFileName";
 import { getParsedSnippetFromCodeBlock } from "../../../utils/treeSitter";
 import { createAiWritenCode } from "../aiCreatedCode/aiCreatedCode.repository";
@@ -296,6 +297,7 @@ export async function findExoConfigFileByCodeDirectoryId(
     .limit(1);
 
   if (error) {
+    logError(error.message);
     return null;
   }
   if (!data) {

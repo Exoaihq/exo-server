@@ -26,6 +26,7 @@ import {
   getSavedDirectoryWhereAccountIsNotNull,
   updateCodeDirectoryById,
 } from "./codeDirectory.repository";
+import { DirectoryWithFiles } from "./codeDirectory.types";
 
 export const createDirectoryIfNotExists = async (
   userId: string,
@@ -111,14 +112,22 @@ async function getSavedCodeDirectoriesByAccount(): Promise<
   return directoriesByAccount;
 }
 
+export interface GetDirectoriesWithSnippetCount {
+  directoryFileCount: {
+    name: string;
+    fileCount: number;
+  }[];
+  savedDirectoryCount: number;
+  directoryCount: number;
+}
+
 export const getDirectoryFilesAndSnippetCount = (
-  directories: Database["public"]["Tables"]["code_directory"]["Row"][]
-) => {
+  directories: DirectoryWithFiles[]
+): GetDirectoriesWithSnippetCount => {
   const savedDirectories = directories.filter((dir) => dir.saved);
   const fileCount = savedDirectories.map((dir) => {
     return {
-      name: dir.directory_name,
-      //@ts-ignore
+      name: dir.directory_name || "",
       fileCount: dir.code_file?.length,
     };
   });
@@ -166,7 +175,7 @@ export const getFilesAndMapToDirectories = async () => {
 export const updateDirectoryExplaination = async () => {
   // Get all directories without explaination and update them
   const directories = await getDirectoriesWithoutExplainations();
-  if (!directories) {
+  if (!directories || directories.length === 0) {
     return;
   }
 

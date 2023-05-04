@@ -1,27 +1,26 @@
-import { Request, Response } from "express";
+import { Response } from "express";
+import { AuthenticatedRequest } from "../../middleware/isAuthenticated";
 import { findOrUpdateAccount } from "../supabase/account.service";
-import {
-  checkSessionOrThrow,
-  findOrCreateSession,
-} from "../supabase/supabase.service";
+import { findOrCreateSession } from "../supabase/supabase.service";
 import {
   getAiCodeBySessionOrAccount,
   updateAiWritenCode,
 } from "./aiCreatedCode.repository";
 
-export const getAiCompletedCode = async (req: Request, res: Response) => {
+export const getAiCompletedCode = async (
+  req: AuthenticatedRequest,
+  res: Response
+) => {
   try {
-    const session = await checkSessionOrThrow(req, res);
-
-    const { user } = session.data;
+    const { userId } = req;
 
     const { session_id } = req.headers;
 
     const sessionId = session_id as string;
 
-    await findOrCreateSession(user.id, sessionId);
+    await findOrCreateSession(userId, sessionId);
 
-    const account = await findOrUpdateAccount(user.id);
+    const account = await findOrUpdateAccount(userId);
 
     const aiCreatedCode = await getAiCodeBySessionOrAccount(
       sessionId,
@@ -37,14 +36,15 @@ export const getAiCompletedCode = async (req: Request, res: Response) => {
   }
 };
 
-export const updateAiCompletedCode = async (req: Request, res: Response) => {
+export const updateAiCompletedCode = async (
+  req: AuthenticatedRequest,
+  res: Response
+) => {
   try {
     const { values, id, sessionId } = req.body;
-    const session = await checkSessionOrThrow(req, res);
+    const { userId } = req;
 
-    const { user } = session.data;
-
-    await findOrCreateSession(user.id, sessionId);
+    await findOrCreateSession(userId, sessionId);
 
     await updateAiWritenCode(id, { ...values });
 

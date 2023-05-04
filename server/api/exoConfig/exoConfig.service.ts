@@ -1,3 +1,4 @@
+import { logError } from "../../../utils/commandLineColors";
 import {
   createExoConfig,
   findExoConfigFileByCodeDirectoryId,
@@ -7,6 +8,7 @@ import {
 export const getOrCreateExoConfig = async (codeFileId: number) => {
   const codeFile = await findFileById(codeFileId);
   if (!codeFile?.code_directory_id) {
+    logError("No code file found for exo config");
     return null;
   }
   // Find the exo config for the code directory id
