@@ -1,4 +1,5 @@
 import { Database } from "../../../types/supabase";
+import { logError, logWarning } from "../../../utils/commandLineColors";
 import { getObjectiveById } from "../objective/objective.service";
 import {
   chatAgent,
@@ -87,40 +88,32 @@ export const executeTask = async (
   });
 
   if (!objective_id || !tool_input || !tool_name || !description) {
-    console.log("Missing some data. Moving on");
+    logWarning("Missing some data. Moving on");
     return;
   }
 
   const objective = await getObjectiveById(objective_id);
 
   if (!objective) {
-    console.log("No objective found");
+    logError("No objective found");
     return;
   }
 
   let previouslyCompletedTasksContext = "";
 
-  // @ts-ignore
   if (objective.task && objective.task.length > 0 && task.created_at) {
-    // @ts-ignore
-    const previousTasks = objective.task.filter(
-      (siblingTask: {
-        tool_output: string;
-        completed_at: any;
-        created_at: string;
-      }) => {
-        if (!task.created_at) {
-          return false;
-        }
-
-        // Created before this task and completed.
-        return (
-          siblingTask.tool_output &&
-          siblingTask.completed_at &&
-          new Date(siblingTask.created_at) < new Date(task.created_at)
-        );
+    const previousTasks = objective.task.filter((siblingTask) => {
+      if (!task.created_at) {
+        return false;
       }
-    );
+
+      // Created before this task and completed.
+      return (
+        siblingTask.tool_output &&
+        siblingTask.completed_at &&
+        new Date(siblingTask.created_at || "") < new Date(task.created_at)
+      );
+    });
 
     if (previousTasks.length > 0) {
       // All previous task must be completed before this task can be executed.
@@ -144,20 +137,20 @@ export const executeTask = async (
   const { session_id } = objective;
 
   if (!session_id) {
-    console.log("No session id found");
+    logError("No session id found");
     return;
   }
 
   const session = await getSessionById(session_id);
 
   if (!session || !session.user_id) {
-    console.log("No session found");
+    logError("No session found");
     return;
   }
   const allToolsAvailable = getToolByNames(allTools);
 
   // This runs the tool once and gets the output that will passed to the task loop for further processing.
-  const { output, metadata } = await allToolsAvailable[tool_name].use(
+  const { output } = await allToolsAvailable[tool_name].use(
     session.user_id,
     session_id,
     tool_input
@@ -186,13 +179,13 @@ export const executeTask = async (
     });
 
     // Each task should have an output function that is called when the task is completed and should do things like update the sessions and the ai generated code.
-    toolToUse.outputFunction &&
-      toolToUse.outputFunction(taskOutput, session_id);
+    // toolToUse.outputFunction &&
+    //   toolToUse.outputFunction(taskOutput, session_id);
   } else {
     // Tasks that don't have a tool output are considered completed but the output is not saved. These tasks are incomplete
-    await updateTaskById(task.id, {
-      completed_at: new Date().toISOString(),
-    });
+    // await updateTaskById(task.id, {
+    //   completed_at: new Date().toISOString(),
+    // });
   }
   // }
 };
@@ -264,7 +257,7 @@ export async function runTaskLoop(
       previousResponses.join("\n")
     );
 
-    console.log("currentPrompt>>>>>>>>>>>>", currentPrompt);
+    // console.log("currentPrompt>>>>>>>>>>>>", currentPrompt);
     // ***** This is the start of the chat agent *****
     const generated: string = await chatAgent(currentPrompt, stopToken);
 
@@ -273,7 +266,7 @@ export async function runTaskLoop(
     console.log(`Tool: ${tool}`);
     console.log(`Tool Input: ${tool_input}`);
 
-    if (tool === "Final Answer") {
+    if (tool === "final answer") {
       return tool_input;
     }
     if (!toolByNames[tool]) {
