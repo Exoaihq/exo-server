@@ -1,6 +1,5 @@
 import { Response } from "express";
 import { ChatMessage } from "../../../../types/chatMessage.type";
-import { Json } from "../../../../types/supabase";
 import { deserializeJson } from "../../../../utils/deserializeJson";
 import { createAiCodeFromNewFilePrompt } from "../../aiCreatedCode/aiCreatedCode.service";
 import { createMessageWithUser } from "../../message/message.service";
@@ -43,7 +42,6 @@ export async function handleKnownNextAction(
 
   if (!doesItAnswerTheQuestion.choices[0].text) {
     createMessageWithUser(
-      userId,
       {
         content: "I'm sorry, I don't understand. Can you clarify or rephrase?",
         role: "assistant",
@@ -55,7 +53,6 @@ export async function handleKnownNextAction(
 
     if (doesIt.answer === false) {
       createMessageWithUser(
-        userId,
         {
           content: doesIt.remedy,
           role: "assistant",
@@ -89,7 +86,6 @@ export async function handleKnownNextAction(
 
         // Add message
         createMessageWithUser(
-          userId,
           {
             content: `I'm creating the code and once finished i'll write it to: ${dbSession.file_path}`,
             role: "assistant",
@@ -122,7 +118,6 @@ export async function handleKnownNextAction(
 
         // Add message
         createMessageWithUser(
-          userId,
           {
             content: `I'm creating the code and once finished i'll write it to: ${dbSession.file_path}`,
             role: "assistant",

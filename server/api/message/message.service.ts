@@ -28,14 +28,12 @@ export const getHelerMessagesWithUser = async (
 };
 
 export const getMessagesByUserAndSession = async (
-  userId: string,
   sessionId: string
 ): Promise<Database["public"]["Tables"]["messages"]["Row"][]> => {
   const { data, error } = await supabase
     .from("messages")
     .select("*, message_prompts(prompt_id)")
     .order("created_at", { ascending: true })
-    .eq("user_id", userId)
     .eq("session_id", sessionId);
 
   const globalMessagePrompts = await getGlobalPromptsDb();
@@ -138,7 +136,6 @@ export const getOnlyRoleAndContentMessagesByUserAndSession = async (
 };
 
 export const createMessageWithUser = async (
-  userId: string,
   message: Database["public"]["Tables"]["messages"]["Insert"],
   sessionId: string
 ): Promise<{
@@ -150,12 +147,10 @@ export const createMessageWithUser = async (
   session_id: string | null;
   user_id: string | null;
 } | null> => {
-  message["user_id"] = userId;
   message["session_id"] = sessionId;
 
   const { data, error } = await supabase
     .from("messages")
-    // @ts-ignore
     .insert([message])
     .select("*");
 
@@ -217,7 +212,6 @@ export const findUnseenHelperMessages = async (
   if (!userMessages || userMessages.length === 0) {
     if (data) {
       createMessageWithUser(
-        userId,
         {
           content: data[0].text,
           role: "assistant",
@@ -226,7 +220,6 @@ export const findUnseenHelperMessages = async (
         sessionId
       );
       createMessageWithUser(
-        userId,
         {
           content: data[1].text,
           role: "assistant",
@@ -247,7 +240,6 @@ export const findUnseenHelperMessages = async (
 
       if (!messageExists) {
         await createMessageWithUser(
-          userId,
           {
             content: data[i].text,
             role: "assistant",

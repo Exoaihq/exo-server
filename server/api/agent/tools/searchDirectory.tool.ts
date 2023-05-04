@@ -1,11 +1,10 @@
 import { ToolName } from ".";
 import { extractPath } from "../../../../utils/fileOperations.service";
 import { findAndUpdateAiCodeBySession } from "../../aiCreatedCode/aiCreatedCode.service";
-import { codeDirectorySearch } from "../../codeDirectory/codeDirectory.repository";
+import { codeDirectorySearch } from "../../search/search.repository";
+
 import { findOrUpdateAccount } from "../../supabase/account.service";
 import { ToolInterface } from "../agent.service";
-import { findDirectoryTool } from "./findDirectory.tool";
-import { findFileTool } from "./findFile.tool";
 import { searchDirectoryPrompt } from "./searchDirectory.prompt";
 
 export function searchDirectoryTool(): ToolInterface {
@@ -25,7 +24,10 @@ export function searchDirectoryTool(): ToolInterface {
       if (response && response.length > 0) {
         output = response
           .slice(0, 10)
-          .map((r) => `Name: ${r.directory_name}, Path: ${r.file_path}`)
+          .map(
+            (r: { directory_name: any; file_path: any }) =>
+              `Name: ${r.directory_name}, Path: ${r.file_path}`
+          )
           .join(", ");
       } else {
         output = "No results found";

@@ -36,7 +36,6 @@ export const findAndUpdateFilesFromClient = async (
 
     // if (directoryId) {
     //   await createMessageWithUser(
-    //     user.id,
     //     {
     //       content: `Started indexing your directroy. This may take a while. The directory indexed date will be updated when the indexing is completed.`,
     //       role: "assistant",

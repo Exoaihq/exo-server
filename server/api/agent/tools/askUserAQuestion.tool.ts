@@ -14,7 +14,6 @@ export function askUserAQuestionTool(): ToolInterface {
     question: string
   ) {
     createMessageWithUser(
-      userId,
       {
         content: question,
         role: ChatUserType.assistant,

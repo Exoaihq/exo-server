@@ -1,5 +1,7 @@
 import { Database } from "../../../types/supabase";
 import { supabase } from "../../../server";
+import { ObjectiveWithTasks } from "./objective.types";
+import { logError } from "../../../utils/commandLineColors";
 
 export const getObjectivesBySession = async (
   sessionId: string
@@ -43,18 +45,18 @@ export const createObjectiveWithSession = async (
 
 export const getObjectiveById = async (
   id: string
-): Promise<Database["public"]["Tables"]["objective"]["Row"] | null> => {
+): Promise<ObjectiveWithTasks | null> => {
   const { data, error } = await supabase
     .from("objective")
     .select("*, task(*)")
     .order("created_at", { ascending: false })
     .eq("id", id);
 
-  if (error || !data) {
-    console.log("Error getting objectives", error);
+  if (error || !data || data.length === 0) {
+    logError(`Error getting objectives: ${error?.message}`);
     return null;
   }
   console.log(data);
 
-  return data[0] || [];
+  return (data[0] as ObjectiveWithTasks) || null;
 };

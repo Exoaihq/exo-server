@@ -92,7 +92,7 @@ export const findAndUpdateAiCodeBySession = async (
 ) => {
   const aiGeneratedCode = await getAiCodeBySessionOrAccount(sessionId);
 
-  if (aiGeneratedCode.length > 0) {
+  if (aiGeneratedCode?.length > 0) {
     // Get the most recent ai generated code that the location is not set to
     const aiGeneratedCodeWithProperyNotSet = aiGeneratedCode.find(
       (aiCreatedCode) => aiCreatedCode[property] === null

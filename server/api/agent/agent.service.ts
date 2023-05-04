@@ -1,6 +1,6 @@
 import { ChatUserType } from "../../../types/chatMessage.type";
 import { deserializeJson } from "../../../utils/deserializeJson";
-import { codeDirectorySearch } from "../codeDirectory/codeDirectory.repository";
+
 import { createMessageWithUser } from "../message/message.service";
 import { createObjectiveWithSession } from "../objective/objective.service";
 import {
@@ -8,6 +8,7 @@ import {
   createChatCompletion,
   getCompletionDefaultStopToken,
 } from "../openAi/openai.service";
+import { codeDirectorySearch } from "../search/search.repository";
 import { findCodeByQuery } from "../search/search.service";
 import { addPlansTaskListToDb } from "./agent.act";
 import { parseToJsonPrompt, promptTemplate } from "./agent.prompt";
@@ -56,7 +57,7 @@ export function getToolDescription(tools: ToolInterface[]): string {
 
       return `"${tool && tool.name}": ${
         tool && tool.description
-      }, args ${argList} `;
+      }, Tool Input ${argList} (this is a required argument passed into this tool) `;
     })
     .join("\n");
 }
@@ -82,7 +83,7 @@ export const parseGeneratedToJson = async (generated: string) => {
     parseToJsonPrompt(generated)
   );
 
-  const response = parsedToJson.data.choices[0].text;
+  const response = parsedToJson?.data?.choices[0]?.text;
   console.log(">>>>>>>>>Parsed to json", response);
 
   const json = deserializeJson(response);
@@ -124,7 +125,6 @@ export async function startNewObjective(
     const { thought, question, reasoning, plan, criticism } = json;
 
     createMessageWithUser(
-      userId,
       {
         content: `Here is the question I'm trying to answer: ${question} And my plan is: ${plan
           .map((item: string, index: any) => `${item}`)
@@ -160,7 +160,6 @@ export async function startNewObjective(
       console.log("results", results);
 
       await createMessageWithUser(
-        userId,
         {
           content:
             "Let me know if you want me to execute this plan as described above. If not, you can change the plan or expand on the goal. If you want to change the goal, you can ask me to start over.",
@@ -204,10 +203,9 @@ export const expandContext = async (
     },
   ]);
 
-  const nouns = res.choices[0].message.content.split(", ");
+  const nouns = res?.choices[0]?.message.content.split(", ");
 
   createMessageWithUser(
-    userId,
     {
       content: `I'm checking your directories and code for some additional context...`,
       role: ChatUserType.assistant,
@@ -254,7 +252,6 @@ export const expandContext = async (
     releventCodeToString !== "None"
   ) {
     createMessageWithUser(
-      userId,
       {
         content: `I've found some additional context. \n\nRelevent directories: ${releventDirectories.length} \n\nRelevent code: ${releventCode.length}`,
         role: ChatUserType.assistant,

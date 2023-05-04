@@ -1,4 +1,3 @@
-import { codeDirectorySearch } from "../codeDirectory/codeDirectory.repository";
 import { findSnippetByExplainationEmbedding } from "../codeSnippet/codeSnippet.service";
 import {
   createMessageWithUser,
@@ -52,7 +51,6 @@ export async function handleSearch(userId: string, sessionId: string) {
   };
 
   await createMessageWithUser(
-    userId,
     // @ts-ignore
     templateResponse.data.choices[0].message,
     sessionId

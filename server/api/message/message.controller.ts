@@ -17,7 +17,7 @@ export const getMessages = async (req: Request, res: Response) => {
 
     await findUnseenHelperMessages(user.id, sessionId);
 
-    const messages = await getMessagesByUserAndSession(user.id, sessionId);
+    const messages = await getMessagesByUserAndSession(sessionId);
 
     return res.status(200).json({
       data: messages,
@@ -33,7 +33,6 @@ export const createMessages = async (req: Request, res: Response) => {
     const { user } = session.data;
 
     const response = await createMessageWithUser(
-      user.id,
       req.body.message,
       req.body.sessionId
     );

@@ -89,7 +89,7 @@ export async function handleKNnowLocButNotFunc(
       0.1
     );
 
-    await createMessageWithUser(userId, response.choices[0].message, sessionId);
+    await createMessageWithUser(response.choices[0].message, sessionId);
 
     return {
       choices: response.choices,

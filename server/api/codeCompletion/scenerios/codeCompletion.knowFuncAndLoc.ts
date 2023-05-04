@@ -48,7 +48,7 @@ export async function handleExistingFileUpdate(
       0.1
     );
 
-    await createMessageWithUser(userId, response.choices[0].message, sessionId);
+    await createMessageWithUser(response.choices[0].message, sessionId);
 
     if (writeCodeObject && writeCodeObject.id) {
       updateAiWritenCode(writeCodeObject.id, {
@@ -88,7 +88,6 @@ export async function handleExistingFileUpdate(
   );
 
   await createMessageWithUser(
-    userId,
     {
       content: `I have add your request to the queue:\n
         "${userMessages[userMessages.length - 1].content}". \n

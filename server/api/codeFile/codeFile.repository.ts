@@ -237,31 +237,6 @@ export const createCodeFile = async (
   return data[0] as Database["public"]["Tables"]["code_file"]["Row"];
 };
 
-export async function findFileByExplainationEmbedding(
-  embedding: number[]
-): Promise<
-  Partial<Database["public"]["Tables"]["code_snippet"]["Row"]>[] | []
-> {
-  console.log("find File By Explaination Embedding", embedding);
-  const query = {
-    query_embedding: embedding,
-    similarity_threshold: 0.5,
-    match_count: 10,
-  };
-
-  //@ts-ignore
-  const { data, error } = await supabase.rpc("match_code_file", query);
-
-  if (error) {
-    console.log(error);
-    return [];
-  }
-  if (!data) {
-    return [];
-  }
-  return data;
-}
-
 export async function findTestFile(
   filePrefix: string,
   accountId: string

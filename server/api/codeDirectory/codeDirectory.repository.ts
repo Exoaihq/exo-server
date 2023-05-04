@@ -1,8 +1,7 @@
 import { PostgrestError } from "@supabase/supabase-js";
-import { Database } from "../../../types/supabase";
-import { createEmbeddings } from "../openAi/openai.service";
-import { findOrUpdateAccount } from "../supabase/account.service";
 import { supabase } from "../../../server";
+import { Database } from "../../../types/supabase";
+import { findOrUpdateAccount } from "../supabase/account.service";
 
 export const findAllDirectories = async (): Promise<
   Database["public"]["Tables"]["code_directory"]["Row"][] | null
@@ -262,22 +261,3 @@ export const createCodeDirectory = async (
   // @ts-ignore
   return data[0] as Database["public"]["Tables"]["code_directory"]["Row"];
 };
-
-export async function codeDirectorySearch(
-  searchQuery: string,
-  accountId: string,
-  match_count: number = 10
-) {
-  const embedding = await createEmbeddings([searchQuery]);
-
-  const query = {
-    accountid: accountId,
-    query_embedding: embedding,
-    similarity_threshold: 0.7,
-    match_count,
-  };
-
-  const { data, error } = await supabase.rpc("match_code_directory", query);
-
-  return data;
-}

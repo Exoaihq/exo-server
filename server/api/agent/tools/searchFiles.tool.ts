@@ -1,11 +1,9 @@
 import { ToolName } from ".";
 import { extractPath } from "../../../../utils/fileOperations.service";
 import { findAndUpdateAiCodeBySession } from "../../aiCreatedCode/aiCreatedCode.service";
-import { codeDirectorySearch } from "../../codeDirectory/codeDirectory.repository";
+import { findFileByExplainationEmbedding } from "../../search/search.repository";
 import { findOrUpdateAccount } from "../../supabase/account.service";
 import { ToolInterface } from "../agent.service";
-import { findDirectoryTool } from "./findDirectory.tool";
-import { findFileTool } from "./findFile.tool";
 import { searchDirectoryPrompt } from "./searchDirectory.prompt";
 
 // Need toflesh this out
@@ -17,7 +15,7 @@ export function searchFilesTool(): ToolInterface {
     query: string
   ) {
     const account = await findOrUpdateAccount(userId);
-    const response = await codeDirectorySearch(
+    const response = await findFileByExplainationEmbedding(
       query,
       account?.id ? account.id : ""
     );
@@ -27,7 +25,7 @@ export function searchFilesTool(): ToolInterface {
       if (response && response.length > 0) {
         output = response
           .slice(0, 10)
-          .map((r) => `Name: ${r.directory_name}, Path: ${r.file_path}`)
+          .map((r) => `Name: ${r.file_name}, Path: ${r.file_path}`)
           .join(", ");
       } else {
         output = "No results found";

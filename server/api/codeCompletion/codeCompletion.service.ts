@@ -62,7 +62,7 @@ export async function checkDbSession(
   userId: string,
   sessionId: string
 ): Promise<CodeCompletionResponse> {
-  const sessionMessages = await getMessagesByUserAndSession(userId, sessionId);
+  const sessionMessages = await getMessagesByUserAndSession(sessionId);
 
   const writeCodeObject = await findOrCreateAiWritenCode(sessionId);
 
@@ -137,7 +137,6 @@ export async function checkDbSession(
       );
 
       await createMessageWithUser(
-        userId,
         {
           content: `I have add your request to the queue:\n
             "${userMessages[userMessages.length - 1].content}". \n
@@ -184,7 +183,6 @@ export async function checkDbSession(
     const userMessages = messages.filter((message) => message.role === "user");
 
     await createMessageWithUser(
-      userId,
       {
         content: `I have add your request to the queue:\n
         "${userMessages[userMessages.length - 1].content}". \n
@@ -216,7 +214,6 @@ export async function checkDbSession(
   codeCompletionResponse.choices = response.choices;
 
   await createMessageWithUser(
-    userId,
     codeCompletionResponse.choices[0].message,
     sessionId
   );

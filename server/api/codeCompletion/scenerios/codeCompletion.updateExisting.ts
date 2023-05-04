@@ -68,7 +68,6 @@ export async function handleGetFunctionalityWhenFileExists(
 
   if (completionResponse && completionResponse?.choices[0]) {
     const newMessage = await createMessageWithUser(
-      userId,
       response.choices[0].message,
       sessionId
     );

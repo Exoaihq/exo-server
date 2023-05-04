@@ -1,7 +1,8 @@
 import { ToolName } from ".";
 import { extractPath } from "../../../../utils/fileOperations.service";
 import { findAndUpdateAiCodeBySession } from "../../aiCreatedCode/aiCreatedCode.service";
-import { codeDirectorySearch } from "../../codeDirectory/codeDirectory.repository";
+import { codeDirectorySearch } from "../../search/search.repository";
+
 import { findOrUpdateAccount } from "../../supabase/account.service";
 import { ToolInterface } from "../agent.service";
 import { findDirectoryPrompt } from "./findDirectory.prompt";

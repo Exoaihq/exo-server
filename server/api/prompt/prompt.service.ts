@@ -119,7 +119,6 @@ export const handleUsingSelectedPrompt = async (
     );
 
     createMessageWithUser(
-      userId,
       {
         content: `I'm creating the code and once finished i'll write it to: ${dbSession.file_path}`,
         role: "assistant",
@@ -140,7 +139,6 @@ export const handleUsingSelectedPrompt = async (
     );
 
     createMessageWithUser(
-      userId,
       {
         content: `I'm creating the code and once finished i'll write it to: ${dbSession.file_path}`,
         role: "assistant",
@@ -150,7 +148,6 @@ export const handleUsingSelectedPrompt = async (
     resetSession(userId, sessionId);
   } else {
     createMessageWithUser(
-      userId,
       {
         content: `Hmm, I don't know what to do with that prompt. Did you select a file to update or a location to write a new file?`,
         role: "assistant",

@@ -13,6 +13,7 @@ export const getAiCodeBySessionOrAccount = async (
 
   if (error) {
     console.log("Getting code error", error);
+    return [];
   }
 
   return data as Database["public"]["Tables"]["ai_created_code"]["Row"][];

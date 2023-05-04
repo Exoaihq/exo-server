@@ -2,6 +2,7 @@ import { createClient } from "@supabase/supabase-js";
 import { Database } from "../../../types/supabase";
 
 import { supabaseKey, supabaseUrl } from "../../../utils/envVariable";
+import { TaskWithObjective } from "./task.types";
 
 const supabase = createClient<Database>(supabaseUrl, supabaseKey);
 
@@ -29,9 +30,10 @@ export const getIncompleteTasks = async (): Promise<
   const { data, error } = await supabase
     .from("task")
     .select("*")
-    .is("completed_at", null)
-    .is("started_eval_at", null)
+    // .is("completed_at", null)
+    // .is("started_eval_at", null)
     .is("tool_output", null)
+    .eq("id", "94a7f228-038c-496b-ab0e-68867802068d")
     // .not("tool_input", "is", null)
     .not("tool_name", "is", null);
 
@@ -41,6 +43,23 @@ export const getIncompleteTasks = async (): Promise<
   }
 
   return data || [];
+};
+
+export const getCompletedTasks = async (): Promise<
+  [] | TaskWithObjective[]
+> => {
+  const { data, error } = await supabase
+    .from("task")
+    .select("*, objective(*, session_id)")
+    .not("tool_output", "is", null)
+    .not("tool_name", "is", null);
+
+  if (error || !data) {
+    console.log("Error getting completed tasks", error);
+    return [];
+  }
+
+  return (data as TaskWithObjective[]) || [];
 };
 
 export const createTaskWithObjective = async (
