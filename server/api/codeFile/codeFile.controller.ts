@@ -1,37 +1,13 @@
-import { Request, Response } from "express";
+import { Response } from "express";
 import { ParseCode } from "../../../types/parseCode.types";
 import { CodeCompletionRequest } from "../codeCompletion/codeCompletion.types";
 
+import { AuthenticatedRequest } from "../../middleware/isAuthenticated";
 import { handleFileUploadWithSession } from "../codeCompletion/codeCompletion.service";
 import { getOnlyRoleAndContentMessagesByUserAndSession } from "../message/message.service";
-import { findCodeByQuery } from "../search/search.service";
 import { findOrUpdateAccount } from "../supabase/account.service";
-import {
-  checkSessionOrThrow,
-  findOrCreateSession,
-} from "../supabase/supabase.service";
+import { findOrCreateSession } from "../supabase/supabase.service";
 import { handleAndFilesToDb } from "./codeFile.service";
-
-export const findCodeFile = async (req: Request, res: Response) => {
-  try {
-    const session = await checkSessionOrThrow(req, res);
-
-    const { user } = session.data;
-
-    const { query } = req.body;
-
-    const account = await findOrUpdateAccount(user.id);
-    if (!account) {
-      return res.status(404).json({ message: "Can't find the user account" });
-    }
-
-    const response = await findCodeByQuery(query, account.id);
-
-    res.status(200).json({ data: response });
-  } catch (error: any) {
-    res.status(500).json({ message: error.message });
-  }
-};
 
 export interface CreateFilesRequest {
   files: ParseCode[];
@@ -42,21 +18,13 @@ export interface CreateFilesRequest {
 }
 
 export const findAndUpdateFilesFromClient = async (
-  req: Request,
+  req: AuthenticatedRequest,
   res: Response
 ) => {
   try {
-    const session = await checkSessionOrThrow(req, res);
+    const { userId } = req;
 
-    const { user } = session.data;
-
-    const { session_id } = req.headers;
-
-    const sessionId = session_id as string;
-
-    const dbSession = await findOrCreateSession(user.id, sessionId);
-
-    const account = await findOrUpdateAccount(user.id);
+    const account = await findOrUpdateAccount(userId);
 
     if (!account) {
       return res.status(404).json({ message: "Can't find the user account" });
@@ -83,25 +51,26 @@ export const findAndUpdateFilesFromClient = async (
   }
 };
 
-export const handleFileUpload = async (req: Request, res: Response) => {
+export const handleFileUpload = async (
+  req: AuthenticatedRequest,
+  res: Response
+) => {
   try {
-    const session = await checkSessionOrThrow(req, res);
-
-    const { user } = session.data;
+    const { userId } = req;
 
     const { fullFilePathWithName, sessionId, codeContent } =
       req.body as CodeCompletionRequest;
 
     const sessionMessages = await getOnlyRoleAndContentMessagesByUserAndSession(
-      user.id,
+      userId,
       sessionId
     );
-    const dbSession = await findOrCreateSession(user.id, sessionId);
+    const dbSession = await findOrCreateSession(userId, sessionId);
 
     const response = await handleFileUploadWithSession(
       sessionMessages,
       fullFilePathWithName,
-      user.id,
+      userId,
       sessionId,
       codeContent,
       dbSession

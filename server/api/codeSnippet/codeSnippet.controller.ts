@@ -49,33 +49,6 @@ export const getCodeSnippet = async (req: Request, res: Response) => {
   }
 };
 
-export const addAllFilesToDb = async (req: Request, res: Response) => {
-  try {
-    const serverDirectory = rootProjectDirectory + "/server";
-    const utilsDirectory = rootProjectDirectory + "/utils";
-    const typeDirectory = rootProjectDirectory + "/types";
-
-    const parentDirectory = "code-gen-server";
-
-    async function handleFoundFile(file: string) {
-      const { fileName, extractedPath } =
-        extractFileNameAndPathFromFullPath(file);
-      const relativeDirectory = extractedPath.split(parentDirectory)[1];
-
-      await addFileToSupabase({
-        fileName,
-        filePath: relativeDirectory ? relativeDirectory : "/",
-      });
-    }
-
-    iterateOverFolderAndHandleFile(rootProjectDirectory, handleFoundFile);
-
-    res.status(200).json({ data: "done" });
-  } catch (error: any) {
-    res.status(500).json({ message: error.message });
-  }
-};
-
 export const testCodeNodeParsing = async (req: Request, res: Response) => {
   try {
     async function findFiles(directory: string) {
