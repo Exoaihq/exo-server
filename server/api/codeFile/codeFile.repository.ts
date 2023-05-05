@@ -100,7 +100,7 @@ export async function findFileByAccountIdAndFullFilePath(
   const { data, error } = await supabase
     .from("code_file")
     .select(
-      "id, file_name, account_id, file_path, code_directory_id, updated_at, code_snippet(id, code_string, code_explaination, start_row, start_column, end_row, end_column, parsed_code_type)"
+      "id, file_name, account_id, file_path, content, code_directory_id, updated_at, code_snippet(id, code_string, code_explaination, start_row, start_column, end_row, end_column, parsed_code_type)"
     )
     .eq("account_id", accountId)
     .eq("file_name", fileName)

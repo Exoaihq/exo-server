@@ -34,8 +34,10 @@ export const handleAndFilesToDb = async (
 
   files.forEach(async (file) => {
     const { filePath, contents } = file;
+
     const { fileName, extractedPath } =
       extractFileNameAndPathFromFullPath(filePath);
+
     const dbFile = await findFileByAccountIdAndFullFilePath(
       account.id,
       filePath
@@ -47,43 +49,63 @@ export const handleAndFilesToDb = async (
         file_name: fileName,
         file_path: extractedPath,
         code_directory_id: directoryId ? directoryId : null,
+        content: contents,
       });
     } else {
       if (!dbFile.updated_at) {
       } else {
-        const updatedInPastHour = isThisHour(new Date(dbFile.updated_at));
-
-        console.log("File updated in the last hour?", updatedInPastHour);
-        if (updatedInPastHour) {
-          return;
-        }
+        // const updatedInPastHour = isThisHour(new Date(dbFile.updated_at));
+        // console.log("File updated in the last hour?", updatedInPastHour);
+        // if (updatedInPastHour) {
+        //   return;
+        // }
       }
     }
 
-    console.log("dbFile", dbFile?.file_name, dbFile?.updated_at);
-
-    // Find all code snippets for this file
-    const snippets = await findSnippetByFileNameAndAccount(
-      fileName,
-      account.id
-    );
-
-    const { updateCount, matchedCount, notFound } =
-      await compareAndUpdateSnippets(
-        { filePath, contents },
-        account.id,
-        snippets
-      );
-
-    if (dbFile) {
-      await updateFileById(dbFile.id, {
+    // If the file doesn't have content, update it
+    if (!dbFile?.content && dbFile?.id) {
+      updateFileById(dbFile?.id, {
+        content: contents,
         updated_at: new Date().toISOString(),
       });
+      totalUpdateCount++;
+    } else if (dbFile?.content !== contents && dbFile?.id) {
+      // If the file has content, but it's not an exact match, update it
+      updateFileById(dbFile?.id, {
+        content: contents,
+        updated_at: new Date().toISOString(),
+      });
+      totalUpdateCount++;
+    } else {
+      // File is up to date
+      totalMatchedCount++;
     }
 
-    totalUpdateCount += updateCount;
-    totalMatchedCount += matchedCount;
-    totalNotFound += notFound;
+    logInfo(`File ${dbFile?.file_name} updated`);
+
+    // Move this to a cron job
+    // // Find all code snippets for this file
+    // const snippets = await findSnippetByFileNameAndAccount(
+    //   fileName,
+    //   account.id
+    // );
+
+    // const { updateCount, matchedCount, notFound } =
+    //   await compareAndUpdateSnippets(
+    //     { filePath, contents },
+    //     account.id,
+    //     snippets
+    //   );
+
+    // if (dbFile) {
+    //   await updateFileById(dbFile.id, {
+    //     updated_at: new Date().toISOString(),
+    //   });
+    // }
+
+    // totalUpdateCount += updateCount;
+    // totalMatchedCount += matchedCount;
+    // totalNotFound += notFound;
   });
 
   if (directoryId) {
