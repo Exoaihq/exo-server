@@ -14,25 +14,25 @@ import { expandContext, startNewObjective } from "./agent.service";
 import { allTools, searchCodeTool, searchDirectoryTool } from "./tools";
 import { updateExistingCodeTool } from "./tools/updateExistingCode.tool";
 import { writeCodeToScratchPadTool } from "./tools/writeCodeToScarchPad.tool";
+import { AuthenticatedRequest } from "../../middleware/isAuthenticated";
+import { logInfo } from "../../../utils/commandLineColors";
 
 const fs = require("fs");
 
-export const useAgent = async (req: Request, res: Response) => {
+export const useAgent = async (req: AuthenticatedRequest, res: Response) => {
   try {
-    const session = await checkSessionOrThrow(req, res);
-
-    const { user } = session.data;
+    const { userId } = req;
 
     const { sessionId } = req.body as CodeCompletionRequest;
 
     const sessionMessages = await getOnlyRoleAndContentMessagesByUserAndSession(
-      user.id,
+      userId,
       sessionId
     );
+    logInfo(`Session messages ${JSON.stringify(sessionMessages)}`);
+    const dbSession = await findOrCreateSession(userId, sessionId);
 
-    const dbSession = await findOrCreateSession(user.id, sessionId);
-
-    const account = await findOrUpdateAccount(user.id);
+    const account = await findOrUpdateAccount(userId);
 
     if (!account) {
       return res.status(200).json({
@@ -48,7 +48,7 @@ export const useAgent = async (req: Request, res: Response) => {
 
     // For specific actions that don't require an agent
 
-    const lastMessage = sessionMessages[sessionMessages.length - 1].content;
+    const lastMessage = sessionMessages[sessionMessages.length - 1]?.content;
 
     const quickActions = [
       searchDirectoryTool(),
@@ -73,12 +73,12 @@ export const useAgent = async (req: Request, res: Response) => {
       const expandedContext = await expandContext(
         sessionMessages,
         account?.id,
-        user.id,
+        userId,
         sessionId
       );
       console.log("Context", expandedContext);
       await startNewObjective(
-        user.id,
+        userId,
         sessionId,
         allTools,
         getExpectedNextAction(dbSession, sessionMessages, expandedContext)
@@ -90,9 +90,9 @@ export const useAgent = async (req: Request, res: Response) => {
 
       if (tool?.name === "search code" || tool?.name === "search directory") {
         // Consider creating separate tools for search code and search directory. This method only searches code
-        return res.status(200).json(await handleSearch(user.id, sessionId));
+        return res.status(200).json(await handleSearch(userId, sessionId));
       } else {
-        tool?.use(user.id, sessionId, lastMessage);
+        tool?.use(userId, sessionId, lastMessage);
       }
     }
 

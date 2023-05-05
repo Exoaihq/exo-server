@@ -34,6 +34,6 @@ export function searchTestsTool(): ToolInterface {
       await handleSearchCode(userId, sessionId, text),
     arguments: ["directory path"],
     promptTemplate: "",
-    availableTools: [name, searchCodeTool().name],
+    availableTools: [name, ToolName.searchCode, ToolName.findFile],
   };
 }

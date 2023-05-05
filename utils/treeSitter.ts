@@ -6,18 +6,6 @@ import { getSubstringFromMultilineCode } from "./getSubstringFromMultilineCode";
 
 // javascript node types ^
 
-const Parser = require("tree-sitter");
-const TypeScript = require("tree-sitter-typescript").typescript;
-const Python = require("tree-sitter-python").python;
-const Java = require("tree-sitter-java").java;
-const fs = require("fs");
-
-const parsers = {
-  typeScript: TypeScript,
-  python: Python,
-  java: Java,
-};
-
 export enum Language {
   TypeScript = "typescript",
   Python = "python",
@@ -40,23 +28,34 @@ export const getProgrammingLanguage = (fileName: string): Language => {
   }
 };
 
-function getParser(language: Language) {
-  switch (language) {
-    case Language.TypeScript:
-      return TypeScript;
-    case Language.Python:
-      return Python;
-    case Language.Java:
-      return Java;
-    default:
-      return TypeScript;
-  }
-}
-
 export async function parseFile(
   fileContents: string,
   language: Language
 ): Promise<Tree> {
+  const Parser = require("tree-sitter");
+  const TypeScript = require("tree-sitter-typescript").typescript;
+  const Python = require("tree-sitter-python").python;
+  const Java = require("tree-sitter-java").java;
+  const fs = require("fs");
+
+  const parsers = {
+    typeScript: TypeScript,
+    python: Python,
+    java: Java,
+  };
+
+  function getParser(language: Language) {
+    switch (language) {
+      case Language.TypeScript:
+        return TypeScript;
+      case Language.Python:
+        return Python;
+      case Language.Java:
+        return Java;
+      default:
+        return TypeScript;
+    }
+  }
   const parser = new Parser();
   console.log("language", language);
 

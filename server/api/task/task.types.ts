@@ -1,6 +1,6 @@
 import { Database } from "../../../types/supabase";
-import { Objective } from "../objective/objective.types";
+import { ObjectiveWithTasks } from "../objective/objective.types";
 
 export type Task = Database["public"]["Tables"]["task"]["Row"];
 
-export type TaskWithObjective = Task & { objective: Objective };
+export type TaskWithObjective = Task & { objective: ObjectiveWithTasks };

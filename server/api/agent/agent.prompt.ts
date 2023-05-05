@@ -141,7 +141,7 @@ const exampleQuickActions = `
   Can you write a new find file prompt to the agent directory in the code-gen-server that is similar to the search directory prompt? Quick action: null (this message can't be solved with a quick action because it takes multiple steps)
   Can you write a new ts file to the agent directory in the code-gen-server that counts the number of letters in a string? Quick action: null (this message can't be solved with a quick action because it takes multiple steps)
   Create a test file for the search.controller.ts file? Quick action: null (this message can't be solved with a quick action because it takes multiple steps)
-
+  Can you write a test for the files in the directory codeFile in the code-gen-server repo? Quick action: null (this message can't be solved with a quick action because it takes multiple steps)
 `;
 
 export const getQuickAction = (

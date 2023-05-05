@@ -87,7 +87,7 @@ export const executeTask = async (
     started_eval_at: new Date().toISOString(),
   });
 
-  if (!objective_id || !tool_input || !tool_name || !description) {
+  if (!objective_id || !tool_input || !tool_name) {
     logWarning("Missing some data. Moving on");
     return;
   }
@@ -162,7 +162,7 @@ export const executeTask = async (
   const taskOutput = await runTaskLoop(
     session.user_id,
     session.id,
-    description,
+    description || "",
     5,
     toolToUse,
     previouslyCompletedTasksContext || "",
@@ -170,17 +170,17 @@ export const executeTask = async (
     "\nObservation:"
   );
 
-  if (taskOutput) {
+  if (taskOutput || output) {
     // function to update other tasks in the objective with the output of this task
 
     await updateTaskById(task.id, {
-      tool_output: taskOutput,
+      tool_output: taskOutput ? taskOutput : output,
       completed_at: new Date().toISOString(),
     });
 
     // Each task should have an output function that is called when the task is completed and should do things like update the sessions and the ai generated code.
-    // toolToUse.outputFunction &&
-    //   toolToUse.outputFunction(taskOutput, session_id);
+    toolToUse.outputFunction &&
+      toolToUse.outputFunction(taskOutput ? taskOutput : output, session_id);
   } else {
     // Tasks that don't have a tool output are considered completed but the output is not saved. These tasks are incomplete
     // await updateTaskById(task.id, {

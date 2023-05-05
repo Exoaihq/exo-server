@@ -12,6 +12,7 @@ import messageRoutes from "./server/api/message/message.routes";
 import promptRoutes from "./server/api/prompt/prompt.routes";
 import searchRoutes from "./server/api/search/search.routes";
 import slackRoutes from "./server/api/slack/slack.route";
+import { runScheduledTasks } from "./cron";
 
 export enum ApiRoutes {
   CODE_DIRECTORY = "/code-directory",
@@ -29,6 +30,8 @@ export enum ApiRoutes {
 
 export function createServer() {
   const app: Express = express();
+
+  runScheduledTasks();
 
   var corsOptions = {
     origin: "*",
