@@ -197,6 +197,7 @@ export const findFilesWithoutExplainationAndAssignExplaination = async () => {
   for (let i = 0; i < files.length; i++) {
     const file = files[i];
 
+    // @ts-ignore
     const { code_snippet, id, file_name, account_id } = file;
 
     if (
