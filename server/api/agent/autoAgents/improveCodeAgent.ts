@@ -58,14 +58,18 @@ export async function improveCodeAgent() {
         const exoConfig = await getOrCreateExoConfig(snippet.code_file_id);
         if (
           !exoConfig ||
+          // @ts-ignore
           !exoConfig.code_snippet ||
+          // @ts-ignore
           !exoConfig.code_snippet[0] ||
+          // @ts-ignore
           !exoConfig.code_snippet[0].code_string ||
           updated.includes(snippet.id)
         ) {
           return;
         }
         const parsedExoConfig = JSON.parse(
+          // @ts-ignore
           exoConfig.code_snippet[0].code_string
         );
         if (!parsedExoConfig || !parsedExoConfig.codeStandards) {
