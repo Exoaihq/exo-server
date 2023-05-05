@@ -1,7 +1,6 @@
 import bodyParser from "body-parser";
 import cors from "cors";
 import express, { Express } from "express";
-import routes from "./routes/routes";
 import agentRouter from "./server/api/agent/agent.routes";
 import aiCreatedCode from "./server/api/aiCreatedCode/aiCreatedCode.routes";
 import codeCompletionRoutes from "./server/api/codeCompletion/codeCompletion.routes";
@@ -13,6 +12,20 @@ import messageRoutes from "./server/api/message/message.routes";
 import promptRoutes from "./server/api/prompt/prompt.routes";
 import searchRoutes from "./server/api/search/search.routes";
 import slackRoutes from "./server/api/slack/slack.route";
+
+export enum ApiRoutes {
+  CODE_DIRECTORY = "/code-directory",
+  MESSAGES = "/messages",
+  CODE_COMPLETION = "/code",
+  AI_COMPLETED_CODE = "/ai-completed-code",
+  AGENT = "/agent",
+  SEARCH = "/search",
+  PROMPT = "/prompt",
+  SLACK = "/slack",
+  EXO_CONFIG = "/exo-config",
+  CODE_SNIPPET = "/code-snippet",
+  CODE_FILE = "/code-file",
+}
 
 export function createServer() {
   const app: Express = express();
@@ -28,17 +41,16 @@ export function createServer() {
   );
   app.use(cors(corsOptions));
 
-  app.use("/ai-completed-code", aiCreatedCode);
-  app.use("/code-directory", codeDirectoryRoutes);
-  app.use("/code-file", codeFileRoutes);
-  app.use("/code-snippet", codeSnippetRoutes);
-  app.use("/messages", messageRoutes);
-  app.use("/code", codeCompletionRoutes);
-  app.use("/agent", agentRouter);
-  app.use("/search", searchRoutes);
-  app.use("/prompt", promptRoutes);
-  app.use("/slack", slackRoutes);
-  app.use("/exo-config", exoConfigRoutes);
-  app.use("/", routes);
+  app.use(ApiRoutes.AI_COMPLETED_CODE, aiCreatedCode);
+  app.use(ApiRoutes.CODE_DIRECTORY, codeDirectoryRoutes);
+  app.use(ApiRoutes.CODE_FILE, codeFileRoutes);
+  app.use(ApiRoutes.CODE_SNIPPET, codeSnippetRoutes);
+  app.use(ApiRoutes.MESSAGES, messageRoutes);
+  app.use(ApiRoutes.CODE_COMPLETION, codeCompletionRoutes);
+  app.use(ApiRoutes.AGENT, agentRouter);
+  app.use(ApiRoutes.SEARCH, searchRoutes);
+  app.use(ApiRoutes.PROMPT, promptRoutes);
+  app.use(ApiRoutes.SLACK, slackRoutes);
+  app.use(ApiRoutes.EXO_CONFIG, exoConfigRoutes);
   return app;
 }

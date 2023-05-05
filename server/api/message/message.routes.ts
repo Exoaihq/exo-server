@@ -1,14 +1,13 @@
 import { Router } from "express";
 import { createMessages, getMessages } from "./message.controller";
-
-export const routes = Router();
+import { ensureAuthenticated } from "../../middleware/isAuthenticated";
 
 const messageRoutes = Router();
 
 // Base route: /messages
 
-messageRoutes.get("/", getMessages);
+messageRoutes.get("/", ensureAuthenticated, getMessages);
 
-messageRoutes.post("/", createMessages);
+messageRoutes.post("/", ensureAuthenticated, createMessages);
 
 export default messageRoutes;

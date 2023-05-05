@@ -1,21 +1,20 @@
 import { Request, Response } from "express";
-import { checkSessionOrThrow } from "../supabase/supabase.service";
+import { AuthenticatedRequest } from "../../middleware/isAuthenticated";
 import {
   createMessageWithUser,
   findUnseenHelperMessages,
   getMessagesByUserAndSession,
 } from "./message.service";
 
-export const getMessages = async (req: Request, res: Response) => {
+export const getMessages = async (req: AuthenticatedRequest, res: Response) => {
   try {
-    const session = await checkSessionOrThrow(req, res);
-    const { user } = session.data;
+    const { userId } = req;
 
     const { session_id } = req.headers;
 
     const sessionId = session_id as string;
 
-    await findUnseenHelperMessages(user.id, sessionId);
+    await findUnseenHelperMessages(userId, sessionId);
 
     const messages = await getMessagesByUserAndSession(sessionId);
 
@@ -29,9 +28,6 @@ export const getMessages = async (req: Request, res: Response) => {
 
 export const createMessages = async (req: Request, res: Response) => {
   try {
-    const session = await checkSessionOrThrow(req, res);
-    const { user } = session.data;
-
     const response = await createMessageWithUser(
       req.body.message,
       req.body.sessionId

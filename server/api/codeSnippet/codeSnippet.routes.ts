@@ -1,28 +1,11 @@
 import { Router } from "express";
-import {
-  findAllSnippetsWithoutFilesAndAssign,
-  generateCode,
-  getCodeSnippet,
-  searchCodeEmbeddings,
-  testCodeNodeParsing,
-  testGpt4,
-} from "./codeSnippet.controller";
-
-export const routes = Router();
+import { getCodeSnippets } from "./codeSnippet.controller";
+import { ensureAuthenticated } from "../../middleware/isAuthenticated";
 
 const codeSnippetRoutes = Router();
 
 // Base route: /code-snippet
 
-codeSnippetRoutes.get("/get", getCodeSnippet);
-codeSnippetRoutes.get("/openai", testGpt4);
-codeSnippetRoutes.get("/search", searchCodeEmbeddings);
-codeSnippetRoutes.get("/generate-code", generateCode);
-codeSnippetRoutes.get("/parse-nodes", testCodeNodeParsing);
-
-codeSnippetRoutes.get(
-  "/find-and-assign-file",
-  findAllSnippetsWithoutFilesAndAssign
-);
+codeSnippetRoutes.get("/", ensureAuthenticated, getCodeSnippets);
 
 export default codeSnippetRoutes;

@@ -56,4 +56,5 @@ export const allTools = [
   generateTestCodeTool(),
   searchTestsTool(),
   searchFilesTool(),
+  generateTestCodeTool(),
 ];

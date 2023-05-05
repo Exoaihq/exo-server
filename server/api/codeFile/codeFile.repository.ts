@@ -32,6 +32,28 @@ export async function findSnippetByFileNameAndAccount(
   return data;
 }
 
+export async function findFileByFileNameAndAccount(
+  fileName: string,
+  accountId: string
+): Promise<Database["public"]["Tables"]["code_file"]["Row"] | null> {
+  console.log(fileName, accountId);
+  const { data, error } = await supabase
+    .from("code_file")
+    .select("*, code_snippet(*)")
+    .eq("file_name", fileName)
+    .eq("account_id", accountId)
+    .limit(1);
+
+  if (error) {
+    console.log(error);
+    return null;
+  }
+  if (!data) {
+    return null;
+  }
+  return data[0];
+}
+
 export async function findFilesByAccountId(
   accountId: string
 ): Promise<Partial<Database["public"]["Tables"]["code_file"]["Row"]>[] | null> {

@@ -1,51 +1,5 @@
 import { Request, Response } from "express";
-import { ChatMessage } from "../../../types/chatMessage.type";
-import { createFile } from "../../../utils/createfile";
-import {
-  createTextCompletion,
-  getCompletion,
-  handlePromptAfterClassification,
-} from "../openAi/openai.service";
-
-export const startClassification = async (req: Request, res: Response) => {
-  try {
-    const messages: ChatMessage[] = req.body ? req.body : [];
-
-    const response = await handlePromptAfterClassification(messages);
-    return res.status(200).json(response);
-  } catch (error: any) {
-    res.status(500).json({ message: error.message });
-  }
-};
-
-export const startChat = async (req: Request, res: Response) => {
-  try {
-    const messages = [
-      {
-        role: "user",
-        content: `Write a typescript function that creates a loading elipsis with three dots and cycles through them every second. The function should take a string as an argument and return the loading elipsis as a string.`,
-      },
-    ];
-    const completion = await createTextCompletion(
-      messages[0].content,
-      1,
-      "Loading",
-      "chat"
-    );
-    console.log(completion);
-
-    const content = completion.choices[0].message?.content
-      ? completion.choices[0].message?.content
-      : "";
-    console.log(content);
-
-    createFile("elipsis.ts", content, "./example");
-
-    res.status(200).json({ data: completion.choices[0] });
-  } catch (error: any) {
-    res.status(500).json({ message: error.message });
-  }
-};
+import { getCompletion } from "../openAi/openai.service";
 
 export const runCalculator = async (req: Request, res: Response) => {
   const prompt =
