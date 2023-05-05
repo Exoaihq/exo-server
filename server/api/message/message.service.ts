@@ -3,6 +3,7 @@ import { ChatMessage, ChatUserType } from "../../../types/chatMessage.type";
 import { Database } from "../../../types/supabase";
 import { getGlobalPromptsDb } from "../prompt/prompt.service";
 import { supabase } from "../../../server";
+import { logError } from "../../../utils/commandLineColors";
 
 export const getMessagesWithUser = async (
   userId: string
@@ -116,18 +117,20 @@ export const getOnlyRoleAndContentMessagesByUserAndSession = async (
     .from("messages")
     .select("role, content, created_at, session_id")
     .order("created_at", { ascending: false })
-    .eq("user_id", userId)
     .eq("session_id", sessionId)
     .limit(5);
 
   let response = [] as ChatMessage[];
 
+  if (error) {
+    logError(error.message);
+  }
+
   if (data) {
-    // @ts-ignore
     response = data.map((message) => {
       return {
-        role: message.role,
-        content: message.content,
+        role: message.role as ChatUserType,
+        content: message.content as string,
       };
     });
   }
