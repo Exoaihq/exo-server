@@ -1,6 +1,5 @@
 import { createClient } from "@supabase/supabase-js";
 import { createServer } from "./createServer";
-import { runScheduledTasks } from "./cron";
 import { Database } from "./types/supabase";
 import { port, supabaseKey, supabaseUrl } from "./utils/envVariable";
 
@@ -8,8 +7,6 @@ import { port, supabaseKey, supabaseUrl } from "./utils/envVariable";
 export const supabase = createClient<Database>(supabaseUrl, supabaseKey);
 
 const app = createServer();
-
-runScheduledTasks();
 
 app.listen(process.env.PORT, () => {
   console.log(`[Server]: Running at https://localhost:${port}`);

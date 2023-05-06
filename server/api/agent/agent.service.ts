@@ -2,7 +2,8 @@ import { ChatUserType } from "../../../types/chatMessage.type";
 import { deserializeJson } from "../../../utils/deserializeJson";
 
 import { createMessageWithUser } from "../message/message.service";
-import { createObjectiveWithSession } from "../objective/objective.service";
+import { createObjectiveWithSession } from "../objective/objective.repository";
+
 import {
   chatAgent,
   createChatCompletion,
@@ -10,6 +11,7 @@ import {
 } from "../openAi/openai.service";
 import { codeDirectorySearch } from "../search/search.repository";
 import { findCodeByQuery } from "../search/search.service";
+import { TaskWithObjective } from "../task/task.types";
 import { addPlansTaskListToDb } from "./agent.act";
 import { parseToJsonPrompt, promptTemplate } from "./agent.prompt";
 import { ToolName } from "./tools";
@@ -30,7 +32,8 @@ export interface ToolInterface {
   use: (
     userId: string,
     sessionId: string,
-    input: string
+    input: string,
+    task?: Partial<TaskWithObjective>
   ) => Promise<ToolResponse>;
   arguments: string[];
   promptTemplate: string;

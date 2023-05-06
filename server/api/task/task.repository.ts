@@ -3,23 +3,27 @@ import { Database } from "../../../types/supabase";
 
 import { supabaseKey, supabaseUrl } from "../../../utils/envVariable";
 import { TaskWithObjective } from "./task.types";
+import { getObjectivesBySession } from "../objective/objective.repository";
 
 const supabase = createClient<Database>(supabaseUrl, supabaseKey);
 
 export const getTasksBySession = async (
   sessionId: string
 ): Promise<Partial<Database["public"]["Tables"]["task"]["Row"]>[] | []> => {
+  const objective = await getObjectivesBySession(sessionId);
+  const objectionIds = objective.map((obj) => obj.id);
+
+  if (!objective || objective.length === 0) return [];
   const { data, error } = await supabase
     .from("task")
     .select("*")
     .order("created_at", { ascending: false })
-    .eq("session_id", sessionId);
+    .in("objective_id", [...objectionIds]);
 
   if (error || !data) {
     console.log("Error getting tasks", error);
     return [];
   }
-  console.log(data);
 
   return data || [];
 };
@@ -29,12 +33,12 @@ export const getIncompleteTasks = async (): Promise<
 > => {
   const { data, error } = await supabase
     .from("task")
-    .select("*")
-    // .is("completed_at", null)
-    // .is("started_eval_at", null)
+    .select("*, objective(*, task(*))")
+    .is("completed_at", null)
+    .is("started_eval_at", null)
     .is("tool_output", null)
-    .eq("id", "94a7f228-038c-496b-ab0e-68867802068d")
-    // .not("tool_input", "is", null)
+    .eq("marked_ready", true)
+    .not("tool_input", "is", null)
     .not("tool_name", "is", null);
 
   if (error || !data) {
@@ -50,7 +54,8 @@ export const getCompletedTasks = async (): Promise<
 > => {
   const { data, error } = await supabase
     .from("task")
-    .select("*, objective(*, session_id)")
+    .select("*, objective(*, session_id, task(*))")
+    .is("loop_evaluated_at", null)
     .not("tool_output", "is", null)
     .not("tool_name", "is", null);
 
@@ -83,7 +88,7 @@ export const createTaskWithObjective = async (
 
 export const getTaskById = async (
   id: string
-): Promise<Partial<Database["public"]["Tables"]["task"]["Row"]> | null> => {
+): Promise<Database["public"]["Tables"]["task"]["Row"] | null> => {
   const { data, error } = await supabase
     .from("task")
     .select("*")

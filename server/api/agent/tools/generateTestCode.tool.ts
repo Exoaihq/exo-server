@@ -1,12 +1,13 @@
 import { ToolName } from ".";
-import { ChatUserType } from "../../../../types/chatMessage.type";
-import { EngineName } from "../../../../types/openAiTypes/openAiEngine";
+import { removeQuotes } from "../../../../utils/findArrayInAString";
 import { convertToTestFileName } from "../../../../utils/getFileName";
 import { findAndUpdateAiCodeBySession } from "../../aiCreatedCode/aiCreatedCode.service";
-import { findFileByAccountIdAndFullFilePath } from "../../codeFile/codeFile.repository";
+import {
+  findFileByAccountIdAndFullFilePath,
+  findFileByFileNameAndAccount,
+} from "../../codeFile/codeFile.repository";
 import { createTestBasedOnExistingCode } from "../../codeFile/codeFile.service";
 import { createNewFileFromSnippets } from "../../codeSnippet/codeSnippet.service";
-import { createChatCompletion } from "../../openAi/openai.service";
 import { findOrUpdateAccount } from "../../supabase/account.service";
 import { updateSession } from "../../supabase/supabase.service";
 import { ToolInterface } from "../agent.service";
@@ -20,31 +21,26 @@ export function generateTestCodeTool(): ToolInterface {
   ) {
     const account = await findOrUpdateAccount(userId);
 
-    const fileContent = await findFileByAccountIdAndFullFilePath(
-      account.id,
-      path
-    );
+    let file = await findFileByAccountIdAndFullFilePath(account.id, path);
 
-    if (!fileContent) {
-      return {
-        output: `I couldn't find the the file based on the path you provided: ${path}. Please use the search directory tool to find the file path.`,
-      };
+    if (!file) {
+      file = await findFileByFileNameAndAccount(removeQuotes(path), account.id);
     }
 
-    if (!fileContent.code_snippet) {
+    if (!file) {
       return {
         output: `I found the file but it didn't contain any code. Please make sure the file has code by indexing your repository again.`,
       };
     }
 
-    const fullFileContent = await createNewFileFromSnippets(path, account.id);
+    const { content } = file;
 
-    if (!fullFileContent) {
+    if (!content) {
       return {
-        output: `I'm sorry I couldn't find the code file to generate a test for. `,
+        output: `This file does not have any content. Please make sure the file has code by indexing your repository again.`,
       };
     }
-    const test = await createTestBasedOnExistingCode(fullFileContent);
+    const test = await createTestBasedOnExistingCode(content);
 
     if (!test) {
       return {
@@ -61,10 +57,8 @@ export function generateTestCodeTool(): ToolInterface {
       {
         code: test,
         functionality: "Write test code based on existing code",
-        file_name: convertToTestFileName(
-          fileContent?.file_name ? fileContent.file_name : ""
-        ),
-        path: fileContent?.file_path ? fileContent.file_path : "",
+        file_name: convertToTestFileName(file?.file_name ? file.file_name : ""),
+        path: file?.file_path ? file.file_path : "",
       },
       "code"
     );
@@ -82,7 +76,7 @@ export function generateTestCodeTool(): ToolInterface {
       "Generates test code based on the existing file path passed into the tool. The file you want to write a test for has to exisit and contain valid code.",
     use: async (userId, sessionId, path) =>
       await handleWriteTestCode(userId, sessionId, path),
-    arguments: ["file path"],
+    arguments: ["/file/path"],
     promptTemplate: generateNewCodePrompt,
     availableTools: [
       name,

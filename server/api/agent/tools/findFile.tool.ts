@@ -4,10 +4,7 @@ import { findAndUpdateAiCodeBySession } from "../../aiCreatedCode/aiCreatedCode.
 import { findCodeByQuery } from "../../search/search.service";
 import { findOrUpdateAccount } from "../../supabase/account.service";
 import { ToolInterface } from "../agent.service";
-import { findDirectoryTool } from "./findDirectory.tool";
 import { findFilePrompt } from "./findFile.prompt";
-import { searchCodeTool } from "./searchCode.tool";
-import { searchDirectoryTool } from "./searchDirectory.tool";
 
 export function findFileTool(): ToolInterface {
   async function handleSearchCode(
@@ -19,7 +16,13 @@ export function findFileTool(): ToolInterface {
     const account = await findOrUpdateAccount(userId);
     const response = await findCodeByQuery(text, account?.id ? account.id : "");
 
-    console.log("response", response);
+    if (!response || response.length === 0) {
+      return {
+        output: "No results found. Try adapting your search query.",
+        metadata: response,
+      };
+    }
+
     return {
       output: response[0].file_name
         ? `The file name that best matches this search is: ${response[0].file_name} which is located at: ${response[0].relative_file_path}.`

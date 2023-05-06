@@ -28,7 +28,7 @@ import {
   getLongSnippetsWhereExternalMethodNull,
   updateSnippetById,
 } from "./codeSnippet.repository";
-import { logInfo } from "../../../utils/commandLineColors";
+import { logInfo, logWarning } from "../../../utils/commandLineColors";
 
 const supabase = createClient(supabaseUrl, supabaseKey);
 
@@ -200,7 +200,7 @@ export async function updateCodeSnippetNames() {
     }
     const matched = extractFunctionName(snippet.code_string);
     if (!matched) {
-      console.log("Not Matched: ", snippet.code_string);
+      logWarning(`Not Matched: ${snippet.file_name}`);
       notMatchedCount++;
       return;
     } else {

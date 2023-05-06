@@ -3,12 +3,10 @@ import { checkSessionOrThrow } from "../supabase/supabase.service";
 import {
   createObjectiveWithSession,
   getObjectivesBySession,
-} from "./objective.service";
+} from "./objective.repository";
 
 export const getObjectives = async (req: Request, res: Response) => {
   try {
-    const session = await checkSessionOrThrow(req, res);
-
     const { session_id } = req.headers;
 
     const sessionId = session_id as string;
@@ -25,8 +23,6 @@ export const getObjectives = async (req: Request, res: Response) => {
 
 export const createObjective = async (req: Request, res: Response) => {
   try {
-    const session = await checkSessionOrThrow(req, res);
-
     const { session_id } = req.headers;
 
     const sessionId = session_id as string;

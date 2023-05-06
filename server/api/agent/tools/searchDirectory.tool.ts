@@ -1,17 +1,24 @@
 import { ToolName } from ".";
+import { ChatUserType } from "../../../../types/chatMessage.type";
 import { extractPath } from "../../../../utils/fileOperations.service";
 import { findAndUpdateAiCodeBySession } from "../../aiCreatedCode/aiCreatedCode.service";
+import { createChatCompletion } from "../../openAi/openai.service";
 import { codeDirectorySearch } from "../../search/search.repository";
 
 import { findOrUpdateAccount } from "../../supabase/account.service";
+import { TaskWithObjective } from "../../task/task.types";
 import { ToolInterface } from "../agent.service";
-import { searchDirectoryPrompt } from "./searchDirectory.prompt";
+import {
+  refinementPrompt,
+  searchDirectoryPrompt,
+} from "./searchDirectory.prompt";
 
 export function searchDirectoryTool(): ToolInterface {
   async function handleSearchDirectory(
     userId: string,
     sessionId: string,
-    query: string
+    query: string,
+    task?: Partial<TaskWithObjective>
   ) {
     const account = await findOrUpdateAccount(userId);
     const response = await codeDirectorySearch(
@@ -29,6 +36,21 @@ export function searchDirectoryTool(): ToolInterface {
               `Name: ${r.directory_name}, Path: ${r.file_path}`
           )
           .join(", ");
+
+        if (task && task.description) {
+          const refinement = await createChatCompletion([
+            {
+              content: refinementPrompt(task.description, output),
+              role: ChatUserType.user,
+            },
+          ]);
+
+          const refinementOutput = refinement?.choices[0]?.message.content;
+
+          if (refinementOutput) {
+            output = refinementOutput;
+          }
+        }
       } else {
         output = "No results found";
       }
@@ -61,8 +83,8 @@ export function searchDirectoryTool(): ToolInterface {
     name,
     description:
       "Searches or finds the users directories for the given directory name or query and return up to ten directories. This does not return the contents of the directory. To find files use the 'search files' tool.",
-    use: async (userId, sessionId, query) =>
-      await handleSearchDirectory(userId, sessionId, query),
+    use: async (userId, sessionId, query, task) =>
+      await handleSearchDirectory(userId, sessionId, query, task),
     arguments: ["search query"],
     promptTemplate: searchDirectoryPrompt,
     availableTools: [

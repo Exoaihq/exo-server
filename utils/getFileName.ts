@@ -63,7 +63,14 @@ export function convertToTestFileName(fileName: string): string {
 }
 
 export function convertToExoSuggestionFileName(fileName: string): string {
+  if (!fileName) return "";
   const fileExtension = fileName.split(".").pop();
+  const indexOfLastDot = fileName.lastIndexOf(".");
+  console.log("indexOfLastDot", indexOfLastDot);
+  if (indexOfLastDot === -1) {
+    return fileName + ".exo-suggestion";
+  }
+
   const fileNameWithoutExtension = fileName.substring(
     0,
     fileName.lastIndexOf(".")

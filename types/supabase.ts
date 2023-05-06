@@ -664,8 +664,11 @@ export interface Database {
           created_at: string | null
           description: string | null
           id: string
+          index: number | null
           loop_evaluated_at: string | null
+          marked_ready: boolean | null
           objective_id: string | null
+          requires_loop: boolean | null
           started_eval_at: string | null
           tool_input: string | null
           tool_name: string | null
@@ -676,8 +679,11 @@ export interface Database {
           created_at?: string | null
           description?: string | null
           id?: string
+          index?: number | null
           loop_evaluated_at?: string | null
+          marked_ready?: boolean | null
           objective_id?: string | null
+          requires_loop?: boolean | null
           started_eval_at?: string | null
           tool_input?: string | null
           tool_name?: string | null
@@ -688,8 +694,11 @@ export interface Database {
           created_at?: string | null
           description?: string | null
           id?: string
+          index?: number | null
           loop_evaluated_at?: string | null
+          marked_ready?: boolean | null
           objective_id?: string | null
+          requires_loop?: boolean | null
           started_eval_at?: string | null
           tool_input?: string | null
           tool_name?: string | null

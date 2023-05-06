@@ -1,10 +1,11 @@
 import { Router } from "express";
-import { testUpdateExisting, useAgent } from "./agent.controller";
+import { testAgent, useAgent } from "./agent.controller";
+import { ensureAuthenticated } from "../../middleware/isAuthenticated";
 
 const agentRouter = Router();
 
 // Base route: /agent
 
-agentRouter.post("/", useAgent);
-// agentRouter.post("/", testUpdateExisting);
+agentRouter.post("/", ensureAuthenticated, useAgent);
+agentRouter.get("/test", testAgent);
 export default agentRouter;

@@ -1,15 +1,23 @@
+import { RateLimiter } from "limiter";
 import { ChatUserType } from "../../../types/chatMessage.type";
 import { EngineName } from "../../../types/openAiTypes/openAiEngine";
 import { ParseCode } from "../../../types/parseCode.types";
 import { Database } from "../../../types/supabase";
 import { logInfo } from "../../../utils/commandLineColors";
+import {
+  clearLoading,
+  commandLineLoading,
+} from "../../../utils/commandLineLoadingl";
 import { isThisHour, isTodaysDate } from "../../../utils/dates";
 import { extractFileNameAndPathFromFullPath } from "../../../utils/getFileName";
 import { updateCodeDirectoryById } from "../codeDirectory/codeDirectory.repository";
 import {
   createChatCompletion,
   createEmbeddings,
-  summarizeCodeExplaination,
+  createTextCompletion,
+  getCompletion,
+  getSummaryOfCode,
+  getSummaryOfFile,
 } from "../openAi/openai.service";
 import { compareAndUpdateSnippets } from "../supabase/supabase.service";
 import {
@@ -20,6 +28,8 @@ import {
   findSnippetByFileNameAndAccount,
   updateFileById,
 } from "./codeFile.repository";
+
+const limiter = new RateLimiter({ tokensPerInterval: 15, interval: "minute" });
 
 const fs = require("fs");
 
@@ -125,70 +135,10 @@ export const handleAndFilesToDb = async (
   };
 };
 
-export const updateFileExplanation = async () => {
-  const files = await findAllFiles();
-
-  if (!files || !files.length) {
-    return;
-  }
-
-  console.log("files", files.length);
-  let filesUpdated = 0;
-
-  for (let i = 0; i < files.length; i++) {
-    const { file_name, account_id, id, updated_at } = files[i];
-
-    if (!updated_at) {
-      continue;
-    }
-
-    const updatedToday = isTodaysDate(new Date(updated_at));
-    console.log("updatedToday", updatedToday);
-    if (updatedToday) {
-      continue;
-    }
-
-    if (file_name && account_id) {
-      const nameAndSnippets = await findAndFilterFileExplanations(
-        file_name,
-        account_id
-      );
-
-      if (!nameAndSnippets) {
-        continue;
-      }
-
-      const file_explaination = await summarizeCodeExplaination(
-        nameAndSnippets
-      );
-
-      if (!file_explaination) {
-        continue;
-      }
-
-      const file_explaination_embedding = await createEmbeddings([
-        file_explaination,
-      ]);
-
-      if (!file_explaination || !file_explaination_embedding || !id) {
-        continue;
-      } else {
-        await updateFileById(id, {
-          file_explaination,
-          file_explaination_embedding,
-          updated_at: new Date().toISOString(),
-        });
-        filesUpdated++;
-      }
-    }
-  }
-  return filesUpdated;
-};
-
 export const findFilesWithoutExplainationAndAssignExplaination = async () => {
   const files = await findFilesWithoutExplaination();
   let filesUpdated = 0;
-  logInfo(`Number of file without explaination: ${files?.length}`);
+  logInfo(`Number of files without explaination: ${files?.length}`);
 
   if (!files) {
     return;
@@ -197,16 +147,9 @@ export const findFilesWithoutExplainationAndAssignExplaination = async () => {
   for (let i = 0; i < files.length; i++) {
     const file = files[i];
 
-    // @ts-ignore
-    const { code_snippet, id, file_name, account_id } = file;
+    const { id, file_name, account_id, content, file_path } = file;
 
-    if (
-      !file_name ||
-      !file.id ||
-      !code_snippet ||
-      !code_snippet.length ||
-      !account_id
-    ) {
+    if (!file_name || !file.id || !account_id || !content || !file_path) {
       continue;
     }
 
@@ -215,17 +158,37 @@ export const findFilesWithoutExplainationAndAssignExplaination = async () => {
       account_id
     );
 
-    if (!combinedExplaination) {
+    let file_explaination = null;
+    let file_explaination_embedding = null;
+
+    if (!combinedExplaination && content) {
+      const codeSummary = await getSummaryOfCode(content);
+
+      if (!codeSummary) {
+        continue;
+      }
+
+      file_explaination = await getSummaryOfFile(
+        codeSummary,
+        file_name,
+        file_path
+      );
+
+      if (!file_explaination) {
+        continue;
+      }
+
+      file_explaination_embedding = await createEmbeddings([file_explaination]);
+    } else if (combinedExplaination) {
+      file_explaination = await summarizeCodeExplaination(combinedExplaination);
+
+      if (!file_explaination) {
+        continue;
+      }
+      file_explaination_embedding = await createEmbeddings([file_explaination]);
+    } else {
       continue;
     }
-
-    const file_explaination = await summarizeCodeExplaination(
-      combinedExplaination
-    );
-
-    const file_explaination_embedding = await createEmbeddings([
-      file_explaination,
-    ]);
 
     if (!file_explaination || !file_explaination_embedding || !id) {
       continue;
@@ -300,3 +263,23 @@ export const createTestBasedOnExistingCode = async (code: string) => {
     : null;
   return test;
 };
+
+export async function summarizeCodeExplaination(
+  text: string,
+  model?: string
+): Promise<any> {
+  const interval = commandLineLoading("Summarizing code");
+  try {
+    const remainingRequests = await limiter.removeTokens(1);
+    const response = await getCompletion(
+      `Summarize this explanation of code into a paragraph: ${text}`,
+      0.2
+    );
+    const res = response.data.choices[0].text;
+    clearLoading(interval, `Summarizing code query completed`);
+    return res;
+  } catch (error: any) {
+    clearLoading(interval, `Summarizing code query failed`);
+    console.log(error);
+  }
+}

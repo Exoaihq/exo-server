@@ -9,6 +9,7 @@ import { createAiWritenCode } from "../aiCreatedCode/aiCreatedCode.repository";
 import { findCodeDirectoryById } from "../codeDirectory/codeDirectory.repository";
 import { getCodeStandards } from "../codeDirectory/codeDirectory.service";
 import { createCodeSnippet } from "../codeSnippet/codeSnippet.repository";
+import { FileWithSnippets } from "./codeFile.type";
 
 export async function findSnippetByFileNameAndAccount(
   fileName: string,
@@ -35,7 +36,7 @@ export async function findSnippetByFileNameAndAccount(
 export async function findFileByFileNameAndAccount(
   fileName: string,
   accountId: string
-): Promise<Database["public"]["Tables"]["code_file"]["Row"] | null> {
+): Promise<FileWithSnippets | null> {
   console.log(fileName, accountId);
   const { data, error } = await supabase
     .from("code_file")
@@ -51,7 +52,7 @@ export async function findFileByFileNameAndAccount(
   if (!data) {
     return null;
   }
-  return data[0];
+  return data[0] as FileWithSnippets;
 }
 
 export async function findFilesByAccountId(
@@ -94,7 +95,7 @@ export async function findFileById(
 export async function findFileByAccountIdAndFullFilePath(
   accountId: string,
   fullFilePath: string
-) {
+): Promise<FileWithSnippets | null> {
   const { fileName, extractedPath } =
     extractFileNameAndPathFromFullPath(fullFilePath);
   const { data, error } = await supabase
@@ -113,7 +114,7 @@ export async function findFileByAccountIdAndFullFilePath(
   if (!data) {
     return null;
   }
-  return data[0];
+  return data[0] as FileWithSnippets;
 }
 
 export async function findFilesByAccountIdAndDirectoryId(
@@ -161,7 +162,7 @@ export async function findFilesByDirectoryId(
 }
 
 export async function findFilesWithoutExplaination(): Promise<
-  Partial<Database["public"]["Tables"]["code_file"]["Row"]>[] | null
+  FileWithSnippets[] | null
 > {
   const { data, error } = await supabase
     .from("code_file")
@@ -177,7 +178,7 @@ export async function findFilesWithoutExplaination(): Promise<
   if (!data) {
     return null;
   }
-  return data;
+  return data as FileWithSnippets[];
 }
 
 export async function findAllFiles(): Promise<
