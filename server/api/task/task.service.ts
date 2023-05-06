@@ -1,5 +1,5 @@
 import { logInfo } from "../../../utils/commandLineColors";
-import { executeTask, runTaskLoop } from "../agent/agent.act";
+import { executeTask } from "../agent/agent.act";
 import { isSearchTool } from "../agent/agent.context";
 import { getToolByNames } from "../agent/agent.service";
 import { allTools } from "../agent/tools";

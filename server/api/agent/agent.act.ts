@@ -18,6 +18,7 @@ import {
   createTaskWithObjective,
   updateTaskById,
 } from "../task/task.repository";
+import { Task } from "../task/task.types";
 import { isSearchTool } from "./agent.context";
 import { getToolInputPrompt } from "./agent.prompt";
 import {
@@ -74,6 +75,7 @@ export const addPlansTaskListToDb = async (
             tool_name: tool.name,
             marked_ready: i === 0 || isSearchTool(tool.name) ? true : false,
             requires_loop: plansThatRequireLoop.includes(i + 1),
+            index: i + 1,
           },
           objective.id
         );
@@ -99,6 +101,7 @@ export const addPlansTaskListToDb = async (
             tool_input: toolInput,
             marked_ready: i === 0 ? true : false,
             requires_loop: plansThatRequireLoop.includes(i + 1),
+            index: i + 1,
           },
           objective.id
         );
@@ -112,13 +115,13 @@ export const addPlansTaskListToDb = async (
 export const executeTask = async (
   task: Database["public"]["Tables"]["task"]["Row"]
 ) => {
-  const { objective_id, tool_input, tool_name, description } = task;
+  const { objective_id, tool_input, tool_name, description, index } = task;
 
   updateTaskById(task.id, {
     started_eval_at: new Date().toISOString(),
   });
 
-  if (!objective_id || !tool_input || !tool_name) {
+  if (!objective_id || !tool_input || !tool_name || !index) {
     logWarning("Missing some data. Moving on");
     return;
   }
@@ -130,41 +133,9 @@ export const executeTask = async (
     return;
   }
 
-  let previouslyCompletedTasksContext = "";
+  const allTasksForObjective = objective.task;
 
-  if (objective.task && objective.task.length > 0 && task.created_at) {
-    const previousTasks = objective.task.filter((siblingTask) => {
-      if (!task.created_at) {
-        return false;
-      }
-
-      // Created before this task and completed.
-      return (
-        siblingTask.tool_output &&
-        siblingTask.completed_at &&
-        new Date(siblingTask.created_at || "") < new Date(task.created_at)
-      );
-    });
-
-    if (previousTasks.length > 0) {
-      // All previous task must be completed before this task can be executed.
-      const allPreviousTasksCompleted = previousTasks.every(
-        (task: { completed_at: any }) => task.completed_at
-      );
-
-      if (!allPreviousTasksCompleted) {
-        console.log(task.tool_name, "Previous tasks not completed");
-        return "Previous tasks not completed";
-      }
-
-      previouslyCompletedTasksContext = previousTasks
-        .map((task: { description: any; tool_name: any; tool_output: any }) => {
-          return `You previously ${task.description} with the tool ${task.tool_name} and the output was ${task.tool_output}}`;
-        })
-        .join("\n");
-    }
-  }
-
+  logInfo(`Previously completed tasks: ${allTasksForObjective}`);
   const { session_id } = objective;
 
   if (!session_id) {
@@ -193,35 +164,48 @@ export const executeTask = async (
 
   const toolToUse = allToolsAvailable[tool_name];
 
-  // if (output) {
-  // const taskOutput = await runTaskLoop(
-  //   session.user_id,
-  //   session.id,
-  //   description || "",
-  //   5,
-  //   toolToUse,
-  //   previouslyCompletedTasksContext || "",
-  //   output || "",
-  //   "\nObservation:"
-  // );
-
   if (output) {
-    // function to update other tasks in the objective with the output of this task
+    const taskOutput = await runTaskLoop(
+      session.user_id,
+      session.id,
+      description || "",
+      5,
+      toolToUse,
+      output || "",
+      "\nObservation:"
+    );
 
-    await updateTaskById(task.id, {
-      tool_output: output,
-      completed_at: new Date().toISOString(),
-    });
+    if (output || taskOutput) {
+      // function to update other tasks in the objective with the output of this task
 
-    // Each task should have an output function that is called when the task is completed and should do things like update the sessions and the ai generated code.
-    toolToUse.outputFunction && toolToUse.outputFunction(output, session_id);
-  } else {
-    // Tasks that don't have a tool output are considered completed but the output is not saved. These tasks are incomplete
-    // await updateTaskById(task.id, {
-    //   completed_at: new Date().toISOString(),
-    // });
+      await updateTaskById(task.id, {
+        tool_output: taskOutput ? taskOutput : output,
+        completed_at: new Date().toISOString(),
+      });
+
+      // If there is another task, add the output to the next task's input
+
+      const nextTask = allTasksForObjective.find(
+        (task) => task.index === index + 1
+      );
+      logInfo(`Next task to update: ${nextTask}`);
+
+      if (nextTask) {
+        await updateTaskById(nextTask.id, {
+          tool_input: taskOutput ? taskOutput : output,
+          marked_ready: true,
+        });
+      }
+
+      // Each task should have an output function that is called when the task is completed and should do things like update the sessions and the ai generated code.
+      // toolToUse.outputFunction && toolToUse.outputFunction(output, session_id);
+    } else {
+      // Tasks that don't have a tool output are considered completed but the output is not saved. These tasks are incomplete
+      // await updateTaskById(task.id, {
+      //   completed_at: new Date().toISOString(),
+      // });
+    }
   }
-  // }
 };
 
 function parse(generated: string): ToolInfo {
@@ -248,7 +232,7 @@ function parse(generated: string): ToolInfo {
 async function decideNextAction(generated: string): Promise<[string, string]> {
   const toolInfo: ToolInfo = parse(generated);
   const { tool, toolInput } = toolInfo;
-  return [tool, toolInput];
+  return [tool.toLowerCase(), toolInput];
 }
 
 export async function runTaskLoop(
@@ -257,7 +241,6 @@ export async function runTaskLoop(
   inputQuestion: string,
   maxLoops: number,
   tool: ToolInterface,
-  context: string,
   output: string = "",
   stopToken: string | null = null
 ): Promise<string | undefined> {
@@ -278,7 +261,6 @@ export async function runTaskLoop(
     .replace("{tool_names}", toolNames)
     .replace("{question}", inputQuestion)
     .replace("{previous_responses}", "{previous_responses}")
-    .replace("{context}", context)
     .replace("{response}", output);
 
   let runMetadata;

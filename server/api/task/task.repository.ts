@@ -33,12 +33,11 @@ export const getIncompleteTasks = async (): Promise<
 > => {
   const { data, error } = await supabase
     .from("task")
-    .select("*")
+    .select("*, objective(*, task(*))")
     .is("completed_at", null)
     .is("started_eval_at", null)
     .is("tool_output", null)
     .eq("marked_ready", true)
-    // .eq("id", "94a7f228-038c-496b-ab0e-68867802068d")
     .not("tool_input", "is", null)
     .not("tool_name", "is", null);
 
@@ -89,7 +88,7 @@ export const createTaskWithObjective = async (
 
 export const getTaskById = async (
   id: string
-): Promise<Partial<Database["public"]["Tables"]["task"]["Row"]> | null> => {
+): Promise<Database["public"]["Tables"]["task"]["Row"] | null> => {
   const { data, error } = await supabase
     .from("task")
     .select("*")

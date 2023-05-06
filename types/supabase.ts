@@ -664,6 +664,7 @@ export interface Database {
           created_at: string | null
           description: string | null
           id: string
+          index: number | null
           loop_evaluated_at: string | null
           marked_ready: boolean | null
           objective_id: string | null
@@ -678,6 +679,7 @@ export interface Database {
           created_at?: string | null
           description?: string | null
           id?: string
+          index?: number | null
           loop_evaluated_at?: string | null
           marked_ready?: boolean | null
           objective_id?: string | null
@@ -692,6 +694,7 @@ export interface Database {
           created_at?: string | null
           description?: string | null
           id?: string
+          index?: number | null
           loop_evaluated_at?: string | null
           marked_ready?: boolean | null
           objective_id?: string | null
