@@ -21,35 +21,26 @@ export function generateTestCodeTool(): ToolInterface {
   ) {
     const account = await findOrUpdateAccount(userId);
 
-    let fileContent = await findFileByAccountIdAndFullFilePath(
-      account.id,
-      path
-    );
+    let file = await findFileByAccountIdAndFullFilePath(account.id, path);
 
-    if (!fileContent) {
-      fileContent = await findFileByFileNameAndAccount(
-        removeQuotes(path),
-        account.id
-      );
+    if (!file) {
+      file = await findFileByFileNameAndAccount(removeQuotes(path), account.id);
     }
 
-    if (!fileContent || !fileContent.code_snippet) {
+    if (!file) {
       return {
         output: `I found the file but it didn't contain any code. Please make sure the file has code by indexing your repository again.`,
       };
     }
 
-    const fullFileContent = await createNewFileFromSnippets(
-      fileContent.file_path + "/" + fileContent.file_name,
-      account.id
-    );
+    const { content } = file;
 
-    if (!fullFileContent) {
+    if (!content) {
       return {
-        output: `I'm sorry I couldn't find the code file to generate a test for. `,
+        output: `This file does not have any content. Please make sure the file has code by indexing your repository again.`,
       };
     }
-    const test = await createTestBasedOnExistingCode(fullFileContent);
+    const test = await createTestBasedOnExistingCode(content);
 
     if (!test) {
       return {
@@ -66,10 +57,8 @@ export function generateTestCodeTool(): ToolInterface {
       {
         code: test,
         functionality: "Write test code based on existing code",
-        file_name: convertToTestFileName(
-          fileContent?.file_name ? fileContent.file_name : ""
-        ),
-        path: fileContent?.file_path ? fileContent.file_path : "",
+        file_name: convertToTestFileName(file?.file_name ? file.file_name : ""),
+        path: file?.file_path ? file.file_path : "",
       },
       "code"
     );

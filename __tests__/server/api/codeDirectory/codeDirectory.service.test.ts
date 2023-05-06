@@ -7,14 +7,17 @@
 import {
   createCodeDirectoryByUser,
   findCodeDirectoryByNameAndUser,
-} from "./codeDirectory.repository";
-import { createDirectoryIfNotExists } from "./codeDirectory.service";
+} from "../../../../server/api/codeDirectory/codeDirectory.repository";
+import { createDirectoryIfNotExists } from "../../../../server/api/codeDirectory/codeDirectory.service";
 
 // Mock the functions from the repository
-jest.mock("./codeDirectory.repository", () => ({
-  findCodeDirectoryByNameAndUser: jest.fn(),
-  createCodeDirectoryByUser: jest.fn(),
-}));
+jest.mock(
+  "../../../../server/api/codeDirectory/codeDirectory.repository",
+  () => ({
+    findCodeDirectoryByNameAndUser: jest.fn(),
+    createCodeDirectoryByUser: jest.fn(),
+  })
+);
 
 describe("codeFile", () => {
   afterEach(() => {

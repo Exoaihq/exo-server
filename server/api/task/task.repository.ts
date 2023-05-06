@@ -11,11 +11,14 @@ export const getTasksBySession = async (
   sessionId: string
 ): Promise<Partial<Database["public"]["Tables"]["task"]["Row"]>[] | []> => {
   const objective = await getObjectivesBySession(sessionId);
+  const objectionIds = objective.map((obj) => obj.id);
+
+  if (!objective || objective.length === 0) return [];
   const { data, error } = await supabase
     .from("task")
     .select("*")
     .order("created_at", { ascending: false })
-    .eq("objective_id", [objective.map((obj) => obj.id)]);
+    .in("objective_id", [...objectionIds]);
 
   if (error || !data) {
     console.log("Error getting tasks", error);

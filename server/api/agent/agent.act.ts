@@ -1,12 +1,16 @@
+import { ChatUserType } from "../../../types/chatMessage.type";
+import { EngineName } from "../../../types/openAiTypes/openAiEngine";
 import { Database } from "../../../types/supabase";
 import {
   logError,
   logInfo,
   logWarning,
 } from "../../../utils/commandLineColors";
+import { extractUniqueNumbers } from "../../../utils/getUniqueNumbers";
 import { getObjectiveById } from "../objective/objective.repository";
 import {
   chatAgent,
+  createChatCompletion,
   getCompletionDefaultStopToken,
 } from "../openAi/openai.service";
 import { getSessionById } from "../supabase/supabase.service";
@@ -14,6 +18,7 @@ import {
   createTaskWithObjective,
   updateTaskById,
 } from "../task/task.repository";
+import { isSearchTool } from "./agent.context";
 import { getToolInputPrompt } from "./agent.prompt";
 import {
   FINAL_ANSWER_TOKEN,
@@ -36,6 +41,25 @@ export const addPlansTaskListToDb = async (
 ) => {
   let planOutput: string[] = [];
 
+  const plansWithLoopRequirements = await createChatCompletion(
+    [
+      {
+        content: `Which of these tasks will have a list of outputs vs one output? ${plan.map(
+          (item, index) => {
+            return `${index + 1}. ${item}`;
+          }
+        )}. Return just the number of the task.`,
+        role: ChatUserType.user,
+      },
+    ],
+    EngineName.Turbo,
+    0.2
+  );
+
+  const plansThatRequireLoop = extractUniqueNumbers(
+    plansWithLoopRequirements.choices[0].message.content
+  );
+
   for (let i = 0; i < plan.length; i++) {
     const task = plan[i];
     logInfo(`Task: ${task}`);
@@ -48,7 +72,8 @@ export const addPlansTaskListToDb = async (
           {
             description: task,
             tool_name: tool.name,
-            marked_ready: i === 0 ? true : false,
+            marked_ready: i === 0 || isSearchTool(tool.name) ? true : false,
+            requires_loop: plansThatRequireLoop.includes(i + 1),
           },
           objective.id
         );
@@ -73,6 +98,7 @@ export const addPlansTaskListToDb = async (
             tool_name: tool.name,
             tool_input: toolInput,
             marked_ready: i === 0 ? true : false,
+            requires_loop: plansThatRequireLoop.includes(i + 1),
           },
           objective.id
         );

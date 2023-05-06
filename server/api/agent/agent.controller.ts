@@ -10,6 +10,11 @@ import { getExpectedNextAction, getQuickAction } from "./agent.prompt";
 import { expandContext, startNewObjective } from "./agent.service";
 import { allTools, searchCodeTool, searchDirectoryTool } from "./tools";
 import { writeCodeToScratchPadTool } from "./tools/writeCodeToScarchPad.tool";
+import { createChatCompletion } from "../openAi/openai.service";
+import { getObjectiveById } from "../objective/objective.repository";
+import { ChatUserType } from "../../../types/chatMessage.type";
+import { EngineName } from "../../../types/openAiTypes/openAiEngine";
+import { extractUniqueNumbers } from "../../../utils/getUniqueNumbers";
 
 const fs = require("fs");
 
@@ -128,16 +133,16 @@ export const testAgent = async (req: Request, res: Response) => {
 
     const sessionId = "ad536466-86b0-4f6c-8c40-2118a30a68e1";
 
-    const output = await searchDirectoryTool().use(
-      userId,
-      sessionId,
-      "codeFile",
-      {
-        description:
-          "1. Use the 'search directory' tool to find the codeFile directory in the code-gen-server repo.",
-      }
-    );
-    logInfo(`Output ${JSON.stringify(output)}`);
+    // const output = await searchDirectoryTool().use(
+    //   userId,
+    //   sessionId,
+    //   "codeFile",
+    //   {
+    //     description:
+    //       "1. Use the 'search directory' tool to find the codeFile directory in the code-gen-server repo.",
+    //   }
+    // );
+    // logInfo(`Output ${JSON.stringify(output)}`);
 
     // await updateExistingCodeTool().use(
     //   userId,
@@ -145,8 +150,38 @@ export const testAgent = async (req: Request, res: Response) => {
     //   "Add a select statement to the updateAiWritenCode function"
     // );
 
+    const objective = await getObjectiveById(
+      "68044e0f-6e74-4dde-ba89-752a4ee039f5"
+    );
+
+    console.log("Objective", objective);
+
+    const plan = [
+      "Search for the aiCreateCode folder in the code-gen-server repo using the 'search directory' tool.",
+      "Use the 'search files' tool to find all the files in the aiCreateCode folder.",
+      "For each file found, use the 'generate test code' tool to generate a test file for that code file.",
+      "Write the generated test code to the appropriate location using the 'generate new code' tool.",
+    ];
+
+    const plansWithLoopRequirements = await createChatCompletion(
+      [
+        {
+          content: `Which of these tasks will have a list of outputs vs one output? ${plan.map(
+            (item, index) => {
+              return `${index + 1}. ${item}`;
+            }
+          )}. Return just the number of the task.`,
+          role: ChatUserType.user,
+        },
+      ],
+      EngineName.Turbo,
+      0.2
+    );
+
     return res.status(200).json({
-      data: output,
+      data: extractUniqueNumbers(
+        plansWithLoopRequirements.choices[0].message.content
+      ),
     });
   } catch (error: any) {
     console.log(error);

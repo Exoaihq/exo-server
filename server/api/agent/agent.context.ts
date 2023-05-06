@@ -27,7 +27,7 @@ export function isGenerateCodeTool(task: TaskWithObjective) {
   return false;
 }
 
-export async function findCompletedTasksAndAskUserForInput() {
+export async function findCompletedTasksThatNeedLoops() {
   const completed = await getCompletedTasks();
   logInfo(`Tasks with output count: ${completed.length}`);
 
@@ -36,7 +36,9 @@ export async function findCompletedTasksAndAskUserForInput() {
     await updateTaskById(task.id, {
       loop_evaluated_at: new Date().toISOString(),
     });
-    if (isSearchTool(task.tool_name)) {
+
+    // This is just one combo of where a loop agent is neede, there will likely be others and this method can be extrapolated to handle them
+    if (task.tool_name === ToolName.searchFiles) {
       const otherTasks = task?.objective?.task;
       if (otherTasks.length === 0) {
         logInfo("No other tasks");

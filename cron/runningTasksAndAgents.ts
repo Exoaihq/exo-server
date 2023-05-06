@@ -1,4 +1,4 @@
-import { findCompletedTasksAndAskUserForInput } from "../server/api/agent/agent.context";
+import { findCompletedTasksThatNeedLoops } from "../server/api/agent/agent.context";
 import { findAndExecuteTasks } from "../server/api/task/task.service";
 
 const cron = require("node-cron");
@@ -9,6 +9,6 @@ export function runTasksAndAgents() {
     findAndExecuteTasks();
 
     // Find completed task and ask the user for next steps.
-    findCompletedTasksAndAskUserForInput();
+    findCompletedTasksThatNeedLoops();
   });
 }
