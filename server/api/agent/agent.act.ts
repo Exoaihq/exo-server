@@ -1,6 +1,10 @@
 import { Database } from "../../../types/supabase";
-import { logError, logWarning } from "../../../utils/commandLineColors";
-import { getObjectiveById } from "../objective/objective.service";
+import {
+  logError,
+  logInfo,
+  logWarning,
+} from "../../../utils/commandLineColors";
+import { getObjectiveById } from "../objective/objective.repository";
 import {
   chatAgent,
   getCompletionDefaultStopToken,
@@ -32,10 +36,9 @@ export const addPlansTaskListToDb = async (
 ) => {
   let planOutput: string[] = [];
 
-  for (let task of plan) {
-    // const taskInputTask = await getCompletionDefaultStopToken(
-    //   getTaskInputTask(plan, thought)
-    // );
+  for (let i = 0; i < plan.length; i++) {
+    const task = plan[i];
+    logInfo(`Task: ${task}`);
 
     const tool = tools.find((tool) => task.includes(tool.name));
     if (tool) {
@@ -45,6 +48,7 @@ export const addPlansTaskListToDb = async (
           {
             description: task,
             tool_name: tool.name,
+            marked_ready: i === 0 ? true : false,
           },
           objective.id
         );
@@ -68,6 +72,7 @@ export const addPlansTaskListToDb = async (
             description: task,
             tool_name: tool.name,
             tool_input: toolInput,
+            marked_ready: i === 0 ? true : false,
           },
           objective.id
         );
@@ -149,6 +154,8 @@ export const executeTask = async (
   }
   const allToolsAvailable = getToolByNames(allTools);
 
+  logInfo(`Tool ${tool_name} input: ${tool_input}`);
+
   // This runs the tool once and gets the output that will passed to the task loop for further processing.
   const { output } = await allToolsAvailable[tool_name].use(
     session.user_id,
@@ -156,31 +163,32 @@ export const executeTask = async (
     tool_input
   );
 
+  logInfo(`Tool ${tool_name} output: ${output}`);
+
   const toolToUse = allToolsAvailable[tool_name];
 
   // if (output) {
-  const taskOutput = await runTaskLoop(
-    session.user_id,
-    session.id,
-    description || "",
-    5,
-    toolToUse,
-    previouslyCompletedTasksContext || "",
-    output || "",
-    "\nObservation:"
-  );
+  // const taskOutput = await runTaskLoop(
+  //   session.user_id,
+  //   session.id,
+  //   description || "",
+  //   5,
+  //   toolToUse,
+  //   previouslyCompletedTasksContext || "",
+  //   output || "",
+  //   "\nObservation:"
+  // );
 
-  if (taskOutput || output) {
+  if (output) {
     // function to update other tasks in the objective with the output of this task
 
     await updateTaskById(task.id, {
-      tool_output: taskOutput ? taskOutput : output,
+      tool_output: output,
       completed_at: new Date().toISOString(),
     });
 
     // Each task should have an output function that is called when the task is completed and should do things like update the sessions and the ai generated code.
-    toolToUse.outputFunction &&
-      toolToUse.outputFunction(taskOutput ? taskOutput : output, session_id);
+    toolToUse.outputFunction && toolToUse.outputFunction(output, session_id);
   } else {
     // Tasks that don't have a tool output are considered completed but the output is not saved. These tasks are incomplete
     // await updateTaskById(task.id, {

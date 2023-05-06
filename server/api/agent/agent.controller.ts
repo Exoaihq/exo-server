@@ -1,21 +1,15 @@
 import { Request, Response } from "express";
-import { ChatUserType } from "../../../types/chatMessage.type";
+import { logInfo } from "../../../utils/commandLineColors";
+import { AuthenticatedRequest } from "../../middleware/isAuthenticated";
 import { CodeCompletionRequest } from "../codeCompletion/codeCompletion.types";
 import { getOnlyRoleAndContentMessagesByUserAndSession } from "../message/message.service";
-import { createChatCompletion } from "../openAi/openai.service";
 import { handleSearch } from "../search/search.service";
 import { findOrUpdateAccount } from "../supabase/account.service";
-import {
-  checkSessionOrThrow,
-  findOrCreateSession,
-} from "../supabase/supabase.service";
+import { findOrCreateSession } from "../supabase/supabase.service";
 import { getExpectedNextAction, getQuickAction } from "./agent.prompt";
 import { expandContext, startNewObjective } from "./agent.service";
 import { allTools, searchCodeTool, searchDirectoryTool } from "./tools";
-import { updateExistingCodeTool } from "./tools/updateExistingCode.tool";
 import { writeCodeToScratchPadTool } from "./tools/writeCodeToScarchPad.tool";
-import { AuthenticatedRequest } from "../../middleware/isAuthenticated";
-import { logInfo } from "../../../utils/commandLineColors";
 
 const fs = require("fs");
 
@@ -60,14 +54,18 @@ export const useAgent = async (req: AuthenticatedRequest, res: Response) => {
 
     console.log("Quick action prompt", quickActionPrompt);
 
-    const isQuicActionRes = await createChatCompletion([
-      { content: quickActionPrompt, role: ChatUserType.user },
-    ]);
+    // const isQuicActionRes = await createChatCompletion(
+    //   [{ content: quickActionPrompt, role: ChatUserType.user }],
+    //   EngineName.Turbo,
+    //   0.1
+    // );
 
-    const isQuickAction =
-      isQuicActionRes.choices[0].message.content.toLowerCase();
+    // const isQuickAction =
+    //   isQuicActionRes.choices[0].message.content.toLowerCase();
 
-    console.log("Is quick action", isQuickAction);
+    // console.log("Is quick action", isQuickAction);
+
+    const isQuickAction = "null";
 
     if (isQuickAction.includes("null")) {
       const expandedContext = await expandContext(
@@ -123,26 +121,32 @@ export const useAgent = async (req: AuthenticatedRequest, res: Response) => {
   }
 };
 
-export const testUpdateExisting = async (req: Request, res: Response) => {
+// User this route to test an agent in isolation
+export const testAgent = async (req: Request, res: Response) => {
   try {
-    const session = await checkSessionOrThrow(req, res);
+    const userId = "4ff416c9-4805-4adb-bfe7-ef315ae9536b";
 
-    const { user } = session.data;
+    const sessionId = "ad536466-86b0-4f6c-8c40-2118a30a68e1";
 
-    const { sessionId } = req.body as CodeCompletionRequest;
-    const account = await findOrUpdateAccount(user.id);
-
-    const path =
-      "/Users/kg/Repos/code-gen-server/server/api/aiCreatedCode/aiCreatedCode.repository.ts";
-
-    await updateExistingCodeTool().use(
-      user.id,
+    const output = await searchDirectoryTool().use(
+      userId,
       sessionId,
-      "Add a select statement to the updateAiWritenCode function"
+      "codeFile",
+      {
+        description:
+          "1. Use the 'search directory' tool to find the codeFile directory in the code-gen-server repo.",
+      }
     );
+    logInfo(`Output ${JSON.stringify(output)}`);
+
+    // await updateExistingCodeTool().use(
+    //   userId,
+    //   sessionId,
+    //   "Add a select statement to the updateAiWritenCode function"
+    // );
 
     return res.status(200).json({
-      data: "done",
+      data: output,
     });
   } catch (error: any) {
     console.log(error);
