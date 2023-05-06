@@ -3,7 +3,7 @@ import { executeTask, runTaskLoop } from "../agent/agent.act";
 import { isSearchTool } from "../agent/agent.context";
 import { getToolByNames } from "../agent/agent.service";
 import { allTools } from "../agent/tools";
-import { getObjectiveById } from "../objective/objective.service";
+import { getObjectiveById } from "../objective/objective.repository";
 import { getSessionById } from "../supabase/supabase.service";
 import { getIncompleteTasks, updateTaskById } from "./task.repository";
 

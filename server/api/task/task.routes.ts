@@ -1,10 +1,12 @@
 import { Router } from "express";
-import { getTasks } from "./task.controller";
+import { ensureAuthenticated } from "../../middleware/isAuthenticated";
+import { getTasks, updateTask } from "./task.controller";
 
 const taskRoutes = Router();
 
 // Base route: /task
 
-taskRoutes.get("/", getTasks);
+taskRoutes.get("/", ensureAuthenticated, getTasks);
+taskRoutes.put("/", ensureAuthenticated, updateTask);
 
 export default taskRoutes;

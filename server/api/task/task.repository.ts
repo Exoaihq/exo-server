@@ -3,23 +3,24 @@ import { Database } from "../../../types/supabase";
 
 import { supabaseKey, supabaseUrl } from "../../../utils/envVariable";
 import { TaskWithObjective } from "./task.types";
+import { getObjectivesBySession } from "../objective/objective.repository";
 
 const supabase = createClient<Database>(supabaseUrl, supabaseKey);
 
 export const getTasksBySession = async (
   sessionId: string
 ): Promise<Partial<Database["public"]["Tables"]["task"]["Row"]>[] | []> => {
+  const objective = await getObjectivesBySession(sessionId);
   const { data, error } = await supabase
     .from("task")
     .select("*")
     .order("created_at", { ascending: false })
-    .eq("session_id", sessionId);
+    .eq("objective_id", [objective.map((obj) => obj.id)]);
 
   if (error || !data) {
     console.log("Error getting tasks", error);
     return [];
   }
-  console.log(data);
 
   return data || [];
 };
@@ -33,6 +34,7 @@ export const getIncompleteTasks = async (): Promise<
     .is("completed_at", null)
     .is("started_eval_at", null)
     .is("tool_output", null)
+    .eq("marked_ready", true)
     // .eq("id", "94a7f228-038c-496b-ab0e-68867802068d")
     .not("tool_input", "is", null)
     .not("tool_name", "is", null);

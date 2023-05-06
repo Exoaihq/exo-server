@@ -1,11 +1,9 @@
 import { Request, Response } from "express";
-import { checkSessionOrThrow } from "../supabase/supabase.service";
-import { getTasksBySession } from "./task.repository";
+import { getTasksBySession, updateTaskById } from "./task.repository";
+import { AuthenticatedRequest } from "../../middleware/isAuthenticated";
 
-export const getTasks = async (req: Request, res: Response) => {
+export const getTasks = async (req: AuthenticatedRequest, res: Response) => {
   try {
-    const session = await checkSessionOrThrow(req, res);
-
     const { session_id } = req.headers;
 
     const sessionId = session_id as string;
@@ -20,24 +18,17 @@ export const getTasks = async (req: Request, res: Response) => {
   }
 };
 
-// export const createTask = async (req: Request, res: Response) => {
-//   try {
-//     const session = await checkSessionOrThrow(req, res);
+export const updateTask = async (req: AuthenticatedRequest, res: Response) => {
+  try {
+    const { taskId, values } = req.body;
 
-//     const { session_id } = req.headers;
+    await updateTaskById(taskId, values);
 
-//     const sessionId = session_id as string;
-
-//     const response = await createObjectiveWithSession(req.body.task, sessionId);
-
-//     if (!response) {
-//       return res.status(404).json({ message: "Error creating message" });
-//     }
-
-//     return res.status(200).json({
-//       data: response,
-//     });
-//   } catch (error: any) {
-//     res.status(500).json({ message: error.message });
-//   }
-// };
+    return res.status(200).json({
+      data: "done",
+    });
+  } catch (error: any) {
+    console.log(error);
+    res.status(500).json({ message: error.message });
+  }
+};

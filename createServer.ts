@@ -13,6 +13,7 @@ import promptRoutes from "./server/api/prompt/prompt.routes";
 import searchRoutes from "./server/api/search/search.routes";
 import slackRoutes from "./server/api/slack/slack.route";
 import { runScheduledTasks } from "./cron";
+import taskRoutes from "./server/api/task/task.routes";
 
 export enum ApiRoutes {
   CODE_DIRECTORY = "/code-directory",
@@ -26,6 +27,7 @@ export enum ApiRoutes {
   EXO_CONFIG = "/exo-config",
   CODE_SNIPPET = "/code-snippet",
   CODE_FILE = "/code-file",
+  TASK = "/task",
 }
 
 export function createServer() {
@@ -55,5 +57,6 @@ export function createServer() {
   app.use(ApiRoutes.PROMPT, promptRoutes);
   app.use(ApiRoutes.SLACK, slackRoutes);
   app.use(ApiRoutes.EXO_CONFIG, exoConfigRoutes);
+  app.use(ApiRoutes.TASK, taskRoutes);
   return app;
 }

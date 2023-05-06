@@ -9,6 +9,7 @@ import { openAiApiKey } from "../../../utils/envVariable";
 
 import { RateLimiter } from "limiter";
 import { OpenAiChatCompletionResponse } from "../codeCompletion/codeCompletion.types";
+import { logError } from "../../../utils/commandLineColors";
 const { Configuration, OpenAIApi } = require("openai");
 const { encode, decode } = require("gpt-3-encoder");
 
@@ -157,76 +158,63 @@ export async function getCompletionDefaultStopToken(
   }
 }
 
-export async function queryClassification(query: string) {
-  const prompt = `You need to classify a query into three buckets: {code}, {question} or {chat}. Here are some examples of queries you might need to classify:\
-    """\
-    query: 'I need a new coat'\
-    classification: chat\
-    """\
-    query: 'How do I create a new file in python?'\
-    classification: code\
-    """\
-    query: 'Where should I go out to dinner in NYC?'\
-    classification: question\
-    return in the following format:\
-    """\
-    classifcation: {classification}\
-    """\
+export async function getSummaryOfCode(codeContent: string) {
+  const interval = commandLineLoading("Summarizing code");
 
-    query: ${query}
-    `;
-  try {
-    const completion = await openai.createCompletion({
-      prompt,
-      temperature: 0,
-      model: "text-davinci-003",
-    });
-    return completion;
-  } catch (error: any) {
-    console.log(error);
-    throw error;
+  const res = await createChatCompletion(
+    [
+      {
+        content:
+          "What does this code do:" +
+          codeContent +
+          "Please include the coding language",
+        role: ChatUserType.user,
+      },
+    ],
+    EngineName.Turbo,
+    0.2
+  );
+  const explaination = res.choices[0].message.content;
+  clearLoading(interval, `Summarizing code query completed`);
+
+  if (!explaination) {
+    logError("Open ai api call to create explaination for code failed ");
+    return null;
+  } else {
+    return explaination;
   }
 }
 
-export async function handlePromptAfterClassification(messages: ChatMessage[]) {
-  const lastMessage = messages[messages.length - 1].content;
-  const completion = await queryClassification(lastMessage);
-  console.log(messages);
+export async function getSummaryOfFile(
+  codeSummary: string,
+  fileName: string,
+  filePath: string
+): Promise<string | null> {
+  const interval = commandLineLoading("Summarizing file");
 
-  const getTextAfterClassification = completion.data.choices[0].text
-    .split("classification: ")[1]
-    .trim();
+  const res = await createChatCompletion(
+    [
+      {
+        content: `Please give a summary of this file that contains code .
+        This is the file name ${fileName}
+        This is where the file is located ${filePath}
+        And this is a summary of the code in the file ${codeSummary}
+        Please provide an explaination summary of this file
+          `,
+        role: ChatUserType.user,
+      },
+    ],
+    EngineName.Turbo,
+    0.2
+  );
+  const explaination = res.choices[0].message.content;
+  clearLoading(interval, `Summarizing file completed`);
 
-  switch (getTextAfterClassification) {
-    case "code":
-      return {
-        data: {
-          choices: [
-            {
-              text: "It sounds like you'd like some help with some code. Do you want to work on a specific repo or just output some code to the scratch pad?",
-            },
-          ],
-        },
-        type: "code",
-      };
-    case "question":
-      const answer = await getCompletion(lastMessage);
-      return {
-        data: answer.data,
-        type: "code",
-      };
-    case "chat":
-      const response = await getChatCompletion(messages);
-      return {
-        data: response.data,
-        type: "code",
-      };
-    default:
-      const defaultResponse = await getChatCompletion(messages);
-      return {
-        data: defaultResponse.data,
-        type: "code",
-      };
+  if (!explaination) {
+    logError("Open ai api call to create explaination for file failed ");
+    return null;
+  } else {
+    return explaination;
   }
 }
 
@@ -243,26 +231,6 @@ export async function createEmbeddings(documents: Array<any>): Promise<any> {
   const [{ embedding }] = response?.data?.data;
   clearLoading(interval, `${raisingHands} Query completed ${raisingHands}`);
   return embedding;
-}
-
-export async function summarizeCodeExplaination(
-  text: string,
-  model?: string
-): Promise<any> {
-  const interval = commandLineLoading("Summarizing code");
-  try {
-    const remainingRequests = await limiter.removeTokens(1);
-    const response = await getCompletion(
-      `Summarize this explanation of code into a paragraph: ${text}`,
-      0.2
-    );
-    const res = response.data.choices[0].text;
-    clearLoading(interval, `${raisingHands} Query completed ${raisingHands}`);
-    return res;
-  } catch (error: any) {
-    clearLoading(interval, `${raisingHands} Query completed ${raisingHands}`);
-    console.log(error);
-  }
 }
 
 export async function summarizeDirectoryExplaination(

@@ -6,6 +6,7 @@ import { findFileByAccountIdAndFullFilePath } from "../codeFile/codeFile.reposit
 import {
   createEmbeddings,
   createTextCompletion,
+  getSummaryOfCode,
 } from "../openAi/openai.service";
 import { matchImportSnippetWithExport } from "./codeSnippet.service";
 
@@ -47,26 +48,15 @@ export async function addCodeToSupabase(
   accountId: string,
   dbSnippetId?: number
 ) {
-  const codeExplaination = await createTextCompletion(
-    "What does this code do:" + snippet.code
-  );
+  const codeExplaination = await getSummaryOfCode(snippet.code);
 
   const code_embedding = await createEmbeddings([snippet.code]);
 
   let code_explaination = null;
   let code_explaination_embedding = null;
 
-  if (
-    codeExplaination &&
-    codeExplaination.choices &&
-    codeExplaination.choices[0] &&
-    codeExplaination.choices[0].text
-  ) {
-    const { choices } = codeExplaination;
-    if (!choices[0].text) {
-      return;
-    }
-    code_explaination = choices[0].text.trim();
+  if (codeExplaination) {
+    code_explaination = codeExplaination;
     const e = await createEmbeddings([code_explaination]);
     code_explaination_embedding = e[0];
   }

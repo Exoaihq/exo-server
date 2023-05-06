@@ -29,3 +29,11 @@ Question: {question}
 Thought: {previous_responses}
 """
 `;
+
+export const refinementPrompt = (description: string, response: string) => `
+    Here is the original task goal: ${description}
+    Here is the new information gained from running the task: ${response}
+
+    Please use the new information to better answer the original task goal.
+
+`;
