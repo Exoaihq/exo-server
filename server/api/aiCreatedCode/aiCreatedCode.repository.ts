@@ -86,12 +86,15 @@ export const findOrCreateAiWritenCode = async (
 export const createAiWritenCode = async (
   values: Partial<Database["public"]["Tables"]["ai_created_code"]["Update"]>
 ): Promise<Database["public"]["Tables"]["ai_created_code"]["Row"]> => {
-  const { data } = await supabase
+  const { data, error } = await supabase
     .from("ai_created_code")
     .insert([{ ...values }])
     .select();
 
-  // @ts-ignore
+  if (!data || data.length === 0 || error) {
+    throw new Error("Could not create ai code");
+  }
+
   return data[0] as Database["public"]["Tables"]["ai_created_code"]["Row"];
 };
 

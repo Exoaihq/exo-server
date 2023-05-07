@@ -9,7 +9,10 @@ import {
   commandLineLoading,
 } from "../../../utils/commandLineLoadingl";
 import { extractFileNameAndPathFromFullPath } from "../../../utils/getFileName";
-import { updateCodeDirectoryById } from "../codeDirectory/codeDirectory.repository";
+import {
+  findCodeDirectoryByPathAndAccountId,
+  updateCodeDirectoryById,
+} from "../codeDirectory/codeDirectory.repository";
 import {
   createChatCompletion,
   getSummaryOfCode,
@@ -26,8 +29,13 @@ import {
   createEmbeddings,
   getTexCompletionUsingDavinci,
 } from "../openAi/openAi.repository";
-import { DbFile } from "./codeFile.type";
+import { DbFile, FileWithSnippets } from "./codeFile.type";
 import { isThisHour } from "../../../utils/dates";
+import {
+  createTestAndUpdateAiCodeAndSession,
+  generateTestCodeTool,
+} from "../agent/tools/generateTestCode.tool";
+import { createMessageWithUser } from "../message/message.service";
 
 const limiter = new RateLimiter({ tokensPerInterval: 15, interval: "minute" });
 
@@ -371,5 +379,50 @@ export function findOldestFile(
     return dbFile as DbFile;
   } else {
     return comparisonFile as DbFile;
+  }
+}
+
+export async function writeTestsForFiles(
+  files: ParseCode[],
+  directoryPath: string,
+  accountId: string,
+  userId: string,
+  sessionId: string
+) {
+  await createMessageWithUser(
+    {
+      content: `Creating tests for ${files.length} files. This may take a few minutes.`,
+      role: ChatUserType.assistant,
+    },
+    sessionId
+  );
+  const directory = await findCodeDirectoryByPathAndAccountId(
+    accountId,
+    directoryPath
+  );
+
+  for (const file of files) {
+    const { contents, filePath } = file;
+    const { extractedPath, fileName } = extractFileNameAndPathFromFullPath(
+      file.filePath
+    );
+    let dbFile: DbFile | FileWithSnippets | null =
+      await findFileByAccountIdAndFullFilePath(accountId, filePath);
+
+    if (!dbFile) {
+      dbFile = await createCodeFile(accountId, {
+        file_name: fileName,
+        file_path: extractedPath,
+        code_directory_id: directory?.id ? directory.id : null,
+        account_id: accountId,
+        content: contents,
+      });
+    }
+
+    // This will create the test and create the ai generated code. The ai generated code will be used to create the test file that will be created by the users Exo app
+    await createTestAndUpdateAiCodeAndSession(contents, userId, sessionId, {
+      file_name: fileName,
+      file_path: extractedPath,
+    });
   }
 }

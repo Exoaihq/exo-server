@@ -7,6 +7,7 @@ import {
   findFileByFileNameAndAccount,
 } from "../../codeFile/codeFile.repository";
 import { createTestBasedOnExistingCode } from "../../codeFile/codeFile.service";
+import { DbFile, FileWithSnippets } from "../../codeFile/codeFile.type";
 import { createNewFileFromSnippets } from "../../codeSnippet/codeSnippet.service";
 import { findOrUpdateAccount } from "../../supabase/account.service";
 import { updateSession } from "../../supabase/supabase.service";
@@ -27,9 +28,9 @@ export function generateTestCodeTool(): ToolInterface {
       file = await findFileByFileNameAndAccount(removeQuotes(path), account.id);
     }
 
-    if (!file) {
+    if (!file || !file.file_name || !file.file_path) {
       return {
-        output: `I found the file but it didn't contain any code. Please make sure the file has code by indexing your repository again.`,
+        output: `I found the file but it didn't contain all the info I need. Please make sure the file has code by indexing your repository again.`,
       };
     }
 
@@ -40,32 +41,26 @@ export function generateTestCodeTool(): ToolInterface {
         output: `This file does not have any content. Please make sure the file has code by indexing your repository again.`,
       };
     }
-    const test = await createTestBasedOnExistingCode(content);
+
+    const test = await createTestAndUpdateAiCodeAndSession(
+      content,
+      userId,
+      sessionId,
+      {
+        file_name: file.file_name,
+        file_path: file.file_path,
+      }
+    );
 
     if (!test) {
       return {
         output: `I'm sorry I couldn't generate code for you. Please try again later.`,
       };
+    } else {
+      return {
+        output: `Here is the test code that I generated for you: ${test}. I've added this code to the session. When you are ready to write this code to the file use the write file tool.`,
+      };
     }
-
-    await updateSession(userId, sessionId, {
-      code_content: test,
-    });
-
-    await findAndUpdateAiCodeBySession(
-      sessionId,
-      {
-        code: test,
-        functionality: "Write test code based on existing code",
-        file_name: convertToTestFileName(file?.file_name ? file.file_name : ""),
-        path: file?.file_path ? file.file_path : "",
-      },
-      "code"
-    );
-
-    return {
-      output: `Here is the test code that I generated for you: ${test}. I've added this code to the session. When you are ready to write this code to the file use the write file tool.`,
-    };
   }
 
   const name = ToolName.generateTestCode;
@@ -85,4 +80,37 @@ export function generateTestCodeTool(): ToolInterface {
       ToolName.searchDirectory,
     ],
   };
+}
+
+export async function createTestAndUpdateAiCodeAndSession(
+  content: string,
+  userId: string,
+  sessionId: string,
+  file: {
+    file_name: string;
+    file_path: string;
+  }
+) {
+  const test = await createTestBasedOnExistingCode(content);
+
+  if (!test) {
+    return null;
+  }
+
+  await updateSession(userId, sessionId, {
+    code_content: test,
+  });
+
+  await findAndUpdateAiCodeBySession(
+    sessionId,
+    {
+      code: test,
+      functionality: "Write test code based on existing code",
+      file_name: convertToTestFileName(file.file_name),
+      path: file.file_path,
+    },
+    "code"
+  );
+
+  return test;
 }

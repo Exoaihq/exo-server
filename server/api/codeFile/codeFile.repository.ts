@@ -9,7 +9,7 @@ import { createAiWritenCode } from "../aiCreatedCode/aiCreatedCode.repository";
 import { findCodeDirectoryById } from "../codeDirectory/codeDirectory.repository";
 import { getCodeStandards } from "../codeDirectory/codeDirectory.service";
 import { createCodeSnippet } from "../codeSnippet/codeSnippet.repository";
-import { FileWithSnippets } from "./codeFile.type";
+import { DbFile, FileWithSnippets } from "./codeFile.type";
 
 export async function findSnippetByFileNameAndAccount(
   fileName: string,
@@ -241,7 +241,7 @@ export const updateFileById = async (
 export const createCodeFile = async (
   accountId: string,
   values: Partial<Database["public"]["Tables"]["code_file"]["Insert"]>
-): Promise<Database["public"]["Tables"]["code_file"]["Insert"] | null> => {
+): Promise<DbFile | null> => {
   const { data, error } = await supabase
     .from("code_file")
     .insert([{ ...values, account_id: accountId }])
@@ -255,7 +255,7 @@ export const createCodeFile = async (
     return null;
   }
 
-  return data[0] as Database["public"]["Tables"]["code_file"]["Row"];
+  return data[0] as DbFile;
 };
 
 export async function findTestFile(

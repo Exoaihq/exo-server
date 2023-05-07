@@ -8,6 +8,7 @@ import {
   commandLineLoading,
 } from "../../../utils/commandLineLoadingl";
 import { openAiApiKey } from "../../../utils/envVariable";
+import { logError } from "../../../utils/commandLineColors";
 
 const { Configuration, OpenAIApi } = require("openai");
 const { encode, decode } = require("gpt-3-encoder");
@@ -55,7 +56,7 @@ export async function baseCreateChat(
     return res?.data?.choices[0]?.message?.content;
   } catch (error: any) {
     clearLoading(interval, `Query failed`);
-    console.log(">>>>>>>>>>>>>>error", error.response.data);
+    logError(error.response.data.error.message);
     return "";
   }
 }

@@ -11,6 +11,7 @@ import {
   findDeletedFiles,
   findDuplicateFiles,
   handleAndFilesToDb,
+  writeTestsForFiles,
 } from "./codeFile.service";
 import {
   deleteMulipleFilesById,
@@ -43,8 +44,8 @@ export const findAndUpdateFilesFromClient = async (
 
     // const dbFiles = await findFilesByDirectoryId(directoryId);
     // if (dbFiles) {
-    //   logInfo(`DB Files ${dbFiles?.length}`);
-    //   logInfo(`Client Files ${files?.length}`);
+    //   logInfo(`DB Files ${dbFiles.length}`);
+    //   logInfo(`Client Files ${files.length}`);
 
     //   const duplicateFiles = findDuplicateFiles(dbFiles);
 
@@ -99,5 +100,45 @@ export const handleFileUpload = async (
   } catch (error: any) {
     console.log(error);
     res.status(500).json({ message: error.message });
+  }
+};
+
+export interface WriteTestRequest {
+  files: ParseCode[];
+  directoryPath: string;
+  baseApiUrl: string;
+  session: any;
+  sessionId: string;
+}
+
+export const handleWriteTests = async (
+  req: AuthenticatedRequest,
+  res: Response
+) => {
+  try {
+    const { userId } = req;
+
+    const { directoryPath, sessionId, files } = req.body as WriteTestRequest;
+
+    const account = await findOrUpdateAccount(userId);
+
+    if (!account) {
+      return res.status(404).json({ message: "Can't find the user account" });
+    }
+
+    const response = await writeTestsForFiles(
+      files,
+      directoryPath,
+      account.id,
+      userId,
+      sessionId
+    );
+
+    return res.status(200).json({
+      data: response,
+    });
+  } catch (error: any) {
+    console.log(error);
+    res.status(405).json({ message: error.message });
   }
 };
