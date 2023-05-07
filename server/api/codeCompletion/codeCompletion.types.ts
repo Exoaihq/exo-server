@@ -26,8 +26,6 @@ export interface CodeCompletionResponseMetadata {
 }
 
 export interface Choice {
-  finish_reason: string;
-  index: number;
   message: ChatMessage;
 }
 

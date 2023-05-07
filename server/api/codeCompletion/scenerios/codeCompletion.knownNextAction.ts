@@ -1,5 +1,5 @@
 import { Response } from "express";
-import { ChatMessage } from "../../../../types/chatMessage.type";
+import { ChatMessage, ChatUserType } from "../../../../types/chatMessage.type";
 import { deserializeJson } from "../../../../utils/deserializeJson";
 import { createAiCodeFromNewFilePrompt } from "../../aiCreatedCode/aiCreatedCode.service";
 import { createMessageWithUser } from "../../message/message.service";
@@ -40,7 +40,7 @@ export async function handleKnownNextAction(
     0.2
   );
 
-  if (!doesItAnswerTheQuestion.choices[0].text) {
+  if (!doesItAnswerTheQuestion) {
     createMessageWithUser(
       {
         content: "I'm sorry, I don't understand. Can you clarify or rephrase?",
@@ -49,7 +49,7 @@ export async function handleKnownNextAction(
       sessionId
     );
   } else {
-    const doesIt = deserializeJson(doesItAnswerTheQuestion.choices[0].text);
+    const doesIt = deserializeJson(doesItAnswerTheQuestion);
 
     if (doesIt.answer === false) {
       createMessageWithUser(
@@ -61,7 +61,12 @@ export async function handleKnownNextAction(
       );
       return res.status(200).json({
         data: {
-          choices: doesItAnswerTheQuestion.choices,
+          choices: {
+            message: {
+              content: doesItAnswerTheQuestion,
+              role: ChatUserType.assistant,
+            },
+          },
           metadata: {
             projectDirectory: "",
             projectFile: "",
@@ -136,7 +141,14 @@ export async function handleKnownNextAction(
 
       return res.status(200).json({
         data: {
-          choices: doesItAnswerTheQuestion.choices,
+          choices: [
+            {
+              message: {
+                content: doesItAnswerTheQuestion,
+                role: ChatUserType.assistant,
+              },
+            },
+          ],
           metadata: {
             projectDirectory: "",
             projectFile: "",

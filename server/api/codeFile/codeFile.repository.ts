@@ -2,7 +2,7 @@ import { PostgrestError } from "@supabase/supabase-js";
 import { supabase } from "../../../server";
 import { SnippetByFileName } from "../../../types/parseCode.types";
 import { Database } from "../../../types/supabase";
-import { logError } from "../../../utils/commandLineColors";
+import { logError, logInfo } from "../../../utils/commandLineColors";
 import { extractFileNameAndPathFromFullPath } from "../../../utils/getFileName";
 import { getParsedSnippetFromCodeBlock } from "../../../utils/treeSitter";
 import { createAiWritenCode } from "../aiCreatedCode/aiCreatedCode.repository";
@@ -143,12 +143,10 @@ export async function findFilesByAccountIdAndDirectoryId(
 
 export async function findFilesByDirectoryId(
   directoryId: number
-): Promise<Partial<Database["public"]["Tables"]["code_file"]["Row"]>[] | null> {
+): Promise<Database["public"]["Tables"]["code_file"]["Row"][] | null> {
   const { data, error } = await supabase
     .from("code_file")
-    .select(
-      "id, file_name, account_id, file_path, code_directory_id, code_directory_parent_id, file_explaination"
-    )
+    .select("*")
     .eq("code_directory_id", directoryId);
 
   if (error) {
@@ -378,4 +376,39 @@ export async function createExoConfig(
   });
 
   return data[0] as Database["public"]["Tables"]["code_file"]["Row"];
+}
+
+export async function deleteFileById(id: number) {
+  const { data, error } = await supabase
+    .from("code_file")
+    .delete()
+    .eq("id", id)
+    .select();
+
+  if (error) {
+    console.log(error);
+    return null;
+  }
+  if (!data) {
+    return null;
+  }
+  return data;
+}
+
+export async function deleteMulipleFilesById(ids: number[]) {
+  const { data, error } = await supabase
+    .from("code_file")
+    .delete()
+    .in("id", ids)
+    .select();
+
+  if (error) {
+    console.log(error);
+    return null;
+  }
+  if (!data) {
+    return null;
+  }
+  logInfo(`Deleted files ${JSON.stringify(data)}`);
+  return data;
 }

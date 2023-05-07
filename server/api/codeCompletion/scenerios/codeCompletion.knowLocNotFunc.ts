@@ -1,4 +1,4 @@
-import { ChatMessage } from "../../../../types/chatMessage.type";
+import { ChatMessage, ChatUserType } from "../../../../types/chatMessage.type";
 import { EngineName } from "../../../../types/openAiTypes/openAiEngine";
 import { createMessageWithUser } from "../../message/message.service";
 import { createChatCompletion } from "../../openAi/openai.service";
@@ -34,7 +34,7 @@ export async function handleKNnowLocButNotFunc(
       EngineName.Turbo,
       0.3
     );
-    codeCompletionResponse.choices = response.choices;
+
     codeCompletionResponse.metadata = {
       projectDirectory: "",
       projectFile: "",
@@ -43,7 +43,14 @@ export async function handleKNnowLocButNotFunc(
     };
 
     return {
-      choices: response.choices,
+      choices: [
+        {
+          message: {
+            content: response,
+            role: ChatUserType.assistant,
+          },
+        },
+      ],
       metadata: {
         projectDirectory: "existingFile",
         projectFile: "",
@@ -60,7 +67,7 @@ export async function handleKNnowLocButNotFunc(
       0.3,
       400
     );
-    codeCompletionResponse.choices = response.choices;
+
     codeCompletionResponse.metadata = {
       projectDirectory: "",
       projectFile: "",
@@ -68,7 +75,14 @@ export async function handleKNnowLocButNotFunc(
       requiredFunctionality: "",
     };
     return {
-      choices: response.choices,
+      choices: [
+        {
+          message: {
+            content: response,
+            role: ChatUserType.assistant,
+          },
+        },
+      ],
       metadata: {
         projectDirectory: "newFile",
         projectFile: "",
@@ -89,10 +103,23 @@ export async function handleKNnowLocButNotFunc(
       0.1
     );
 
-    await createMessageWithUser(response.choices[0].message, sessionId);
+    await createMessageWithUser(
+      {
+        content: response,
+        role: ChatUserType.assistant,
+      },
+      sessionId
+    );
 
     return {
-      choices: response.choices,
+      choices: [
+        {
+          message: {
+            content: response,
+            role: ChatUserType.assistant,
+          },
+        },
+      ],
       metadata: {
         projectDirectory: "scratchPad",
         projectFile: "",

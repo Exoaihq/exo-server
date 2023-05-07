@@ -51,11 +51,7 @@ export function generateNewCodeTool(): ToolInterface {
       },
     ]);
 
-    if (
-      isPromptToGenerateCode?.choices[0].message.content
-        ?.toLowerCase()
-        .includes("yes")
-    ) {
+    if (isPromptToGenerateCode?.toLowerCase().includes("yes")) {
       const response = await createChatCompletion(
         [
           {
@@ -69,9 +65,7 @@ export function generateNewCodeTool(): ToolInterface {
         EngineName.GPT4
       );
 
-      const improvedCode = response?.choices[0].message?.content
-        ? response?.choices[0].message?.content
-        : null;
+      const improvedCode = response ? response : null;
 
       console.log("improvedCode", improvedCode);
 
@@ -97,7 +91,7 @@ export function generateNewCodeTool(): ToolInterface {
         {
           code: improvedCode,
           functionality,
-          file_name: getFileNameRes.choices[0].message.content,
+          file_name: getFileNameRes,
         },
         "code"
       );

@@ -48,7 +48,13 @@ export async function handleExistingFileUpdate(
       0.1
     );
 
-    await createMessageWithUser(response.choices[0].message, sessionId);
+    await createMessageWithUser(
+      {
+        content: response,
+        role: ChatUserType.assistant,
+      },
+      sessionId
+    );
 
     if (writeCodeObject && writeCodeObject.id) {
       updateAiWritenCode(writeCodeObject.id, {
@@ -64,9 +70,16 @@ export async function handleExistingFileUpdate(
       new_file: false,
       code_content: "",
     });
-    console.log("Reponse from no name or path", response.choices[0].message);
+    console.log("Reponse from no name or path", response);
     return {
-      choices: response.choices,
+      choices: [
+        {
+          message: {
+            content: response,
+            role: ChatUserType.assistant,
+          },
+        },
+      ],
       metadata: {
         projectDirectory: "existingFile",
         projectFile: "",
@@ -181,7 +194,7 @@ export async function handleScratchPadUpdate(
   if (writeCodeObject && writeCodeObject.id) {
     updateAiWritenCode(writeCodeObject.id, {
       functionality,
-      code: response.choices[0].message?.content,
+      code: response,
       completed_at: new Date().toISOString(),
       location,
     });

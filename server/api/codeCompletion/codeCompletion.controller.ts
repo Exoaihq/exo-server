@@ -1,6 +1,7 @@
 import { Response } from "express";
 import { AuthenticatedRequest } from "../../middleware/isAuthenticated";
 import {
+  createMessageWithUser,
   createMessagesWithUser,
   getOnlyRoleAndContentMessagesByUserAndSession,
 } from "../message/message.service";
@@ -17,6 +18,7 @@ import {
 import { checkDbSession } from "./codeCompletion.service";
 import { CodeCompletionRequest } from "./codeCompletion.types";
 import { handleKnownNextAction } from "./scenerios/codeCompletion.knownNextAction";
+import { ChatUserType } from "../../../types/chatMessage.type";
 
 export const handleCodeCompletion = async (
   req: AuthenticatedRequest,
@@ -64,7 +66,7 @@ export const handleCodeCompletion = async (
       0.2
     );
 
-    const baseClassificaiton = classifyMessage.choices[0].text?.trim();
+    const baseClassificaiton = classifyMessage.trim();
 
     console.log("Base classificaiton", baseClassificaiton);
 
@@ -76,13 +78,15 @@ export const handleCodeCompletion = async (
     };
 
     if (baseClassificaiton === "generalChat") {
-      const choices = await (
-        await runBaseClassificaitonChatCompletion(sessionMessages)
-      ).choices;
+      const choices = await await runBaseClassificaitonChatCompletion(
+        sessionMessages
+      );
 
-      await createMessagesWithUser(
-        userId,
-        choices.map((choice) => choice.message),
+      await createMessageWithUser(
+        {
+          content: choices,
+          role: ChatUserType.assistant,
+        },
         sessionId
       );
       return res.status(200).json({

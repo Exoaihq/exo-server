@@ -18,10 +18,8 @@ import {
   addCodeToSupabase,
   deleteSnippetById,
 } from "../codeSnippet/codeSnippet.repository";
-import {
-  createEmbeddings,
-  createTextCompletion,
-} from "../openAi/openai.service";
+import { createTextCompletion } from "../openAi/openai.service";
+import { createEmbeddings } from "../openAi/openAi.repository";
 
 export type AuthResponseWithUser = {
   data: {
@@ -254,11 +252,11 @@ export async function addDirectoryToSupabase(directory: ParsedDirectory) {
   );
 
   const directory_explaination_embedding = await createEmbeddings([
-    directoryExplaination.choices[0].text?.trim(),
+    directoryExplaination.trim(),
   ]);
 
   const dbRecord = {
-    directory_explaination: directoryExplaination.choices[0].text?.trim(),
+    directory_explaination: directoryExplaination.trim(),
     directory_explaination_embedding,
     file_path: filePath,
     directory_name: directoryName,
@@ -429,7 +427,7 @@ export async function assignExplainationsForFilesWhereNull(
     const fileExplaination = await createTextCompletion(prompt);
     console.log(fileExplaination);
 
-    const explaination = fileExplaination.choices[0].text?.trim();
+    const explaination = fileExplaination?.trim();
 
     const file_explaination_embedding = await createEmbeddings([explaination]);
     console.log(file_explaination_embedding);

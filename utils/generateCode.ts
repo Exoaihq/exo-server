@@ -38,7 +38,7 @@ export async function createCodeCompletionAddToFiles(
     loadingMessage
   );
   try {
-    let generatedCode = await res?.choices[0].text;
+    let generatedCode = res;
     if (!generatedCode) {
       return;
     }
@@ -65,7 +65,7 @@ export async function createCodeCompletionAddToNewNamedFile(
 ) {
   const res = await createTextCompletion(prompt, 1, loadingMessage, "chat");
   try {
-    let generatedCode = await res?.choices[0].text;
+    let generatedCode = res;
     if (!generatedCode) {
       return;
     }
@@ -90,8 +90,8 @@ export async function refactorFile(prompt: string, filePath: string) {
     const entirePrompt = prefix + (await data) + "\n" + prompt;
     console.log(">>>>>>>>>>", entirePrompt);
     const res = await createTextCompletion(entirePrompt, 1, "Refactoring...");
-    if (res.choices[0].text) {
-      addCodeToTheBottonOfFile(filePath, res.choices[0].text);
+    if (res) {
+      addCodeToTheBottonOfFile(filePath, res);
     }
     console.log(res);
     response = res;

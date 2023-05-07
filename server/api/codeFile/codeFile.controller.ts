@@ -7,7 +7,16 @@ import { handleFileUploadWithSession } from "../codeCompletion/codeCompletion.se
 import { getOnlyRoleAndContentMessagesByUserAndSession } from "../message/message.service";
 import { findOrUpdateAccount } from "../supabase/account.service";
 import { findOrCreateSession } from "../supabase/supabase.service";
-import { handleAndFilesToDb } from "./codeFile.service";
+import {
+  findDeletedFiles,
+  findDuplicateFiles,
+  handleAndFilesToDb,
+} from "./codeFile.service";
+import {
+  deleteMulipleFilesById,
+  findFilesByDirectoryId,
+} from "./codeFile.repository";
+import { logInfo } from "../../../utils/commandLineColors";
 
 export interface CreateFilesRequest {
   files: ParseCode[];
@@ -32,19 +41,28 @@ export const findAndUpdateFilesFromClient = async (
 
     const { files, directoryId } = req.body as CreateFilesRequest;
 
+    const dbFiles = await findFilesByDirectoryId(directoryId);
+    if (dbFiles) {
+      logInfo(`DB Files ${dbFiles?.length}`);
+      logInfo(`Client Files ${files?.length}`);
+
+      const duplicateFiles = findDuplicateFiles(dbFiles);
+
+      if (duplicateFiles && duplicateFiles.duplicateCount > 0) {
+        deleteMulipleFilesById(
+          duplicateFiles.duplicateFilePairs.map((f) => f?.oldestFile?.id)
+        );
+      }
+
+      const deletedFiles = findDeletedFiles(files, dbFiles);
+      if (deletedFiles.length > 0) {
+        deleteMulipleFilesById(deletedFiles.map((f) => f.id));
+      }
+    }
+
     handleAndFilesToDb(files, account, directoryId);
 
-    // if (directoryId) {
-    //   await createMessageWithUser(
-    //     {
-    //       content: `Started indexing your directroy. This may take a while. The directory indexed date will be updated when the indexing is completed.`,
-    //       role: "assistant",
-    //     },
-    //     sessionId
-    //   );
-    // }
-
-    return res.status(200).json({ data: "done" });
+    return res.status(200).json({ data: files });
   } catch (error: any) {
     res.status(500).json({ message: error.message });
   }

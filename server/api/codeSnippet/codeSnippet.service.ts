@@ -11,10 +11,7 @@ import {
   findFileByAccountIdAndFullFilePath,
 } from "../codeFile/codeFile.repository";
 import { findImportExportMapByImportId } from "../exportImportMap/exportImportMap.repository";
-import {
-  createChatCompletion,
-  createEmbeddings,
-} from "../openAi/openai.service";
+import { createChatCompletion } from "../openAi/openai.service";
 import {
   assignCodeSnippetToFile,
   findAllSnippetWithoutFiles,
@@ -29,6 +26,7 @@ import {
   updateSnippetById,
 } from "./codeSnippet.repository";
 import { logInfo, logWarning } from "../../../utils/commandLineColors";
+import { createEmbeddings } from "../openAi/openAi.repository";
 
 const supabase = createClient(supabaseUrl, supabaseKey);
 
@@ -361,17 +359,13 @@ export async function matchExportsInSnippetBody() {
         },
       ]);
 
-      if (
-        !externalMethods ||
-        !externalMethods.choices ||
-        externalMethods.choices.length === 0
-      ) {
+      if (!externalMethods) {
         continue;
       }
 
-      console.log(externalMethods.choices[0].message.content);
+      console.log(externalMethods);
 
-      const parsed = findArray(externalMethods.choices[0].message.content);
+      const parsed = findArray(externalMethods);
       if (!parsed || !parsed.length || parsed.length === 0) {
         await updateSnippetById(snippet.id, {
           has_external_methods: false,

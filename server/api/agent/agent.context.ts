@@ -1,6 +1,6 @@
 import { logInfo } from "../../../utils/commandLineColors";
 import { getCompletedTasks, updateTaskById } from "../task/task.repository";
-import { TaskWithObjective } from "../task/task.types";
+import { Task, TaskWithObjective } from "../task/task.types";
 import { handleLoopAgent } from "./autoAgents/handleLoopAgent";
 import { ToolName } from "./tools";
 
@@ -16,7 +16,7 @@ export function isSearchTool(taskName: string | null) {
   return false;
 }
 
-export function isGenerateCodeTool(task: TaskWithObjective) {
+export function isGenerateCodeTool(task: TaskWithObjective | Task) {
   if (!task) return false;
   if (
     task?.tool_name === ToolName.generateNewCode ||

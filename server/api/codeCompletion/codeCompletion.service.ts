@@ -24,6 +24,7 @@ import {
   locationPrompt,
 } from "./codeCompletion.prompts";
 import {
+  Choice,
   CodeCompletionResponse,
   CodeCompletionResponseMetadata,
   OpenAiChatCompletionResponse,
@@ -211,10 +212,12 @@ export async function checkDbSession(
     EngineName.Turbo,
     0.1
   );
-  codeCompletionResponse.choices = response.choices;
 
   await createMessageWithUser(
-    codeCompletionResponse.choices[0].message,
+    {
+      content: response,
+      role: ChatUserType.assistant,
+    },
     sessionId
   );
   return await codeCompletionResponse;
@@ -272,24 +275,22 @@ export async function handleFileUploadWithSession(
 }
 
 export async function handleParsingCreatedCode(
-  response: OpenAiChatCompletionResponse,
+  response: string,
   metadata: CodeCompletionResponseMetadata,
   sessionId?: string,
   location?: string,
   userId: string = "",
   functionality?: string
 ): Promise<CodeCompletionResponse> {
-  const parsedContent = parseReturnedCode(response.choices[0].message?.content);
+  const parsedContent = parseReturnedCode(response);
   console.log("parsed content", parsedContent.code);
 
-  const codeCompletionChoiceResponse = [
+  const codeCompletionChoiceResponse: Choice[] = [
     {
       message: {
         role: ChatUserType.assistant,
         content: `${parsedContent.message} How does it look? Let me know if you'd like to make any changes.`,
       },
-      index: response.choices[0].index,
-      finish_reason: response.choices[0].finish_reason,
     },
   ];
 

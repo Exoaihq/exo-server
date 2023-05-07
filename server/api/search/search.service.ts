@@ -1,9 +1,10 @@
+import { ChatUserType } from "../../../types/chatMessage.type";
 import { findSnippetByExplainationEmbedding } from "../codeSnippet/codeSnippet.service";
 import {
   createMessageWithUser,
   getOnlyRoleAndContentMessagesSession,
 } from "../message/message.service";
-import { createEmbeddings } from "../openAi/openai.service";
+import { createEmbeddings } from "../openAi/openAi.repository";
 import { findOrUpdateAccount } from "../supabase/account.service";
 
 export async function handleSearch(userId: string, sessionId: string) {
@@ -51,8 +52,10 @@ export async function handleSearch(userId: string, sessionId: string) {
   };
 
   await createMessageWithUser(
-    // @ts-ignore
-    templateResponse.data.choices[0].message,
+    {
+      content: templateResponse.data.choices[0].message.content,
+      role: ChatUserType.assistant,
+    },
     sessionId
   );
   return templateResponse;

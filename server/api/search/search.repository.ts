@@ -1,6 +1,6 @@
 import { supabase } from "../../../server";
 import { Database } from "../../../types/supabase";
-import { createEmbeddings } from "../openAi/openai.service";
+import { createEmbeddings } from "../openAi/openAi.repository";
 
 export async function codeDirectorySearch(
   searchQuery: string,

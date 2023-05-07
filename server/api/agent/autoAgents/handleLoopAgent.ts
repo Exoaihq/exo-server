@@ -40,18 +40,17 @@ async function runLoop(prompt: string) {
   let input: { toolName: string; toolInput: string }[] | null = null;
   try {
     logInfo(`Loop prompt: ${prompt}`);
-    const response: OpenAiChatCompletionResponse = await createChatCompletion([
+    const response: string = await createChatCompletion([
       {
         content: prompt,
         role: ChatUserType.user,
       },
     ]);
 
-    const { content } = response.choices[0].message;
-    logInfo(`Loop response: ${content}`);
-    input = JSON.parse(content);
+    logInfo(`Loop response: ${response}`);
+    input = JSON.parse(response);
     if (!input) {
-      input = extractAllToolInfo(response?.choices[0]?.message?.content);
+      input = extractAllToolInfo(response);
     }
     if (!input) {
       logError(`Loop agent failed to run. Aborting...`);

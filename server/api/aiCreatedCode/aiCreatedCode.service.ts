@@ -29,12 +29,10 @@ export const createAiCodeFromNewFilePrompt = async (
     getFileNameAndFunctionalityPrompt(content),
     0.2
   );
-  if (!fileNameAndFunc.choices[0].text) {
+  if (!fileNameAndFunc) {
     throw new Error("Could not parse file name and functionality");
   }
-  const { fileName, functionality } = deserializeJson(
-    fileNameAndFunc.choices[0].text
-  );
+  const { fileName, functionality } = deserializeJson(fileNameAndFunc);
 
   if (!fileName || !functionality) {
     throw new Error("Could not parse file name and functionality");
@@ -60,12 +58,10 @@ export const createAiCodeFromNewFilePrompt = async (
     EngineName.GPT4
   );
 
-  const code = response.choices[0].message?.content;
-
   // Add it to ai created code
 
   createAiWritenCode({
-    code,
+    code: response,
     functionality,
     session_id: sessionId,
     location: "newFile",

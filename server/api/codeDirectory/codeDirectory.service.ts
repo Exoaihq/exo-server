@@ -10,8 +10,8 @@ import {
   findFilesByDirectoryId,
   updateFileById,
 } from "../codeFile/codeFile.repository";
+import { createEmbeddings } from "../openAi/openAi.repository";
 import {
-  createEmbeddings,
   createTextCompletion,
   summarizeDirectoryExplaination,
 } from "../openAi/openai.service";
@@ -360,15 +360,15 @@ export const getCodeStandards = async (
         "Running code standards analysis",
         "chat"
       );
-      const list = res.choices[0].message?.content;
-      if (!list) {
+
+      if (!res) {
         return [];
       }
       // Get the text after the numbered list and add it to the array
       const regex = /^\d+\.\s+(.*)$/gm;
 
       // Use the regex to extract the text after the number and period for each match in the input string
-      const matches = list.matchAll(regex);
+      const matches = res.matchAll(regex);
 
       for (const match of matches) {
         // Extract the capture group containing the text after the number and period

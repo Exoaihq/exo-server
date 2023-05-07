@@ -45,10 +45,8 @@ export function searchDirectoryTool(): ToolInterface {
             },
           ]);
 
-          const refinementOutput = refinement?.choices[0]?.message.content;
-
-          if (refinementOutput) {
-            output = refinementOutput;
+          if (refinement) {
+            output = refinement;
           }
         }
       } else {

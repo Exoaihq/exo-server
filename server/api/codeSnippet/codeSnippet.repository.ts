@@ -3,11 +3,8 @@ import { ParsedCode } from "../../../types/parseCode.types";
 import { Database } from "../../../types/supabase";
 import { extractFunctionName } from "../../../utils/getMethodName";
 import { findFileByAccountIdAndFullFilePath } from "../codeFile/codeFile.repository";
-import {
-  createEmbeddings,
-  createTextCompletion,
-  getSummaryOfCode,
-} from "../openAi/openai.service";
+import { createEmbeddings } from "../openAi/openAi.repository";
+import { getSummaryOfCode } from "../openAi/openai.service";
 import { matchImportSnippetWithExport } from "./codeSnippet.service";
 
 export const updateSnippetById = async (

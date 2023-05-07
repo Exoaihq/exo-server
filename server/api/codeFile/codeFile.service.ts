@@ -8,26 +8,25 @@ import {
   clearLoading,
   commandLineLoading,
 } from "../../../utils/commandLineLoadingl";
-import { isThisHour, isTodaysDate } from "../../../utils/dates";
 import { extractFileNameAndPathFromFullPath } from "../../../utils/getFileName";
 import { updateCodeDirectoryById } from "../codeDirectory/codeDirectory.repository";
 import {
   createChatCompletion,
-  createEmbeddings,
-  createTextCompletion,
-  getCompletion,
   getSummaryOfCode,
   getSummaryOfFile,
 } from "../openAi/openai.service";
-import { compareAndUpdateSnippets } from "../supabase/supabase.service";
 import {
   createCodeFile,
-  findAllFiles,
   findFileByAccountIdAndFullFilePath,
   findFilesWithoutExplaination,
   findSnippetByFileNameAndAccount,
   updateFileById,
 } from "./codeFile.repository";
+import {
+  createEmbeddings,
+  getTexCompletionUsingDavinci,
+} from "../openAi/openAi.repository";
+import { DbFile } from "./codeFile.type";
 
 const limiter = new RateLimiter({ tokensPerInterval: 15, interval: "minute" });
 
@@ -258,9 +257,7 @@ export const createTestBasedOnExistingCode = async (code: string) => {
     ],
     EngineName.GPT4
   );
-  const test = response?.choices[0].message?.content
-    ? response?.choices[0].message?.content
-    : null;
+  const test = response ? response : null;
   return test;
 };
 
@@ -271,15 +268,103 @@ export async function summarizeCodeExplaination(
   const interval = commandLineLoading("Summarizing code");
   try {
     const remainingRequests = await limiter.removeTokens(1);
-    const response = await getCompletion(
+    const response = await getTexCompletionUsingDavinci(
       `Summarize this explanation of code into a paragraph: ${text}`,
       0.2
     );
-    const res = response.data.choices[0].text;
+
     clearLoading(interval, `Summarizing code query completed`);
-    return res;
+    return response;
   } catch (error: any) {
     clearLoading(interval, `Summarizing code query failed`);
     console.log(error);
+  }
+}
+
+export function findDeletedFiles(
+  filesInRepo: ParseCode[],
+  filesInDb: DbFile[]
+) {
+  if (!filesInDb || !filesInRepo) {
+    logInfo(`Deleted Files 0`);
+    return [];
+  }
+  const deletedFiles = filesInDb.filter((file) => {
+    const found = filesInRepo.find((repoFile) => {
+      return repoFile.filePath === file.file_path + "/" + file.file_name;
+    });
+    return !found;
+  });
+
+  logInfo(`Deleted Files ${deletedFiles.length}`);
+
+  return deletedFiles;
+}
+
+export function findDuplicateFiles(filesInDb: DbFile[]): {
+  duplicateCount: number;
+  duplicateFilePairs:
+    | { file1: DbFile; file2: DbFile; oldestFile: DbFile }[]
+    | [];
+} {
+  if (!filesInDb) {
+    logInfo(`Duplicate Files 0`);
+    return {
+      duplicateCount: 0,
+      duplicateFilePairs: [],
+    };
+  }
+
+  const duplicateFilePairs = [] as {
+    file1: DbFile;
+    file2: DbFile;
+    oldestFile: DbFile;
+  }[];
+
+  const duplicateFiles = filesInDb.filter((file, index) => {
+    const found = filesInDb.find((repoFile) => {
+      return (
+        repoFile.file_name === file.file_name &&
+        repoFile.file_path === file.file_path
+      );
+    });
+    if (!found) {
+      return false;
+    }
+    const findIndex = filesInDb.map((j) => j.id).indexOf(found.id);
+
+    const foundAnother = index !== findIndex;
+
+    if (foundAnother) {
+      //@ts-ignore
+      const oldestFile = findOldestFile(file, found);
+
+      duplicateFilePairs.push({ file1: file, file2: found, oldestFile });
+    }
+
+    return found && index !== findIndex;
+  });
+
+  logInfo(`Duplicate Files ${duplicateFiles.length}`);
+  return {
+    duplicateCount: duplicateFiles.length,
+    duplicateFilePairs,
+  };
+}
+
+export function findOldestFile(
+  dbFile: {
+    updated_at: string;
+  },
+  comparisonFile: {
+    updated_at: string;
+  }
+): DbFile {
+  const dbFileDate = new Date(dbFile.updated_at);
+  const comparisonFileDate = new Date(comparisonFile.updated_at);
+  if (dbFileDate < comparisonFileDate) {
+    return dbFile as DbFile;
+  } else {
+    return comparisonFile as DbFile;
   }
 }

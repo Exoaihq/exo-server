@@ -30,9 +30,7 @@ export function writeCodeToScratchPadTool(): ToolInterface {
     );
 
     console.log("isPromptToGenerateCode", isPromptToGenerateCode);
-    if (
-      isPromptToGenerateCode?.choices[0].text?.toLowerCase().includes("yes")
-    ) {
+    if (isPromptToGenerateCode.toLowerCase().includes("yes")) {
       const response = await createChatCompletion(
         [
           {
@@ -43,9 +41,7 @@ export function writeCodeToScratchPadTool(): ToolInterface {
         EngineName.GPT4
       );
 
-      const improvedCode = response?.choices[0].message?.content
-        ? response?.choices[0].message?.content
-        : null;
+      const improvedCode = response ? response : null;
 
       console.log("improvedCode", improvedCode);
 

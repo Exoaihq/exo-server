@@ -3,12 +3,12 @@ import { deserializeJson } from "../../../utils/deserializeJson";
 
 import { createMessageWithUser } from "../message/message.service";
 import { createObjectiveWithSession } from "../objective/objective.repository";
-
+import { getCompletionDefaultStopToken } from "../openAi/openAi.repository";
 import {
-  chatAgent,
   createChatCompletion,
-  getCompletionDefaultStopToken,
+  createChatWithUserRoleAndLowTemp,
 } from "../openAi/openai.service";
+
 import { codeDirectorySearch } from "../search/search.repository";
 import { findCodeByQuery } from "../search/search.service";
 import { TaskWithObjective } from "../task/task.types";
@@ -86,10 +86,9 @@ export const parseGeneratedToJson = async (generated: string) => {
     parseToJsonPrompt(generated)
   );
 
-  const response = parsedToJson?.data?.choices[0]?.text;
-  console.log(">>>>>>>>>Parsed to json", response);
+  console.log(">>>>>>>>>Parsed to json", parsedToJson);
 
-  const json = deserializeJson(response);
+  const json = deserializeJson(parsedToJson);
 
   return json;
 };
@@ -120,7 +119,9 @@ export async function startNewObjective(
   );
 
   // ***** This is the start of the chat agent *****
-  const generated: string = await chatAgent(currentPrompt);
+  const generated: string = await createChatWithUserRoleAndLowTemp(
+    currentPrompt
+  );
 
   console.log("generated????????", generated);
   const json = await parseGeneratedToJson(generated);
@@ -182,7 +183,6 @@ export async function startNewObjective(
 export const expandContext = async (
   sessionMessages: string | any[],
   accountId: string,
-  userId: string,
   sessionId: string
 ): Promise<string> => {
   const lastMessage = sessionMessages[sessionMessages.length - 1].content;
@@ -206,7 +206,7 @@ export const expandContext = async (
     },
   ]);
 
-  const nouns = res?.choices[0]?.message.content.split(", ");
+  const nouns = res?.split(", ");
 
   createMessageWithUser(
     {

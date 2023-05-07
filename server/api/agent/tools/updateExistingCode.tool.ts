@@ -82,7 +82,7 @@ export function updateExistingCodeTool(): ToolInterface {
             },
           ]);
 
-          const existingCodeIds = relevantCode.choices[0].message.content;
+          const existingCodeIds = relevantCode;
           console.log("existingCodeIds", existingCodeIds);
 
           if (existingCodeIds.includes("null")) {
@@ -104,11 +104,7 @@ export function updateExistingCodeTool(): ToolInterface {
       },
     ]);
 
-    if (
-      isPromptToGenerateCode?.choices[0].message.content
-        ?.toLowerCase()
-        .includes("yes")
-    ) {
+    if (isPromptToGenerateCode.toLowerCase().includes("yes")) {
       const response = await createChatCompletion(
         [
           {
@@ -129,9 +125,7 @@ export function updateExistingCodeTool(): ToolInterface {
         EngineName.GPT4
       );
 
-      const improvedCode = response?.choices[0].message?.content
-        ? response?.choices[0].message?.content
-        : null;
+      const improvedCode = response ? response : null;
 
       if (existingCodeToUpdate.length === 1) {
         await updateSnippetById(existingCodeToUpdate[0].id, {

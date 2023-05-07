@@ -37,10 +37,7 @@ export async function handleGetFunctionalityWhenFileExists(
     EngineName.Turbo
   );
 
-  console.log(
-    "I have the file but need the functionality response",
-    response.choices[0]
-  );
+  console.log("I have the file but need the functionality response", response);
 
   const { fileName, extractedPath } =
     extractFileNameAndPathFromFullPath(fullFilePathWithName);
@@ -62,13 +59,23 @@ export async function handleGetFunctionalityWhenFileExists(
   };
 
   const completionResponse: CodeCompletionResponse = {
-    choices: response.choices,
+    choices: [
+      {
+        message: {
+          content: response,
+          role: ChatUserType.assistant,
+        },
+      },
+    ],
     metadata,
   };
 
   if (completionResponse && completionResponse?.choices[0]) {
     const newMessage = await createMessageWithUser(
-      response.choices[0].message,
+      {
+        content: response,
+        role: ChatUserType.assistant,
+      },
       sessionId
     );
 
@@ -136,7 +143,7 @@ export async function handleUpdatingExistingCode(
   if (writeCodeObject) {
     updateAiWritenCode(writeCodeObject.id, {
       functionality: requiredFunctionality,
-      code: response.choices[0].message?.content,
+      code: response,
       completed_at: new Date().toISOString(),
       location,
       path: extractedPath,
@@ -145,7 +152,7 @@ export async function handleUpdatingExistingCode(
   } else {
     createAiWritenCode({
       functionality: requiredFunctionality,
-      code: response.choices[0].message?.content,
+      code: response,
       completed_at: new Date().toISOString(),
       location,
       path: extractedPath,

@@ -59,24 +59,20 @@ export const useAgent = async (req: AuthenticatedRequest, res: Response) => {
 
     console.log("Quick action prompt", quickActionPrompt);
 
-    // const isQuicActionRes = await createChatCompletion(
-    //   [{ content: quickActionPrompt, role: ChatUserType.user }],
-    //   EngineName.Turbo,
-    //   0.1
-    // );
+    const isQuicActionRes = await createChatCompletion(
+      [{ content: quickActionPrompt, role: ChatUserType.user }],
+      EngineName.Turbo,
+      0.1
+    );
 
-    // const isQuickAction =
-    //   isQuicActionRes.choices[0].message.content.toLowerCase();
+    const isQuickAction = isQuicActionRes.toLowerCase();
 
-    // console.log("Is quick action", isQuickAction);
-
-    const isQuickAction = "null";
+    console.log("Is quick action", isQuickAction);
 
     if (isQuickAction.includes("null")) {
       const expandedContext = await expandContext(
         sessionMessages,
         account?.id,
-        userId,
         sessionId
       );
       console.log("Context", expandedContext);
@@ -133,28 +129,16 @@ export const testAgent = async (req: Request, res: Response) => {
 
     const sessionId = "ad536466-86b0-4f6c-8c40-2118a30a68e1";
 
-    // const output = await searchDirectoryTool().use(
-    //   userId,
-    //   sessionId,
-    //   "codeFile",
-    //   {
-    //     description:
-    //       "1. Use the 'search directory' tool to find the codeFile directory in the code-gen-server repo.",
-    //   }
-    // );
-    // logInfo(`Output ${JSON.stringify(output)}`);
-
-    // await updateExistingCodeTool().use(
-    //   userId,
-    //   sessionId,
-    //   "Add a select statement to the updateAiWritenCode function"
-    // );
-
     const objective = await getObjectiveById(
-      "68044e0f-6e74-4dde-ba89-752a4ee039f5"
+      "9259485f-5ddd-4910-a59b-ce5bfb3d9da6"
     );
 
-    console.log("Objective", objective);
+    if (objective && objective.task) {
+      const nextTask = objective.task.find(
+        (sibling) => sibling.index === 1 + 1
+      );
+      console.log("Next task", nextTask);
+    }
 
     const plan = [
       "Search for the aiCreateCode folder in the code-gen-server repo using the 'search directory' tool.",
@@ -163,25 +147,23 @@ export const testAgent = async (req: Request, res: Response) => {
       "Write the generated test code to the appropriate location using the 'generate new code' tool.",
     ];
 
-    const plansWithLoopRequirements = await createChatCompletion(
-      [
-        {
-          content: `Which of these tasks will have a list of outputs vs one output? ${plan.map(
-            (item, index) => {
-              return `${index + 1}. ${item}`;
-            }
-          )}. Return just the number of the task.`,
-          role: ChatUserType.user,
-        },
-      ],
-      EngineName.Turbo,
-      0.2
-    );
+    // const plansWithLoopRequirements = await createChatCompletion(
+    //   [
+    //     {
+    //       content: `Which of these tasks will have a list of outputs vs one output? ${plan.map(
+    //         (item, index) => {
+    //           return `${index + 1}. ${item}`;
+    //         }
+    //       )}. Return just the number of the task.`,
+    //       role: ChatUserType.user,
+    //     },
+    //   ],
+    //   EngineName.Turbo,
+    //   0.2
+    // );
 
     return res.status(200).json({
-      data: extractUniqueNumbers(
-        plansWithLoopRequirements.choices[0].message.content
-      ),
+      data: objective,
     });
   } catch (error: any) {
     console.log(error);

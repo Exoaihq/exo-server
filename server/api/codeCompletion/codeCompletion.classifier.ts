@@ -92,7 +92,7 @@ export async function runCodeClassificaiton(
 
   const response = await createTextCompletion(classificationPrompt, 0.1);
 
-  const classification = response.choices[0].text;
+  const classification = response;
 
   const base = {
     location: "",
@@ -123,7 +123,7 @@ export async function runUpdateExistingOrCreateNewClassificaiton(
 
   const response = await createTextCompletion(classificationPrompt, 0.1);
 
-  const classification = response.choices[0].text;
+  const classification = response;
 
   const base = {
     where: "",
@@ -156,7 +156,7 @@ export async function runFileUploadClassificaiton(
 
   const response = await createTextCompletion(classificationPrompt, 0.1);
 
-  const classification = response.choices[0].text;
+  const classification = response;
 
   const base = {
     functionality: "",
@@ -180,7 +180,7 @@ export async function runFileUploadClassificaiton(
 
 export async function runBaseClassificaitonChatCompletion(
   messages: ChatMessage[]
-): Promise<OpenAiChatCompletionResponse> {
+): Promise<string> {
   const newMessages = updateBaseClassificationSystemMessage(messages);
   return await createChatCompletion(newMessages, EngineName.Turbo);
 }

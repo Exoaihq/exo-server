@@ -103,16 +103,11 @@ export async function improveCodeAgent() {
           0.5,
           4000
         );
-        if (
-          !res ||
-          !res.choices ||
-          !res.choices[0] ||
-          !res.choices[0].message
-        ) {
+        if (!res) {
           continue;
         } else {
           await createAiWritenCode({
-            code: res.choices[0].message.content,
+            code: res,
             location: "newFile",
             path: codeFile.file_path,
             file_name: convertToExoSuggestionFileName(codeFile.file_name),

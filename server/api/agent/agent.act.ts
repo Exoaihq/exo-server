@@ -9,27 +9,30 @@ import {
 import { extractUniqueNumbers } from "../../../utils/getUniqueNumbers";
 import { getObjectiveById } from "../objective/objective.repository";
 import {
-  chatAgent,
-  createChatCompletion,
+  baseCreateChat,
   getCompletionDefaultStopToken,
+} from "../openAi/openAi.repository";
+import {
+  createChatCompletion,
+  createChatWithUserRoleAndLowTemp,
 } from "../openAi/openai.service";
+
 import { getSessionById } from "../supabase/supabase.service";
 import {
   createTaskWithObjective,
   updateTaskById,
 } from "../task/task.repository";
-import { Task } from "../task/task.types";
-import { isSearchTool } from "./agent.context";
+import { isGenerateCodeTool, isSearchTool } from "./agent.context";
 import { getToolInputPrompt } from "./agent.prompt";
 import {
   FINAL_ANSWER_TOKEN,
-  getToolByNames,
-  getToolDescription,
-  getToolNames,
   OBSERVATION_TOKEN,
   THOUGHT_TOKEN,
   ToolInfo,
   ToolInterface,
+  getToolByNames,
+  getToolDescription,
+  getToolNames,
 } from "./agent.service";
 import { allTools } from "./tools";
 
@@ -57,9 +60,7 @@ export const addPlansTaskListToDb = async (
     0.2
   );
 
-  const plansThatRequireLoop = extractUniqueNumbers(
-    plansWithLoopRequirements.choices[0].message.content
-  );
+  const plansThatRequireLoop = extractUniqueNumbers(plansWithLoopRequirements);
 
   for (let i = 0; i < plan.length; i++) {
     const task = plan[i];
@@ -87,10 +88,9 @@ export const addPlansTaskListToDb = async (
         getToolInputPrompt(tool, task, thought, question)
       );
 
-      const toolInput = toolInputResponse.data.choices[0].text;
-      console.log("Tool input", toolInput);
+      console.log("Tool input", toolInputResponse);
 
-      if (!toolInput) {
+      if (!toolInputResponse) {
         console.log("No tool input");
         continue;
       } else {
@@ -98,7 +98,7 @@ export const addPlansTaskListToDb = async (
           {
             description: task,
             tool_name: tool.name,
-            tool_input: toolInput,
+            tool_input: toolInputResponse,
             marked_ready: i === 0 ? true : false,
             requires_loop: plansThatRequireLoop.includes(i + 1),
             index: i + 1,
@@ -186,14 +186,15 @@ export const executeTask = async (
       // If there is another task, add the output to the next task's input
 
       const nextTask = allTasksForObjective.find(
-        (task) => task.index === index + 1
+        (sibling) => sibling.index === index + 1
       );
       logInfo(`Next task to update: ${nextTask}`);
 
       if (nextTask) {
         await updateTaskById(nextTask.id, {
           tool_input: taskOutput ? taskOutput : output,
-          marked_ready: true,
+          // Only the user can mark the task as ready if it is a generate code task
+          marked_ready: isGenerateCodeTool(nextTask) ? false : true,
         });
       }
 
@@ -275,7 +276,10 @@ export async function runTaskLoop(
 
     // console.log("currentPrompt>>>>>>>>>>>>", currentPrompt);
     // ***** This is the start of the chat agent *****
-    const generated: string = await chatAgent(currentPrompt, stopToken);
+    const generated: string = await createChatWithUserRoleAndLowTemp(
+      currentPrompt,
+      stopToken
+    );
 
     const [tool, tool_input] = await decideNextAction(generated);
     console.log("generated: ", generated);
