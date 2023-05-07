@@ -27,6 +27,7 @@ import {
   getTexCompletionUsingDavinci,
 } from "../openAi/openAi.repository";
 import { DbFile } from "./codeFile.type";
+import { isThisHour } from "../../../utils/dates";
 
 const limiter = new RateLimiter({ tokensPerInterval: 15, interval: "minute" });
 
@@ -54,43 +55,46 @@ export const handleAndFilesToDb = async (
 
     if (!dbFile) {
       // Create new file
-      await createCodeFile(account.id, {
+      const newFile = await createCodeFile(account.id, {
         file_name: fileName,
         file_path: extractedPath,
         code_directory_id: directoryId ? directoryId : null,
         content: contents,
       });
+      logInfo(`File ${newFile?.file_name} created`);
     } else {
       if (!dbFile.updated_at) {
       } else {
-        // const updatedInPastHour = isThisHour(new Date(dbFile.updated_at));
-        // console.log("File updated in the last hour?", updatedInPastHour);
-        // if (updatedInPastHour) {
-        //   return;
-        // }
+        const updatedInPastHour = isThisHour(new Date(dbFile.updated_at));
+        console.log("File updated in the last hour", updatedInPastHour);
+        if (updatedInPastHour) {
+          return;
+        }
       }
     }
 
     // If the file doesn't have content, update it
-    if (!dbFile?.content && dbFile?.id) {
-      updateFileById(dbFile?.id, {
+    if (dbFile && !dbFile.content && dbFile.id) {
+      updateFileById(dbFile.id, {
         content: contents,
+        code_directory_id: directoryId ? directoryId : null,
         updated_at: new Date().toISOString(),
       });
+      logInfo(`File ${dbFile.file_name} content added`);
       totalUpdateCount++;
-    } else if (dbFile?.content !== contents && dbFile?.id) {
+    } else if (dbFile && dbFile.content !== contents && dbFile.id) {
       // If the file has content, but it's not an exact match, update it
-      updateFileById(dbFile?.id, {
+      updateFileById(dbFile.id, {
         content: contents,
+        code_directory_id: directoryId ? directoryId : null,
         updated_at: new Date().toISOString(),
       });
+      logInfo(`File ${dbFile.file_name} content updated`);
       totalUpdateCount++;
     } else {
       // File is up to date
       totalMatchedCount++;
     }
-
-    logInfo(`File ${dbFile?.file_name} updated`);
 
     // Move this to a cron job
     // // Find all code snippets for this file
@@ -148,7 +152,7 @@ export const findFilesWithoutExplainationAndAssignExplaination = async () => {
 
     const { id, file_name, account_id, content, file_path } = file;
 
-    if (!file_name || !file.id || !account_id || !content || !file_path) {
+    if (!file_name || !id || !account_id || !content || !file_path) {
       continue;
     }
 
@@ -195,6 +199,7 @@ export const findFilesWithoutExplainationAndAssignExplaination = async () => {
       await updateFileById(id, {
         file_explaination,
         file_explaination_embedding,
+        updated_at: new Date().toISOString(),
       });
       filesUpdated++;
     }

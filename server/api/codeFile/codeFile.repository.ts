@@ -165,7 +165,7 @@ export async function findFilesWithoutExplaination(): Promise<
   const { data, error } = await supabase
     .from("code_file")
     .select(
-      "id, file_name, account_id, code_snippet(id, file_name, code_explaination, parsed_code_type, code_string, account_id)"
+      "*, code_snippet(id, file_name, code_explaination, parsed_code_type, code_string, account_id)"
     )
     .is("file_explaination", null);
 
@@ -240,8 +240,8 @@ export const updateFileById = async (
 
 export const createCodeFile = async (
   accountId: string,
-  values: Partial<Database["public"]["Tables"]["code_file"]["Update"]>
-): Promise<Database["public"]["Tables"]["code_directory"]["Insert"] | null> => {
+  values: Partial<Database["public"]["Tables"]["code_file"]["Insert"]>
+): Promise<Database["public"]["Tables"]["code_file"]["Insert"] | null> => {
   const { data, error } = await supabase
     .from("code_file")
     .insert([{ ...values, account_id: accountId }])

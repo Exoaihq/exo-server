@@ -82,7 +82,7 @@ export async function getSummaryOfFile(
         This is the file name ${fileName}
         This is where the file is located ${filePath}
         And this is a summary of the code in the file ${codeSummary}
-        Please provide an explaination summary of this file
+        Please provide an explaination summary of this file starting like this "This file, ${fileName}, contains <code language> code that does the following: "
           `,
         role: ChatUserType.user,
       },

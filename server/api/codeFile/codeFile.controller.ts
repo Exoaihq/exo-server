@@ -41,24 +41,24 @@ export const findAndUpdateFilesFromClient = async (
 
     const { files, directoryId } = req.body as CreateFilesRequest;
 
-    const dbFiles = await findFilesByDirectoryId(directoryId);
-    if (dbFiles) {
-      logInfo(`DB Files ${dbFiles?.length}`);
-      logInfo(`Client Files ${files?.length}`);
+    // const dbFiles = await findFilesByDirectoryId(directoryId);
+    // if (dbFiles) {
+    //   logInfo(`DB Files ${dbFiles?.length}`);
+    //   logInfo(`Client Files ${files?.length}`);
 
-      const duplicateFiles = findDuplicateFiles(dbFiles);
+    //   const duplicateFiles = findDuplicateFiles(dbFiles);
 
-      if (duplicateFiles && duplicateFiles.duplicateCount > 0) {
-        deleteMulipleFilesById(
-          duplicateFiles.duplicateFilePairs.map((f) => f?.oldestFile?.id)
-        );
-      }
+    //   if (duplicateFiles && duplicateFiles.duplicateCount > 0) {
+    //     deleteMulipleFilesById(
+    //       duplicateFiles.duplicateFilePairs.map((f) => f?.oldestFile?.id)
+    //     );
+    //   }
 
-      const deletedFiles = findDeletedFiles(files, dbFiles);
-      if (deletedFiles.length > 0) {
-        deleteMulipleFilesById(deletedFiles.map((f) => f.id));
-      }
-    }
+    //   const deletedFiles = findDeletedFiles(files, dbFiles);
+    //   if (deletedFiles.length > 0) {
+    //     deleteMulipleFilesById(deletedFiles.map((f) => f.id));
+    //   }
+    // }
 
     handleAndFilesToDb(files, account, directoryId);
 
