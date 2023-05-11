@@ -77,7 +77,7 @@ export async function createEmbeddings(documents: Array<any>): Promise<any> {
     model: "text-embedding-ada-002",
     input: documents.map((d) => {
       if (!d) return "";
-      return truncateStringTokens(d.replace("\n", " "), 8191);
+      return truncateStringTokens(d, 8191);
     }),
   });
   const [{ embedding }] = response?.data?.data;

@@ -1,11 +1,10 @@
 import { ChatUserType } from "../../../types/chatMessage.type";
-import { findSnippetByExplainationEmbedding } from "../codeSnippet/codeSnippet.service";
 import {
   createMessageWithUser,
   getOnlyRoleAndContentMessagesSession,
 } from "../message/message.service";
-import { createEmbeddings } from "../openAi/openAi.repository";
 import { findOrUpdateAccount } from "../supabase/account.service";
+import { findFileByExplainationEmbedding } from "./search.repository";
 
 export async function handleSearch(userId: string, sessionId: string) {
   const sessionMessages = await getOnlyRoleAndContentMessagesSession(sessionId);
@@ -23,11 +22,6 @@ export async function handleSearch(userId: string, sessionId: string) {
     userMessages[userMessages.length - 1].content,
     account?.id ? account.id : ""
   );
-
-  // const response = await codeDirectorySearch(
-  //   userMessages[userMessages.length - 1].content,
-  //   account?.id ? account.id : ""
-  // );
 
   const templateResponse = {
     data: {
@@ -66,10 +60,8 @@ export async function findCodeByQuery(
   accountId: string,
   match_count: number = 10
 ): Promise<any> {
-  const queryEmbedding = await createEmbeddings([query]);
-
-  const response = await findSnippetByExplainationEmbedding(
-    queryEmbedding,
+  const response = await findFileByExplainationEmbedding(
+    query,
     accountId,
     match_count
   );
