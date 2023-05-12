@@ -1,7 +1,6 @@
 import { Request, Response } from "express";
-import { updateAiCompletedCode } from "../aiCreatedCode/aiCreatedCode.controller";
 import { createAiWritenCode } from "../aiCreatedCode/aiCreatedCode.repository";
-import { updateSnippetById } from "../codeSnippet/codeSnippet.repository";
+import { updateFileById } from "../codeFile/codeFile.repository";
 import { findOrUpdateAccount } from "../supabase/account.service";
 import { checkSessionOrThrow } from "../supabase/supabase.service";
 
@@ -13,10 +12,10 @@ export const updateExoConfig = async (req: Request, res: Response) => {
 
     const account = await findOrUpdateAccount(user.id);
 
-    const { exoConfig, sessionId, snippetId } = req.body;
+    const { exoConfig, fileId } = req.body;
 
-    const snippet = await updateSnippetById(snippetId, {
-      code_string: JSON.stringify(exoConfig),
+    const file = await updateFileById(fileId, {
+      content: JSON.stringify(exoConfig),
       updated_at: new Date().toISOString(),
     });
 
@@ -25,8 +24,8 @@ export const updateExoConfig = async (req: Request, res: Response) => {
       account_id: account.id,
       location: "existingFile",
       completed_at: new Date().toISOString(),
-      path: snippet?.relative_file_path || "",
-      file_name: snippet?.file_name,
+      path: file?.file_path || "",
+      file_name: file?.file_name,
       code: JSON.stringify(exoConfig),
     });
 

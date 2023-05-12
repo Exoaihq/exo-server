@@ -224,7 +224,7 @@ export const updateFileById = async (
   id: number,
   values?: Partial<Database["public"]["Tables"]["code_file"]["Update"]>
 ): Promise<
-  Partial<Database["public"]["Tables"]["code_file"]["Update"] | PostgrestError>
+  Partial<Database["public"]["Tables"]["code_file"]["Update"] | null>
 > => {
   const { data, error } = await supabaseBaseServerClient
     .from("code_file")
@@ -234,7 +234,7 @@ export const updateFileById = async (
 
   if (error || !data) {
     console.log("Error updating code directory", error);
-    return error;
+    return null;
   }
 
   return data[0] as Database["public"]["Tables"]["code_file"]["Row"];
