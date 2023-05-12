@@ -1,12 +1,14 @@
 import { PostgrestError } from "@supabase/supabase-js";
-import { supabase } from "../../../server";
+import { supabaseBaseServerClient } from "../../../server";
 import { Database } from "../../../types/supabase";
 import { findOrUpdateAccount } from "../supabase/account.service";
 
 export const findAllDirectories = async (): Promise<
   Database["public"]["Tables"]["code_directory"]["Row"][] | null
 > => {
-  const { data, error } = await supabase.from("code_directory").select("*");
+  const { data, error } = await supabaseBaseServerClient
+    .from("code_directory")
+    .select("*");
 
   if (error) {
     console.log("Getting all directories error", error);
@@ -25,7 +27,7 @@ export const findCodeDirectoryByNameAndUser = async (
 ): Promise<Database["public"]["Tables"]["code_directory"]["Row"] | null> => {
   const account = await findOrUpdateAccount(userId);
 
-  const { data, error } = await supabase
+  const { data, error } = await supabaseBaseServerClient
     .from("code_directory")
     .select("*")
     .eq("account_id", account ? account.id : null)
@@ -46,7 +48,7 @@ export const findCodeDirectoryByPathAndAccountId = async (
   accountId: string,
   directoryName: string
 ): Promise<Database["public"]["Tables"]["code_directory"]["Row"] | null> => {
-  const { data, error } = await supabase
+  const { data, error } = await supabaseBaseServerClient
     .from("code_directory")
     .select("*")
     .eq("account_id", accountId)
@@ -66,7 +68,7 @@ export const findCodeDirectoryByPathAndAccountId = async (
 export const findCodeDirectoryById = async (
   directoryId: number
 ): Promise<Database["public"]["Tables"]["code_directory"]["Row"] | null> => {
-  const { data, error } = await supabase
+  const { data, error } = await supabaseBaseServerClient
     .from("code_directory")
     .select("*")
     .eq("id", directoryId)
@@ -86,7 +88,7 @@ export const findCodeDirectoryById = async (
 export const getCodeDirectories = async (
   accountId: string
 ): Promise<Database["public"]["Tables"]["code_directory"]["Row"][] | null> => {
-  const { data, error } = await supabase
+  const { data, error } = await supabaseBaseServerClient
     .from("code_directory")
     .select("*, code_file!code_file_code_directory_id_fkey(*)")
     .eq("account_id", accountId)
@@ -107,7 +109,7 @@ export const getCodeDirectories = async (
 export const getSavedCodeDirectories = async (): Promise<
   Database["public"]["Tables"]["code_directory"]["Row"][] | null
 > => {
-  const { data, error } = await supabase
+  const { data, error } = await supabaseBaseServerClient
     .from("code_directory")
     .select("*, code_file!code_file_code_directory_id_fkey(*)")
     .eq("saved", true);
@@ -129,7 +131,7 @@ export const getDirectoriesByParentId = async (
 ): Promise<
   Partial<Database["public"]["Tables"]["code_directory"]["Row"]>[] | null
 > => {
-  const { data, error } = await supabase
+  const { data, error } = await supabaseBaseServerClient
     .from("code_directory")
     .select(
       "id, parent_directory_id, directory_name, file_path, saved, account_id, directory_explaination, indexed_at, created_at, updated_at"
@@ -151,7 +153,7 @@ export const getDirectoriesByParentId = async (
 export const getDirectoriesWithoutExplainations = async (): Promise<
   Database["public"]["Tables"]["code_directory"]["Row"][] | null
 > => {
-  const { data, error } = await supabase
+  const { data, error } = await supabaseBaseServerClient
     .from("code_directory")
     .select("*")
     .is("directory_explaination", null);
@@ -170,7 +172,7 @@ export const getDirectoriesWithoutExplainations = async (): Promise<
 };
 
 export const getSavedDirectoryWhereAccountIsNotNull = async () => {
-  const { data, error } = await supabase
+  const { data, error } = await supabaseBaseServerClient
     .from("code_directory")
     .select("id, saved, account_id, file_path, directory_name")
     .eq("saved", true)
@@ -191,7 +193,7 @@ export const updateCodeDirectoryById = async (
     Database["public"]["Tables"]["code_directory"]["Update"] | PostgrestError
   >
 > => {
-  const { data, error } = await supabase
+  const { data, error } = await supabaseBaseServerClient
     .from("code_directory")
     .update({ ...values })
     .eq("id", id)
@@ -208,7 +210,7 @@ export const updateCodeDirectoryById = async (
 export const getSavedCodeDirectoriesGroupByAccount = async (): Promise<
   Database["public"]["Tables"]["code_directory"]["Row"][] | null
 > => {
-  const { data, error } = await supabase
+  const { data, error } = await supabaseBaseServerClient
     .from("code_directory")
     .select("*, code_file!code_file_code_directory_id_fkey(*)")
     .eq("saved", true)
@@ -234,7 +236,7 @@ export const createCodeDirectoryByUser = async (
 ): Promise<Database["public"]["Tables"]["code_directory"]["Insert"]> => {
   const account = await findOrUpdateAccount(userId);
 
-  const { data } = await supabase
+  const { data } = await supabaseBaseServerClient
     .from("code_directory")
     .insert([
       {
@@ -253,7 +255,7 @@ export const createCodeDirectoryByUser = async (
 export const createCodeDirectory = async (
   values: Database["public"]["Tables"]["code_directory"]["Insert"]
 ): Promise<Database["public"]["Tables"]["code_directory"]["Insert"]> => {
-  const { data } = await supabase
+  const { data } = await supabaseBaseServerClient
     .from("code_directory")
     .insert({ ...values })
     .select();

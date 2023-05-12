@@ -1,6 +1,12 @@
-import { AuthResponse, Session, User } from "@supabase/supabase-js";
+import {
+  AuthResponse,
+  Session,
+  SupabaseClient,
+  User,
+  createClient,
+} from "@supabase/supabase-js";
 import { Request, Response } from "express";
-import { supabase } from "../../../server";
+import { supabaseBaseServerClient } from "../../../server";
 import { AddModel } from "../../../types/openAiTypes/openAiEngine";
 import {
   Element,
@@ -20,12 +26,43 @@ import {
 } from "../codeSnippet/codeSnippet.repository";
 import { createTextCompletion } from "../openAi/openai.service";
 import { createEmbeddings } from "../openAi/openAi.repository";
+import { supabaseKey, supabaseUrl } from "../../../utils/envVariable";
 
 export type AuthResponseWithUser = {
   data: {
     user: User;
     session: Session;
   };
+};
+
+// An unauthenticated client is set on server init. This is used for public access. All protected routes require an authenticated client to be set and should use this client. This is created by the isAuthenticated middleware.
+export let supabaseAuthenticatedServerClient: SupabaseClient<Database> | null =
+  null;
+
+export const authenticatedSupabaseClient = (): SupabaseClient<Database> => {
+  if (!supabaseAuthenticatedServerClient) {
+    throw new Error("Authenticated supabase client not set");
+  }
+  return supabaseAuthenticatedServerClient;
+};
+
+export const setSupabaseAuthenticatedServerClient = async (
+  refresh_token: string,
+  access_token: string
+) => {
+  const supabase = await createClient<Database>(supabaseUrl, supabaseKey, {
+    global: {
+      headers: {
+        Authorization: `Bearer ${access_token}`,
+      },
+    },
+  });
+
+  supabase.auth.setSession({ refresh_token, access_token });
+
+  supabaseAuthenticatedServerClient = supabase;
+
+  return supabase;
 };
 
 export async function checkSessionOrThrow(
@@ -63,29 +100,36 @@ export async function checkSession(session: {
   access_token: string;
   refresh_token: string;
 }) {
-  return await supabase.auth.setSession(session);
+  return await supabaseBaseServerClient.auth.setSession(session);
 }
 
 export const findOrCreateSession = async (
   userId: string,
   sessionId: string
 ): Promise<Database["public"]["Tables"]["session"]["Row"]> => {
-  const { data, error } = await supabase
+  if (!supabaseAuthenticatedServerClient) {
+    throw new Error("No authenticated supabase client");
+  }
+
+  const { data, error } = await supabaseAuthenticatedServerClient
     .from("session")
     .select("*")
     .eq("user_id", userId)
     .eq("id", sessionId);
 
+  if (error) {
+    throw new Error(error.message);
+  }
+
   if (data && data.length > 0) {
     return data[0];
   } else {
-    const { data, error } = await supabase
+    const { data, error } = await supabaseAuthenticatedServerClient
       .from("session")
       .insert([{ user_id: userId, id: sessionId }])
       .select();
 
     if (error || !data) {
-      console.log("Error creating session", error);
       throw new Error(error.message);
     }
 
@@ -96,7 +140,7 @@ export const findOrCreateSession = async (
 export const getSessionById = async (
   sessionId: string
 ): Promise<Database["public"]["Tables"]["session"]["Row"]> => {
-  const { data, error } = await supabase
+  const { data, error } = await supabaseBaseServerClient
     .from("session")
     .select("*")
     .eq("id", sessionId);
@@ -113,7 +157,7 @@ export const updateSession = async (
   sessionId: string,
   session: Partial<Database["public"]["Tables"]["session"]["Update"]>
 ): Promise<any> => {
-  const { data } = await supabase
+  const { data } = await supabaseBaseServerClient
     .from("session")
     .update({ ...session })
     .eq("user_id", userId)
@@ -262,7 +306,7 @@ export async function addDirectoryToSupabase(directory: ParsedDirectory) {
     directory_name: directoryName,
   };
 
-  const { data, error } = await supabase
+  const { data, error } = await supabaseBaseServerClient
     .from("code_directory")
     .insert([dbRecord]);
 
@@ -277,7 +321,9 @@ export async function addFileToSupabase(parsedFile: ParsedFile) {
     file_path: filePath,
   };
 
-  const { data, error } = await supabase.from("code_file").insert([dbRecord]);
+  const { data, error } = await supabaseBaseServerClient
+    .from("code_file")
+    .insert([dbRecord]);
 
   console.log(data, error);
 }
@@ -290,7 +336,7 @@ interface SnippetWithoutFiles {
 export async function findAllSnippetWithoutFiles(): Promise<
   Partial<Database["public"]["Tables"]["code_snippet"]["Row"]>[] | null
 > {
-  const { data, error } = await supabase
+  const { data, error } = await supabaseBaseServerClient
     .from("code_snippet")
     .select("*")
     .is("code_file_id", null);
@@ -308,7 +354,7 @@ export async function findAllSnippetWithoutFiles(): Promise<
 export async function findSnippetByFileName(
   fileName: string
 ): Promise<SnippetByFileName[] | null> {
-  const { data, error } = await supabase
+  const { data, error } = await supabaseBaseServerClient
     .from("code_snippet")
     .select(
       "file_name, id, code_file_id, code_string, code_explaination, start_row, start_column, end_row, end_column, parsed_code_type"
@@ -333,7 +379,7 @@ export async function assignCodeSnippetToFile(
     code_file_id: fileId,
   };
 
-  const { data, error } = await supabase
+  const { data, error } = await supabaseBaseServerClient
     .from("code_snippet")
     .update(dbRecord)
     .eq("id", codeSnippetId);
@@ -437,7 +483,7 @@ export async function assignExplainationsForFilesWhereNull(
       file_explaination_embedding,
     };
 
-    const { data, error } = await supabase
+    const { data, error } = await supabaseBaseServerClient
       .from("code_file")
       .update(dbRecord)
       .eq("id", file.id);
@@ -447,7 +493,9 @@ export async function assignExplainationsForFilesWhereNull(
 }
 
 export async function updateOpenAiModels(models: AddModel[]) {
-  const { data, error } = await supabase.from("openai_models").upsert(models);
+  const { data, error } = await supabaseBaseServerClient
+    .from("openai_models")
+    .upsert(models);
 
   console.log(data, error);
 }
@@ -462,7 +510,9 @@ export async function getOpenAiModelsFromDb(): Promise<
     }[]
   | null
 > {
-  const { data, error } = await supabase.from("openai_models").select("*");
+  const { data, error } = await supabaseBaseServerClient
+    .from("openai_models")
+    .select("*");
 
   return data;
 }

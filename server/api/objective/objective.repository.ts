@@ -1,5 +1,5 @@
 import { Database } from "../../../types/supabase";
-import { supabase } from "../../../server";
+import { supabaseBaseServerClient } from "../../../server";
 import { ObjectiveWithTasks } from "./objective.types";
 import { logError } from "../../../utils/commandLineColors";
 
@@ -8,7 +8,7 @@ export const getObjectivesBySession = async (
 ): Promise<
   Partial<Database["public"]["Tables"]["objective"]["Row"]>[] | []
 > => {
-  const { data, error } = await supabase
+  const { data, error } = await supabaseBaseServerClient
     .from("objective")
     .select("*")
     .order("created_at", { ascending: false })
@@ -28,7 +28,7 @@ export const createObjectiveWithSession = async (
 ): Promise<any | null> => {
   objective["session_id"] = sessionId;
 
-  const { data, error } = await supabase
+  const { data, error } = await supabaseBaseServerClient
     .from("objective")
     // @ts-ignore
     .insert([objective])
@@ -45,7 +45,7 @@ export const createObjectiveWithSession = async (
 export const getObjectiveById = async (
   id: string
 ): Promise<ObjectiveWithTasks | null> => {
-  const { data, error } = await supabase
+  const { data, error } = await supabaseBaseServerClient
     .from("objective")
     .select("*, task(*)")
     .order("created_at", { ascending: false })

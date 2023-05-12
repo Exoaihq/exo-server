@@ -1,4 +1,4 @@
-import { supabase } from "../../../server";
+import { supabaseBaseServerClient } from "../../../server";
 import { Database } from "../../../types/supabase";
 import { convertToTestFileName } from "../../../utils/getFileName";
 import { createAiCodeFromNewFilePrompt } from "../aiCreatedCode/aiCreatedCode.service";
@@ -10,7 +10,7 @@ import { resetSession } from "../supabase/supabase.service";
 export const getGlobalPromptsDb = async (): Promise<
   Database["public"]["Tables"]["prompt"]["Row"][]
 > => {
-  const { data, error } = await supabase
+  const { data, error } = await supabaseBaseServerClient
     .from("prompt")
     .select("*")
     .eq("global", true);
@@ -21,7 +21,7 @@ export const getGlobalPromptsDb = async (): Promise<
 export const getPromptById = async (
   promptId: string
 ): Promise<Database["public"]["Tables"]["prompt"]["Row"] | null> => {
-  const { data, error } = await supabase
+  const { data, error } = await supabaseBaseServerClient
     .from("prompt")
     .select("*")
     .eq("id", promptId);
@@ -32,7 +32,7 @@ export const getPromptById = async (
 export const getMessageExamplePrompts = async (): Promise<
   Database["public"]["Tables"]["prompt"]["Row"][]
 > => {
-  const { data, error } = await supabase
+  const { data, error } = await supabaseBaseServerClient
     .from("prompt")
     .select("*")
     .eq("global", true)
@@ -43,14 +43,16 @@ export const getMessageExamplePrompts = async (): Promise<
 
 export const createNewMessagePrompt = async (messageId: string) => {
   const prompts = await getMessageExamplePrompts();
-  const { data, error } = await supabase.from("message_prompts").insert(
-    prompts.map((prompt) => {
-      return {
-        message_id: messageId,
-        prompt_id: prompt.id,
-      };
-    })
-  );
+  const { data, error } = await supabaseBaseServerClient
+    .from("message_prompts")
+    .insert(
+      prompts.map((prompt) => {
+        return {
+          message_id: messageId,
+          prompt_id: prompt.id,
+        };
+      })
+    );
 };
 
 export const createPromptForLlm = ({

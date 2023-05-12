@@ -1,4 +1,4 @@
-import { Response } from "express";
+import { NextFunction, Response } from "express";
 import { AuthenticatedRequest } from "../../middleware/isAuthenticated";
 import { findOrUpdateAccount } from "../supabase/account.service";
 import { findOrCreateSession } from "../supabase/supabase.service";
@@ -9,16 +9,16 @@ import {
 
 export const getAiCompletedCode = async (
   req: AuthenticatedRequest,
-  res: Response
+  res: Response,
+  next: NextFunction
 ) => {
   try {
     const { userId } = req;
+    debugger;
 
     const { session_id } = req.headers;
 
     const sessionId = session_id as string;
-
-    await findOrCreateSession(userId, sessionId);
 
     const account = await findOrUpdateAccount(userId);
 

@@ -1,14 +1,10 @@
-import { createClient } from "@supabase/supabase-js";
+import { supabaseBaseServerClient } from "../../../server";
 import { Database } from "../../../types/supabase";
-import { supabaseKey, supabaseUrl } from "../../../utils/envVariable";
-
-// Create a single supabase client for interacting with your database
-const supabase = createClient<Database>(supabaseUrl, supabaseKey);
 
 export const findOrUpdateAccount = async (
   userId: string
 ): Promise<Database["public"]["Tables"]["account"]["Row"]> => {
-  const { data, error } = await supabase
+  const { data, error } = await supabaseBaseServerClient
     .from("account")
     .select("*")
     .eq("user_id", userId)
@@ -21,7 +17,7 @@ export const findOrUpdateAccount = async (
   if (data && data.length > 0) {
     return data[0];
   } else {
-    const { data, error } = await supabase
+    const { data, error } = await supabaseBaseServerClient
       .from("account")
       .insert([{ user_id: userId }])
       .select();

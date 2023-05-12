@@ -1,4 +1,4 @@
-import { supabase } from "../../../server";
+import { supabaseBaseServerClient } from "../../../server";
 import { Database } from "../../../types/supabase";
 import { createEmbeddings } from "../openAi/openAi.repository";
 
@@ -16,7 +16,10 @@ export async function codeDirectorySearch(
     match_count,
   };
 
-  const { data, error } = await supabase.rpc("match_code_directory", query);
+  const { data, error } = await supabaseBaseServerClient.rpc(
+    "match_code_directory",
+    query
+  );
 
   return data;
 }
@@ -34,7 +37,10 @@ export async function findFileByExplainationEmbedding(
     match_count,
   };
 
-  const { data, error } = await supabase.rpc("match_code_file", query);
+  const { data, error } = await supabaseBaseServerClient.rpc(
+    "match_code_file",
+    query
+  );
 
   if (error) {
     console.log(error);

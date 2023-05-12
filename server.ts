@@ -4,7 +4,10 @@ import { Database } from "./types/supabase";
 import { port, supabaseKey, supabaseUrl } from "./utils/envVariable";
 
 // Create a single supabase client for interacting with your database
-export const supabase = createClient<Database>(supabaseUrl, supabaseKey);
+export const supabaseBaseServerClient = createClient<Database>(
+  supabaseUrl,
+  supabaseKey
+);
 
 const app = createServer();
 

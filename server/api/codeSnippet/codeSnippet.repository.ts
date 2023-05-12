@@ -1,4 +1,4 @@
-import { supabase } from "../../../server";
+import { supabaseBaseServerClient } from "../../../server";
 import { ParsedCode } from "../../../types/parseCode.types";
 import { Database } from "../../../types/supabase";
 import { extractFunctionName } from "../../../utils/getMethodName";
@@ -11,7 +11,7 @@ export const updateSnippetById = async (
   id: number,
   values?: Partial<Database["public"]["Tables"]["code_snippet"]["Update"]>
 ): Promise<Partial<Database["public"]["Tables"]["code_snippet"]["Update"]>> => {
-  const { data, error } = await supabase
+  const { data, error } = await supabaseBaseServerClient
     .from("code_snippet")
     .update({ ...values })
     .eq("id", id)
@@ -26,7 +26,7 @@ export const updateSnippetById = async (
 };
 
 export const deleteSnippetById = async (id: number) => {
-  const { data, error } = await supabase
+  const { data, error } = await supabaseBaseServerClient
     .from("code_snippet")
     .delete()
     .eq("id", id)
@@ -86,7 +86,7 @@ export async function addCodeToSupabase(
 
   let updatedOrCreated;
   if (dbSnippetId) {
-    const { data, error } = await supabase
+    const { data, error } = await supabaseBaseServerClient
       .from("code_snippet")
       .update(dbRecord)
       .eq("id", dbSnippetId)
@@ -95,7 +95,7 @@ export async function addCodeToSupabase(
       updatedOrCreated = data[0];
     }
   } else {
-    const { data, error } = await supabase
+    const { data, error } = await supabaseBaseServerClient
       .from("code_snippet")
       .insert([dbRecord])
       .select("*");
@@ -125,7 +125,7 @@ export async function addCodeToSupabase(
 }
 
 export const findAllSnippetsWhereNameIsNull = async () => {
-  const { data, error } = await supabase
+  const { data, error } = await supabaseBaseServerClient
     .from("code_snippet")
     .select("code_string, id, name, file_name, parsed_code_type")
     .is("name", null)
@@ -153,7 +153,7 @@ export const findAllSnippetsWhereNameIsNull = async () => {
 };
 
 export const findExportSnippetByNameAndPath = async (name: string) => {
-  const { data, error } = await supabase
+  const { data, error } = await supabaseBaseServerClient
     .from("code_snippet")
     .select(
       "code_string, id, name, file_name, parsed_code_type, relative_file_path, updated_at, account_id"
@@ -183,7 +183,7 @@ export const findSnippetByMethodNameAndAccount = async (
   name: string,
   accountId: string
 ) => {
-  const { data, error } = await supabase
+  const { data, error } = await supabaseBaseServerClient
     .from("code_snippet")
     .select(
       "code_string, id, name, file_name, parsed_code_type, relative_file_path, updated_at, account_id"
@@ -206,7 +206,7 @@ export const findSnippetByMethodNameAndAccount = async (
 };
 
 export const findAllSnippetsImportStatements = async () => {
-  const { data, error } = await supabase
+  const { data, error } = await supabaseBaseServerClient
     .from("code_snippet")
     .select(
       "code_string, id, name, file_name, name, relative_file_path, account_id, parsed_code_type "
@@ -233,7 +233,7 @@ export const findAllSnippetsImportStatements = async () => {
 };
 
 export const createImportExportMap = async (value: any) => {
-  const found = await supabase
+  const found = await supabaseBaseServerClient
     .from("export_import_snippet_map")
     .select("id, export_id, import_id")
     .eq("export_id", value.export_id)
@@ -242,7 +242,7 @@ export const createImportExportMap = async (value: any) => {
   if (found.data && found.data.length > 0) {
     return found.data[0];
   } else {
-    return await supabase
+    return await supabaseBaseServerClient
       .from("export_import_snippet_map")
       .insert([value])
       .select("*");
@@ -250,7 +250,7 @@ export const createImportExportMap = async (value: any) => {
 };
 
 export const getLongExportSnippets = async (minLength: number) => {
-  const { data, error } = await supabase
+  const { data, error } = await supabaseBaseServerClient
     .rpc("find_long_snippets", {
       line_count: minLength,
     })
@@ -273,7 +273,7 @@ export const getLongExportSnippets = async (minLength: number) => {
 export const getLongSnippetsWhereExternalMethodNull = async (
   minLength: number
 ) => {
-  const { data, error } = await supabase
+  const { data, error } = await supabaseBaseServerClient
     .rpc("find_long_snippets", {
       line_count: minLength,
     })
@@ -296,7 +296,7 @@ export const getLongSnippetsWhereExternalMethodNull = async (
 export const createCodeSnippet = async (
   values: Database["public"]["Tables"]["code_snippet"]["Insert"]
 ) => {
-  const { data, error } = await supabase
+  const { data, error } = await supabaseBaseServerClient
     .from("code_snippet")
     .insert([{ ...values }])
     .select("*");
@@ -306,7 +306,7 @@ export const createCodeSnippet = async (
 export async function findExoConfigSnippetByCodeDirectoryId(
   directoryId: number
 ): Promise<Partial<Database["public"]["Tables"]["code_file"]["Row"]> | null> {
-  const { data, error } = await supabase
+  const { data, error } = await supabaseBaseServerClient
     .from("code_snippet")
     .select("*")
     .eq("file_name", "exo-config.json")
@@ -363,7 +363,7 @@ export async function findCodeSnippetById(
   id: number
 ): Promise<FindCodeSnippetById | null> {
   console.log(id);
-  const { data, error } = await supabase
+  const { data, error } = await supabaseBaseServerClient
     .from("code_snippet")
     .select(
       "*, code_file(*), export_import_snippet_map!export_import_snippet_map_export_id_fkey(*, code_snippet!export_import_snippet_map_import_id_fkey(id, code_string))"

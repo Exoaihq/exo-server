@@ -1,5 +1,5 @@
 import { Database } from "../../../types/supabase";
-import { supabase } from "../../../server";
+import { supabaseBaseServerClient } from "../../../server";
 import { createEmbeddings } from "../openAi/openAi.repository";
 
 export const getMemoriesBySession = async (
@@ -7,7 +7,7 @@ export const getMemoriesBySession = async (
 ): Promise<
   Partial<Database["public"]["Tables"]["short_term_memory"]["Row"]>[] | []
 > => {
-  const { data, error } = await supabase
+  const { data, error } = await supabaseBaseServerClient
     .from("short_term_memory")
     .select("id, memory_text, created_at, session_id, memory_context")
     .order("created_at", { ascending: false })
@@ -32,7 +32,7 @@ export const createMemoryWithSession = async (
     memory.memory_embedding = await createEmbeddings([memory.memory_text]);
   }
 
-  const { data, error } = await supabase
+  const { data, error } = await supabaseBaseServerClient
     .from("short_term_memory")
     // @ts-ignore
     .insert([memory])
@@ -51,7 +51,7 @@ export const getMemoriesById = async (
 ): Promise<Partial<
   Database["public"]["Tables"]["short_term_memory"]["Row"]
 > | null> => {
-  const { data, error } = await supabase
+  const { data, error } = await supabaseBaseServerClient
     .from("short_term_memory")
     .select("id, memory_text, created_at, session_id, memory_context")
     .order("created_at", { ascending: false })

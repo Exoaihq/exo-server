@@ -1,5 +1,5 @@
 import { PostgrestError } from "@supabase/supabase-js";
-import { supabase } from "../../../server";
+import { supabaseBaseServerClient } from "../../../server";
 import { SnippetByFileName } from "../../../types/parseCode.types";
 import { Database } from "../../../types/supabase";
 import { logError, logInfo } from "../../../utils/commandLineColors";
@@ -15,7 +15,7 @@ export async function findSnippetByFileNameAndAccount(
   fileName: string,
   accountId: string
 ): Promise<SnippetByFileName[] | null> {
-  const { data, error } = await supabase
+  const { data, error } = await supabaseBaseServerClient
     .from("code_snippet")
     .select(
       "file_name, id, code_file_id, code_string, code_explaination, start_row, start_column, end_row, end_column, parsed_code_type, account_id"
@@ -38,7 +38,7 @@ export async function findFileByFileNameAndAccount(
   accountId: string
 ): Promise<FileWithSnippets | null> {
   console.log(fileName, accountId);
-  const { data, error } = await supabase
+  const { data, error } = await supabaseBaseServerClient
     .from("code_file")
     .select("*, code_snippet(*)")
     .eq("file_name", fileName)
@@ -58,7 +58,7 @@ export async function findFileByFileNameAndAccount(
 export async function findFilesByAccountId(
   accountId: string
 ): Promise<Partial<Database["public"]["Tables"]["code_file"]["Row"]>[] | null> {
-  const { data, error } = await supabase
+  const { data, error } = await supabaseBaseServerClient
     .from("code_file")
     .select("id, file_name, account_id, file_path, code_directory_id")
     .eq("account_id", accountId);
@@ -76,7 +76,7 @@ export async function findFilesByAccountId(
 export async function findFileById(
   fileId: number
 ): Promise<Partial<Database["public"]["Tables"]["code_file"]["Row"]> | null> {
-  const { data, error } = await supabase
+  const { data, error } = await supabaseBaseServerClient
     .from("code_file")
     .select("*, code_snippet(*)")
     .eq("id", fileId)
@@ -98,7 +98,7 @@ export async function findFileByAccountIdAndFullFilePath(
 ): Promise<FileWithSnippets | null> {
   const { fileName, extractedPath } =
     extractFileNameAndPathFromFullPath(fullFilePath);
-  const { data, error } = await supabase
+  const { data, error } = await supabaseBaseServerClient
     .from("code_file")
     .select(
       "id, file_name, account_id, file_path, content, code_directory_id, updated_at, code_snippet(id, code_string, code_explaination, start_row, start_column, end_row, end_column, parsed_code_type)"
@@ -121,7 +121,7 @@ export async function findFilesByAccountIdAndDirectoryId(
   accountId: string,
   directoryId: number
 ): Promise<Partial<Database["public"]["Tables"]["code_file"]["Row"]>[] | null> {
-  const { data, error } = await supabase
+  const { data, error } = await supabaseBaseServerClient
     .from("code_file")
     .select(
       "id, file_name, account_id, file_path, code_directory_id, code_directory_parent_id, file_explaination"
@@ -144,7 +144,7 @@ export async function findFilesByAccountIdAndDirectoryId(
 export async function findFilesByDirectoryId(
   directoryId: number
 ): Promise<Database["public"]["Tables"]["code_file"]["Row"][] | null> {
-  const { data, error } = await supabase
+  const { data, error } = await supabaseBaseServerClient
     .from("code_file")
     .select("*")
     .eq("code_directory_id", directoryId);
@@ -162,11 +162,13 @@ export async function findFilesByDirectoryId(
 export async function findFilesWithoutExplaination(): Promise<
   FileWithSnippets[] | null
 > {
-  const { data, error } = await supabase
+  const { data, error } = await supabaseBaseServerClient
     .from("code_file")
     .select(
       "*, code_snippet(id, file_name, code_explaination, parsed_code_type, code_string, account_id)"
     )
+    .not("account_id", "is", null)
+    .not("content", "is", null)
     .is("file_explaination", null);
 
   if (error) {
@@ -182,7 +184,7 @@ export async function findFilesWithoutExplaination(): Promise<
 export async function findAllFiles(): Promise<
   Partial<Database["public"]["Tables"]["code_file"]["Row"]>[] | null
 > {
-  const { data, error } = await supabase
+  const { data, error } = await supabaseBaseServerClient
     .from("code_file")
     .select("id, file_name, file_explaination, account_id, updated_at")
     .not("account_id", "is", null);
@@ -200,7 +202,7 @@ export async function findAllFiles(): Promise<
 export async function findAllFilesWhereParentIsNull(): Promise<
   Partial<Database["public"]["Tables"]["code_file"]["Row"]>[] | null
 > {
-  const { data, error } = await supabase
+  const { data, error } = await supabaseBaseServerClient
     .from("code_file")
     .select(
       "id, file_name, file_path, file_explaination, account_id, updated_at, code_directory_id, code_directory_parent_id"
@@ -224,7 +226,7 @@ export const updateFileById = async (
 ): Promise<
   Partial<Database["public"]["Tables"]["code_file"]["Update"] | PostgrestError>
 > => {
-  const { data, error } = await supabase
+  const { data, error } = await supabaseBaseServerClient
     .from("code_file")
     .update({ ...values })
     .eq("id", id)
@@ -242,7 +244,7 @@ export const createCodeFile = async (
   accountId: string,
   values: Partial<Database["public"]["Tables"]["code_file"]["Insert"]>
 ): Promise<DbFile | null> => {
-  const { data, error } = await supabase
+  const { data, error } = await supabaseBaseServerClient
     .from("code_file")
     .insert([{ ...values, account_id: accountId }])
     .select();
@@ -266,7 +268,7 @@ export async function findTestFile(
 > | null> {
   const like = `${filePrefix}%.%test%`;
 
-  const { data, error } = await supabase
+  const { data, error } = await supabaseBaseServerClient
     .from("code_file")
     .select()
     .like("file_name", like)
@@ -285,7 +287,7 @@ export async function findTestFile(
 export async function findExoConfigFileByCodeDirectoryId(
   directoryId: number
 ): Promise<Database["public"]["Tables"]["code_file"]["Row"] | null> {
-  const { data, error } = await supabase
+  const { data, error } = await supabaseBaseServerClient
     .from("code_file")
     .select("*, code_snippet(id, file_name, parsed_code_type, code_string)")
     .eq("file_name", "exo-config.json")
@@ -322,7 +324,7 @@ export async function createExoConfig(
     account_id: directory.account_id,
   };
 
-  const { data, error } = await supabase
+  const { data, error } = await supabaseBaseServerClient
     .from("code_file")
     .insert([{ ...values }])
     .select();
@@ -379,7 +381,7 @@ export async function createExoConfig(
 }
 
 export async function deleteFileById(id: number) {
-  const { data, error } = await supabase
+  const { data, error } = await supabaseBaseServerClient
     .from("code_file")
     .delete()
     .eq("id", id)
@@ -396,7 +398,7 @@ export async function deleteFileById(id: number) {
 }
 
 export async function deleteMulipleFilesById(ids: number[]) {
-  const { data, error } = await supabase
+  const { data, error } = await supabaseBaseServerClient
     .from("code_file")
     .delete()
     .in("id", ids)

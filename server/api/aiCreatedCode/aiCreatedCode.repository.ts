@@ -1,11 +1,12 @@
 import { Database } from "../../../types/supabase";
-import { supabase } from "../../../server";
+import { supabaseBaseServerClient } from "../../../server";
+import { authenticatedSupabaseClient } from "../supabase/supabase.service";
 
 export const getAiCodeBySessionOrAccount = async (
   sessionId: string,
   accountId?: string
 ): Promise<Database["public"]["Tables"]["ai_created_code"]["Row"][]> => {
-  const { data, error } = await supabase
+  const { data, error } = await authenticatedSupabaseClient()
     .from("ai_created_code")
     .select("*")
     .or(`session_id.eq.${sessionId},account_id.eq.${accountId}`)
@@ -23,7 +24,7 @@ export const findAiCodeBySessionAndFileName = async (
   sessionId: string,
   fileName: string
 ): Promise<Database["public"]["Tables"]["ai_created_code"]["Row"] | null> => {
-  const { data, error } = await supabase
+  const { data, error } = await supabaseBaseServerClient
     .from("ai_created_code")
     .select("*")
     .eq("session_id", sessionId)
@@ -41,7 +42,7 @@ export const findAiCodeBySessionAndFileName = async (
 export const getAiCodeBySessionCodeNotNull = async (
   sessionId: string
 ): Promise<Database["public"]["Tables"]["ai_created_code"]["Row"]> => {
-  const { data, error } = await supabase
+  const { data, error } = await supabaseBaseServerClient
     .from("ai_created_code")
     .select("*")
     .eq("session_id", sessionId)
@@ -60,7 +61,7 @@ export const findOrCreateAiWritenCode = async (
   sessionId: string,
   values?: Partial<Database["public"]["Tables"]["ai_created_code"]["Update"]>
 ): Promise<Database["public"]["Tables"]["ai_created_code"]["Row"]> => {
-  const { data, error } = await supabase
+  const { data, error } = await supabaseBaseServerClient
     .from("ai_created_code")
     .select("*")
     .eq("session_id", sessionId);
@@ -73,7 +74,7 @@ export const findOrCreateAiWritenCode = async (
   if (data && data.length > 0 && data[0] && !data[0].completed_at) {
     return data[0];
   } else {
-    const { data } = await supabase
+    const { data } = await supabaseBaseServerClient
       .from("ai_created_code")
       .insert([{ session_id: sessionId, ...values }])
       .select();
@@ -86,7 +87,7 @@ export const findOrCreateAiWritenCode = async (
 export const createAiWritenCode = async (
   values: Partial<Database["public"]["Tables"]["ai_created_code"]["Update"]>
 ): Promise<Database["public"]["Tables"]["ai_created_code"]["Row"]> => {
-  const { data, error } = await supabase
+  const { data, error } = await supabaseBaseServerClient
     .from("ai_created_code")
     .insert([{ ...values }])
     .select();
@@ -103,7 +104,7 @@ export const createAiWritenCodeWithSessionLocationAndCode = async (
   code: string,
   location: string
 ): Promise<Database["public"]["Tables"]["ai_created_code"]["Row"]> => {
-  const { data } = await supabase
+  const { data } = await supabaseBaseServerClient
     .from("ai_created_code")
     .insert([{ code, session_id: sessionId, location }])
     .select();
@@ -116,7 +117,7 @@ export const updateAiWritenCode = async (
   id: string,
   values?: Partial<Database["public"]["Tables"]["ai_created_code"]["Update"]>
 ): Promise<void> => {
-  const { data, error } = await supabase
+  const { data, error } = await supabaseBaseServerClient
     .from("ai_created_code")
     .update({ ...values })
     .eq("id", id);

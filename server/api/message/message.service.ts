@@ -2,13 +2,13 @@ import { PostgrestSingleResponse } from "@supabase/supabase-js";
 import { ChatMessage, ChatUserType } from "../../../types/chatMessage.type";
 import { Database } from "../../../types/supabase";
 import { getGlobalPromptsDb } from "../prompt/prompt.service";
-import { supabase } from "../../../server";
+import { supabaseBaseServerClient } from "../../../server";
 import { logError } from "../../../utils/commandLineColors";
 
 export const getMessagesWithUser = async (
   userId: string
 ): Promise<Database["public"]["Tables"]["messages"]["Row"][]> => {
-  const { data, error } = await supabase
+  const { data, error } = await supabaseBaseServerClient
     .from("messages")
     .select("*")
     .eq("user_id", userId);
@@ -19,7 +19,7 @@ export const getMessagesWithUser = async (
 export const getHelerMessagesWithUser = async (
   userId: string
 ): Promise<any> => {
-  const { data, error } = await supabase
+  const { data, error } = await supabaseBaseServerClient
     .from("messages")
     .select("content, created_at, session_id, role")
     .eq("user_id", userId)
@@ -31,7 +31,7 @@ export const getHelerMessagesWithUser = async (
 export const getMessagesByUserAndSession = async (
   sessionId: string
 ): Promise<Database["public"]["Tables"]["messages"]["Row"][]> => {
-  const { data, error } = await supabase
+  const { data, error } = await supabaseBaseServerClient
     .from("messages")
     .select("*, message_prompts(prompt_id)")
     .order("created_at", { ascending: true })
@@ -87,7 +87,7 @@ export const getMessagesByUserAndSession = async (
 export const getOnlyRoleAndContentMessagesSession = async (
   sessionId: string
 ): Promise<ChatMessage[]> => {
-  const { data, error } = await supabase
+  const { data, error } = await supabaseBaseServerClient
     .from("messages")
     .select("role, content, created_at, session_id")
     .order("created_at", { ascending: false })
@@ -113,7 +113,7 @@ export const getOnlyRoleAndContentMessagesByUserAndSession = async (
   userId: string,
   sessionId: string
 ): Promise<ChatMessage[]> => {
-  const { data, error } = await supabase
+  const { data, error } = await supabaseBaseServerClient
     .from("messages")
     .select("role, content, created_at, session_id")
     .order("created_at", { ascending: false })
@@ -152,7 +152,7 @@ export const createMessageWithUser = async (
 } | null> => {
   message["session_id"] = sessionId;
 
-  const { data, error } = await supabase
+  const { data, error } = await supabaseBaseServerClient
     .from("messages")
     .insert([message])
     .select("*");
@@ -174,7 +174,7 @@ export const createMessagesWithUser = async (
     return { ...message, user_id: userId, session_id: sessionId };
   });
 
-  const res = await supabase
+  const res = await supabaseBaseServerClient
     .from("messages")
     // @ts-ignore
     .insert([...updateMessages]);
@@ -204,7 +204,7 @@ export const findUnseenHelperMessages = async (
   sessionId: string
 ) => {
   const userMessages = await getHelerMessagesWithUser(userId);
-  const { data, error } = await supabase
+  const { data, error } = await supabaseBaseServerClient
     .from("app_helper_messages")
     .select("*");
 
