@@ -1,5 +1,4 @@
 import { Request, Response } from "express";
-import { checkSessionOrThrow } from "../supabase/supabase.service";
 import {
   createObjectiveWithSession,
   getObjectivesBySession,

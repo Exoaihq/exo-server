@@ -1,22 +1,20 @@
 import { Request, Response } from "express";
+import { ChatUserType } from "../../../types/chatMessage.type";
+import { EngineName } from "../../../types/openAiTypes/openAiEngine";
 import { logInfo } from "../../../utils/commandLineColors";
 import { AuthenticatedRequest } from "../../middleware/isAuthenticated";
 import { CodeCompletionRequest } from "../codeCompletion/codeCompletion.types";
 import { getOnlyRoleAndContentMessagesByUserAndSession } from "../message/message.service";
+import { getObjectiveById } from "../objective/objective.repository";
+import { createChatCompletion } from "../openAi/openai.service";
 import { handleSearch } from "../search/search.service";
 import { findOrUpdateAccount } from "../supabase/account.service";
-import { findOrCreateSession } from "../supabase/supabase.service";
+import { findOrCreateSession } from "../session/session.service";
 import { getExpectedNextAction, getQuickAction } from "./agent.prompt";
 import { expandContext, startNewObjective } from "./agent.service";
 import { allTools, searchCodeTool, searchDirectoryTool } from "./tools";
 import { writeCodeToScratchPadTool } from "./tools/writeCodeToScarchPad.tool";
-import { createChatCompletion } from "../openAi/openai.service";
-import { getObjectiveById } from "../objective/objective.repository";
-import { ChatUserType } from "../../../types/chatMessage.type";
-import { EngineName } from "../../../types/openAiTypes/openAiEngine";
-import { extractUniqueNumbers } from "../../../utils/getUniqueNumbers";
-
-const fs = require("fs");
+import { handleKnownNextAction } from "../codeCompletion/scenerios/codeCompletion.knownNextAction";
 
 export const useAgent = async (req: AuthenticatedRequest, res: Response) => {
   try {
@@ -45,6 +43,15 @@ export const useAgent = async (req: AuthenticatedRequest, res: Response) => {
       });
     }
 
+    if (dbSession?.expected_next_action) {
+      return await handleKnownNextAction(
+        sessionMessages,
+        dbSession,
+        userId,
+        sessionId,
+        res
+      );
+    }
     // For specific actions that don't require an agent
 
     const lastMessage = sessionMessages[sessionMessages.length - 1]?.content;

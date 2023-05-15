@@ -5,16 +5,15 @@ import { ExpectedNextAction } from "../codeCompletion/scenerios/codeCompletion.k
 import { findExoConfigFileByCodeDirectoryId } from "../codeFile/codeFile.repository";
 import { createMessageWithUser } from "../message/message.service";
 import { findOrUpdateAccount } from "../supabase/account.service";
-import {
-  findOrCreateSession,
-  updateSession,
-} from "../supabase/supabase.service";
+
 import {
   createCodeDirectoryByUser,
   getCodeDirectories,
   updateCodeDirectoryById,
 } from "./codeDirectory.repository";
 import { getDirectoryFilesAndSnippetCount } from "./codeDirectory.service";
+import { findOrCreateSession } from "../session/session.service";
+import { updateSession } from "../session/session.repository";
 
 export const getCodeDirectoriesByAccount = async (
   req: AuthenticatedRequest,

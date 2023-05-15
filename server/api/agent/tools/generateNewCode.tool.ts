@@ -6,7 +6,7 @@ import { findAndUpdateAiCodeBySession } from "../../aiCreatedCode/aiCreatedCode.
 import { createChatCompletion } from "../../openAi/openai.service";
 import { findCodeByQuery } from "../../search/search.service";
 import { findOrUpdateAccount } from "../../supabase/account.service";
-import { updateSession } from "../../supabase/supabase.service";
+import { updateSession } from "../../session/session.repository";
 import { ToolInterface } from "../agent.service";
 import { generateNewCodePrompt } from "./generateNewCode.prompt";
 

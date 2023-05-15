@@ -2,7 +2,7 @@ import { Request, Response } from "express";
 import { createAiWritenCode } from "../aiCreatedCode/aiCreatedCode.repository";
 import { updateFileById } from "../codeFile/codeFile.repository";
 import { findOrUpdateAccount } from "../supabase/account.service";
-import { checkSessionOrThrow } from "../supabase/supabase.service";
+import { checkSessionOrThrow } from "../session/session.service";
 
 export const updateExoConfig = async (req: Request, res: Response) => {
   try {

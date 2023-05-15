@@ -3,7 +3,7 @@
 // import { extractFileNameAndPathFromFullPath } from "../../../../utils/getFileName";
 // import { getAiCodeBySession } from "../../aiCreatedCode/aiCreatedCode.repository";
 // import { findAndUpdateAiCodeBySession } from "../../aiCreatedCode/aiCreatedCode.service";
-// import { updateSession } from "../../supabase/supabase.service";
+// import { updateSession } from "../../session/session.repository";
 // import { ToolInterface } from "../agent.service";
 // import { searchCodeTool } from "./searchCode.tool";
 // import { setLocationPrompt } from "./setLocationToWriteCode.prompt";

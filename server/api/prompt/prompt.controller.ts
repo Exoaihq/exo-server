@@ -1,15 +1,16 @@
 // ```javascript
 import { Request, Response } from "express";
 import { findOrUpdateAccount } from "../supabase/account.service";
-import {
-  checkSessionOrThrow,
-  findOrCreateSession,
-} from "../supabase/supabase.service";
+
 import {
   getGlobalPromptsDb,
   getPromptById,
   handleUsingSelectedPrompt,
 } from "./prompt.service";
+import {
+  checkSessionOrThrow,
+  findOrCreateSession,
+} from "../session/session.service";
 
 export const getGlobalPrompts = async (req: Request, res: Response) => {
   try {

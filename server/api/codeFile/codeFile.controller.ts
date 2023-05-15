@@ -6,7 +6,7 @@ import { AuthenticatedRequest } from "../../middleware/isAuthenticated";
 import { handleFileUploadWithSession } from "../codeCompletion/codeCompletion.service";
 import { getOnlyRoleAndContentMessagesByUserAndSession } from "../message/message.service";
 import { findOrUpdateAccount } from "../supabase/account.service";
-import { findOrCreateSession } from "../supabase/supabase.service";
+import { findOrCreateSession } from "../session/session.service";
 import {
   findDeletedFiles,
   findDuplicateFiles,

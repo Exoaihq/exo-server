@@ -4,7 +4,7 @@ import { isSearchTool } from "../agent/agent.context";
 import { getToolByNames } from "../agent/agent.service";
 import { allTools } from "../agent/tools";
 import { getObjectiveById } from "../objective/objective.repository";
-import { getSessionById } from "../supabase/supabase.service";
+import { getSessionById } from "../session/session.repository";
 import { getIncompleteTasks, updateTaskById } from "./task.repository";
 
 export async function findAndExecuteTasks() {

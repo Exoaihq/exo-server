@@ -1,7 +1,7 @@
 import { NextFunction, Response } from "express";
 import { AuthenticatedRequest } from "../../middleware/isAuthenticated";
 import { findOrUpdateAccount } from "../supabase/account.service";
-import { findOrCreateSession } from "../supabase/supabase.service";
+import { findOrCreateSession } from "../session/session.service";
 import {
   getAiCodeBySessionOrAccount,
   updateAiWritenCode,

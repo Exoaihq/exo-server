@@ -2,7 +2,7 @@ import { ChatMessage, ChatUserType } from "../../../../types/chatMessage.type";
 import { EngineName } from "../../../../types/openAiTypes/openAiEngine";
 import { createMessageWithUser } from "../../message/message.service";
 import { createChatCompletion } from "../../openAi/openai.service";
-import { updateSession } from "../../supabase/supabase.service";
+import { updateSession } from "../../session/session.repository";
 import {
   requiredFunctionalityOnlyPrompt,
   useChooseDirectory,

@@ -4,6 +4,7 @@ import { Database } from "../../../types/supabase";
 import { getGlobalPromptsDb } from "../prompt/prompt.service";
 import { supabaseBaseServerClient } from "../../../server";
 import { logError } from "../../../utils/commandLineColors";
+import { getSessionsByUserId } from "../session/session.repository";
 
 export const getMessagesWithUser = async (
   userId: string
@@ -19,10 +20,12 @@ export const getMessagesWithUser = async (
 export const getHelerMessagesWithUser = async (
   userId: string
 ): Promise<any> => {
+  const sessions = await getSessionsByUserId(userId);
+
   const { data, error } = await supabaseBaseServerClient
     .from("messages")
     .select("content, created_at, session_id, role")
-    .eq("user_id", userId)
+    .in("session_id", [...sessions.map((session: { id: any }) => session.id)])
     .eq("is_helper_message", true);
 
   return data || [];

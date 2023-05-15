@@ -7,7 +7,10 @@ import {
 } from "../../aiCreatedCode/aiCreatedCode.repository";
 import { createMessageWithUser } from "../../message/message.service";
 import { createChatCompletion } from "../../openAi/openai.service";
-import { getSessionById, updateSession } from "../../supabase/supabase.service";
+import {
+  getSessionById,
+  updateSession,
+} from "../../session/session.repository";
 import { runUpdateExistingOrCreateNewClassificaiton } from "../codeCompletion.classifier";
 import {
   createNewCodePrompt,

@@ -8,16 +8,12 @@ import {
 } from "../../../utils/commandLineColors";
 import { extractUniqueNumbers } from "../../../utils/getUniqueNumbers";
 import { getObjectiveById } from "../objective/objective.repository";
-import {
-  baseCreateChat,
-  getCompletionDefaultStopToken,
-} from "../openAi/openAi.repository";
+import { getCompletionDefaultStopToken } from "../openAi/openAi.repository";
 import {
   createChatCompletion,
   createChatWithUserRoleAndLowTemp,
 } from "../openAi/openai.service";
-
-import { getSessionById } from "../supabase/supabase.service";
+import { getSessionById } from "../session/session.repository";
 import {
   createTaskWithObjective,
   updateTaskById,

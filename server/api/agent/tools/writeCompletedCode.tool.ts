@@ -3,7 +3,8 @@ import {
   getAiCodeBySessionOrAccount,
   updateAiWritenCode,
 } from "../../aiCreatedCode/aiCreatedCode.repository";
-import { resetSession } from "../../supabase/supabase.service";
+import { resetSession } from "../../session/session.service";
+
 import { ToolInterface } from "../agent.service";
 
 export function writeCompletedCodeTool(): ToolInterface {

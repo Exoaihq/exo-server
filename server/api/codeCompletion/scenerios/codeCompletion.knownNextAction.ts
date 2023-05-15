@@ -4,13 +4,13 @@ import { deserializeJson } from "../../../../utils/deserializeJson";
 import { createAiCodeFromNewFilePrompt } from "../../aiCreatedCode/aiCreatedCode.service";
 import { createMessageWithUser } from "../../message/message.service";
 import { createTextCompletion } from "../../openAi/openai.service";
-import { updateSession } from "../../supabase/supabase.service";
+import { updateSession } from "../../session/session.repository";
 import { doesMessageAnswerExpectedNextActionPrompt } from "../codeCompletion.prompts";
 import { handleUpdatingExistingCode } from "./codeCompletion.updateExisting";
 
 export enum ExpectedNextAction {
   NEW_FILE = "User to send functionality and file name",
-  EXISTING_FILE = "User to send code functionality, what they want the code to do",
+  EXISTING_FILE = "User to send details about how to update code in existing file that you have access to",
 }
 
 export async function handleKnownNextAction(
@@ -35,7 +35,8 @@ export async function handleKnownNextAction(
   const doesItAnswerTheQuestion = await createTextCompletion(
     doesMessageAnswerExpectedNextActionPrompt(
       sessionMessages,
-      dbSession.expected_next_action
+      dbSession.expected_next_action,
+      dbSession.code_content || ""
     ),
     0.2
   );

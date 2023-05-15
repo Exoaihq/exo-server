@@ -268,7 +268,8 @@ export const createUpdateExistingOrCreateNewPrompt = (lastMessage: string) => {
 
 export function doesMessageAnswerExpectedNextActionPrompt(
   messages: ChatMessage[],
-  expectedNextAction: string
+  expectedNextAction: string,
+  codeContent?: string
 ) {
   const userMessages = messages.filter((message) => message.role === "user");
 
@@ -277,6 +278,11 @@ export function doesMessageAnswerExpectedNextActionPrompt(
     You expect ${expectedNextAction}. Here is the most recent message: ${
     userMessages[userMessages.length - 1].content
   }
+
+  ${codeContent ? `Here is the code: ${codeContent}` : ""}
+
+  If the user mentions code in a file, you can assume you have the code. If the user does not mention code in a file, you can assume you do not have the code.
+
   If this message answers the expected next action return a json object:  
   
   {

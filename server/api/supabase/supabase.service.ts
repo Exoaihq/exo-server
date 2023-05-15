@@ -1,11 +1,9 @@
 import {
-  AuthResponse,
   Session,
   SupabaseClient,
   User,
   createClient,
 } from "@supabase/supabase-js";
-import { Request, Response } from "express";
 import { supabaseBaseServerClient } from "../../../server";
 import { AddModel } from "../../../types/openAiTypes/openAiEngine";
 import {
@@ -17,6 +15,8 @@ import {
   SnippetByFileName,
 } from "../../../types/parseCode.types";
 import { Database } from "../../../types/supabase";
+import { logError } from "../../../utils/commandLineColors";
+import { supabaseKey, supabaseUrl } from "../../../utils/envVariable";
 import { extractFileNameAndPathFromFullPath } from "../../../utils/getFileName";
 import { getSubstringFromMultilineCode } from "../../../utils/getSubstringFromMultilineCode";
 import { getProgrammingLanguage, parseFile } from "../../../utils/treeSitter";
@@ -24,9 +24,8 @@ import {
   addCodeToSupabase,
   deleteSnippetById,
 } from "../codeSnippet/codeSnippet.repository";
-import { createTextCompletion } from "../openAi/openai.service";
 import { createEmbeddings } from "../openAi/openAi.repository";
-import { supabaseKey, supabaseUrl } from "../../../utils/envVariable";
+import { createTextCompletion } from "../openAi/openai.service";
 
 export type AuthResponseWithUser = {
   data: {
@@ -63,117 +62,6 @@ export const setSupabaseAuthenticatedServerClient = async (
   supabaseAuthenticatedServerClient = supabase;
 
   return supabase;
-};
-
-export async function checkSessionOrThrow(
-  req: Request,
-  res: Response
-): Promise<AuthResponseWithUser> {
-  const { access_token, refresh_token } = req.headers;
-
-  if (!access_token || !refresh_token) {
-    throw new Error("403");
-  }
-
-  const access = access_token as string;
-  const refresh = refresh_token as string;
-
-  const session = await checkSession({
-    access_token: access,
-    refresh_token: refresh,
-  });
-
-  if (
-    !session ||
-    !session.data ||
-    !session.data.user ||
-    !session.data.user.id ||
-    session.error
-  ) {
-    throw new Error("403");
-  }
-
-  return session as AuthResponseWithUser;
-}
-
-export async function checkSession(session: {
-  access_token: string;
-  refresh_token: string;
-}) {
-  return await supabaseBaseServerClient.auth.setSession(session);
-}
-
-export const findOrCreateSession = async (
-  userId: string,
-  sessionId: string
-): Promise<Database["public"]["Tables"]["session"]["Row"]> => {
-  if (!supabaseAuthenticatedServerClient) {
-    throw new Error("No authenticated supabase client");
-  }
-
-  const { data, error } = await supabaseAuthenticatedServerClient
-    .from("session")
-    .select("*")
-    .eq("user_id", userId)
-    .eq("id", sessionId);
-
-  if (error) {
-    throw new Error(error.message);
-  }
-
-  if (data && data.length > 0) {
-    return data[0];
-  } else {
-    const { data, error } = await supabaseAuthenticatedServerClient
-      .from("session")
-      .insert([{ user_id: userId, id: sessionId }])
-      .select();
-
-    if (error || !data) {
-      throw new Error(error.message);
-    }
-
-    return data[0] as Database["public"]["Tables"]["session"]["Row"];
-  }
-};
-
-export const getSessionById = async (
-  sessionId: string
-): Promise<Database["public"]["Tables"]["session"]["Row"]> => {
-  const { data, error } = await supabaseBaseServerClient
-    .from("session")
-    .select("*")
-    .eq("id", sessionId);
-
-  if (error || !data || data.length === 0) {
-    throw new Error("Can't find the users session");
-  }
-
-  return data[0];
-};
-
-export const updateSession = async (
-  userId: string,
-  sessionId: string,
-  session: Partial<Database["public"]["Tables"]["session"]["Update"]>
-): Promise<any> => {
-  const { data } = await supabaseBaseServerClient
-    .from("session")
-    .update({ ...session })
-    .eq("user_id", userId)
-    .eq("id", sessionId)
-    .select();
-};
-
-export const resetSession = (userId: string, sessionId: any) => {
-  updateSession(userId, sessionId, {
-    code_content: "",
-    file_name: "",
-    file_path: "",
-    new_file: null,
-    location: "",
-    expected_next_action: null,
-  });
 };
 
 // Use this function to update snippets in the database
@@ -513,6 +401,33 @@ export async function getOpenAiModelsFromDb(): Promise<
   const { data, error } = await supabaseBaseServerClient
     .from("openai_models")
     .select("*");
+
+  return data;
+}
+
+export async function findUserByJwt(jwt: string) {
+  const { data, error } = await supabaseBaseServerClient.auth.getUser(jwt);
+
+  if (error) {
+    logError(error.message ? error.message : "error finding user by id");
+    return null;
+  }
+
+  return data.user;
+}
+
+export async function findDbUserByJwt(jwt: string) {
+  const authUser = await findUserByJwt(jwt);
+
+  const { data, error } = await authenticatedSupabaseClient()
+    .from("users")
+    .select("*")
+    .eq("email", authUser?.email);
+
+  if (error) {
+    logError(error.message ? error.message : "error finding user by id");
+    return null;
+  }
 
   return data;
 }

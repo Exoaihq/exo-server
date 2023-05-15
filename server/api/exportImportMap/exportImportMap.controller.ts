@@ -3,7 +3,7 @@ import { Request, Response } from "express";
 import {
   checkSessionOrThrow,
   findOrCreateSession,
-} from "../supabase/supabase.service";
+} from "../session/session.service";
 
 export const handleGetExportImportMap = async (req: Request, res: Response) => {
   try {

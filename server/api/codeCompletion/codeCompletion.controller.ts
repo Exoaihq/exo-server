@@ -2,15 +2,14 @@ import { Response } from "express";
 import { AuthenticatedRequest } from "../../middleware/isAuthenticated";
 import {
   createMessageWithUser,
-  createMessagesWithUser,
   getOnlyRoleAndContentMessagesByUserAndSession,
 } from "../message/message.service";
 import { createTextCompletion } from "../openAi/openai.service";
 import { handleSearch } from "../search/search.service";
-import {
-  findOrCreateSession,
-  updateSession,
-} from "../supabase/supabase.service";
+
+import { ChatUserType } from "../../../types/chatMessage.type";
+import { updateSession } from "../session/session.repository";
+import { findOrCreateSession } from "../session/session.service";
 import {
   createBaseClassificationPrompt,
   runBaseClassificaitonChatCompletion,
@@ -18,7 +17,6 @@ import {
 import { checkDbSession } from "./codeCompletion.service";
 import { CodeCompletionRequest } from "./codeCompletion.types";
 import { handleKnownNextAction } from "./scenerios/codeCompletion.knownNextAction";
-import { ChatUserType } from "../../../types/chatMessage.type";
 
 export const handleCodeCompletion = async (
   req: AuthenticatedRequest,

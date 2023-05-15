@@ -2,19 +2,16 @@ import { Request, Response } from "express";
 import { AuthenticatedRequest } from "../../middleware/isAuthenticated";
 import {
   createMessageWithUser,
-  findUnseenHelperMessages,
   getMessagesByUserAndSession,
 } from "./message.service";
 
 export const getMessages = async (req: AuthenticatedRequest, res: Response) => {
   try {
-    const { userId } = req;
-
     const { session_id } = req.headers;
 
     const sessionId = session_id as string;
-
-    await findUnseenHelperMessages(userId, sessionId);
+    // TODO - need to find a better way to track views
+    // await findUnseenHelperMessages(userId, sessionId);
 
     const messages = await getMessagesByUserAndSession(sessionId);
 

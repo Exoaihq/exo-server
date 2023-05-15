@@ -231,11 +231,6 @@ export async function handleFileUploadWithSession(
   codeContent: string,
   dbSession: Database["public"]["Tables"]["session"]["Row"]
 ): Promise<CodeCompletionResponse> {
-  const classification = await runFileUploadClassificaiton(
-    sessionMessages,
-    dbSession
-  );
-
   const { fileName, extractedPath } =
     extractFileNameAndPathFromFullPath(fullFilePathWithName);
 
@@ -246,24 +241,6 @@ export async function handleFileUploadWithSession(
     location: "existingFile",
   });
 
-  console.log(writeCodeObject);
-
-  console.log("File upload classification", classification);
-
-  // This was supposed to handle the case where we had the existing file and were waiting on the functionality. I'm not sure if this is still needed.
-
-  // if (classification.functionality) {
-  //   return await handleExistingFileUpdate(
-  //     sessionMessages,
-  //     classification,
-  //     userId
-  //     sessionId,
-  //     codeContent,
-  //     fileName ? fileName : dbSession.file_name || "",
-  //     extractedPath ? extractedPath : dbSession.file_path || "",
-  //     writeCodeObject
-  //   );
-  // } else {
   return await handleGetFunctionalityWhenFileExists(
     sessionMessages,
     fullFilePathWithName,
@@ -271,7 +248,6 @@ export async function handleFileUploadWithSession(
     sessionId,
     codeContent
   );
-  // }
 }
 
 export async function handleParsingCreatedCode(

@@ -10,7 +10,7 @@ import {
   createChatCompletion,
   createTextCompletion,
 } from "../openAi/openai.service";
-import { getSessionById } from "../supabase/supabase.service";
+import { getSessionById } from "../session/session.repository";
 import {
   createAiWritenCode,
   getAiCodeBySessionOrAccount,

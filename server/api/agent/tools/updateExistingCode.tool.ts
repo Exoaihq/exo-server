@@ -7,7 +7,7 @@ import { findFileByAccountIdAndFullFilePath } from "../../codeFile/codeFile.repo
 import { updateSnippetById } from "../../codeSnippet/codeSnippet.repository";
 import { createChatCompletion } from "../../openAi/openai.service";
 import { findOrUpdateAccount } from "../../supabase/account.service";
-import { updateSession } from "../../supabase/supabase.service";
+import { updateSession } from "../../session/session.repository";
 import { ToolInterface } from "../agent.service";
 import { updateExistingCodePrompt } from "./updateExistingCode.prompt";
 

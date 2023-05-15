@@ -1,5 +1,5 @@
 import { Request, Response } from "express";
-import { checkSessionOrThrow } from "../supabase/supabase.service";
+import { checkSessionOrThrow } from "../session/session.service";
 import {
   createMemoryWithSession,
   getMemoriesBySession,

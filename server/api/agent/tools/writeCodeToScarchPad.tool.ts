@@ -6,7 +6,7 @@ import {
   createChatCompletion,
   createTextCompletion,
 } from "../../openAi/openai.service";
-import { updateSession } from "../../supabase/supabase.service";
+import { updateSession } from "../../session/session.repository";
 import { ToolInterface } from "../agent.service";
 import { generateNewCodePrompt } from "./generateNewCode.prompt";
 

@@ -5,7 +5,7 @@ import { createAiCodeFromNewFilePrompt } from "../aiCreatedCode/aiCreatedCode.se
 import { ExpectedNextAction } from "../codeCompletion/scenerios/codeCompletion.knownNextAction";
 import { handleUpdatingExistingCode } from "../codeCompletion/scenerios/codeCompletion.updateExisting";
 import { createMessageWithUser } from "../message/message.service";
-import { resetSession } from "../supabase/supabase.service";
+import { resetSession } from "../session/session.service";
 
 export const getGlobalPromptsDb = async (): Promise<
   Database["public"]["Tables"]["prompt"]["Row"][]

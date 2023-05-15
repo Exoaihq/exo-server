@@ -14,7 +14,10 @@ import { createDirectoryIfNotExists } from "../../codeDirectory/codeDirectory.se
 import { createMessageWithUser } from "../../message/message.service";
 import { createChatCompletion } from "../../openAi/openai.service";
 import { createNewMessagePrompt } from "../../prompt/prompt.service";
-import { getSessionById, updateSession } from "../../supabase/supabase.service";
+import {
+  getSessionById,
+  updateSession,
+} from "../../session/session.repository";
 import { fileUploadPromp, refactorCodePrompt } from "../codeCompletion.prompts";
 import {
   addSystemMessage,
@@ -84,7 +87,7 @@ export async function handleGetFunctionalityWhenFileExists(
     }
   }
 
-  updateSession(userId, sessionId, {
+  const session = await updateSession(userId, sessionId, {
     location: "existingFile",
     functionality: "",
     file_name: fileName,

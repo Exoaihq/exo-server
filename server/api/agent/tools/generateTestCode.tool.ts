@@ -7,10 +7,8 @@ import {
   findFileByFileNameAndAccount,
 } from "../../codeFile/codeFile.repository";
 import { createTestBasedOnExistingCode } from "../../codeFile/codeFile.service";
-import { DbFile, FileWithSnippets } from "../../codeFile/codeFile.type";
-import { createNewFileFromSnippets } from "../../codeSnippet/codeSnippet.service";
+import { updateSession } from "../../session/session.repository";
 import { findOrUpdateAccount } from "../../supabase/account.service";
-import { updateSession } from "../../supabase/supabase.service";
 import { ToolInterface } from "../agent.service";
 import { generateNewCodePrompt } from "./generateNewCode.prompt";
 

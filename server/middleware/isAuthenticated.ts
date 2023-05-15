@@ -1,6 +1,6 @@
 import { NextFunction, Request, Response } from "express";
+import { checkSessionOrThrow } from "../api/session/session.service";
 import {
-  checkSessionOrThrow,
   setSupabaseAuthenticatedServerClient,
   supabaseAuthenticatedServerClient,
 } from "../api/supabase/supabase.service";
