@@ -22,6 +22,9 @@
     "test": "jest --watchAll --verbose --forceExit"
   },
   "dependencies": {
+    "@octokit/auth-app": "^4.0.10",
+    "@octokit/core": "^4.2.0",
+    "@octokit/webhooks": "^11.0.0",
     "@slack/bolt": "^3.13.0",
     "@slack/web-api": "^6.8.1",
     "@supabase/supabase-js": "^2.10.0",

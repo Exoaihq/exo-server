@@ -1,6 +1,6 @@
 import bodyParser from "body-parser";
 import cors from "cors";
-import express, { Express } from "express";
+import express, { Express, Request, Response, NextFunction } from "express";
 import agentRouter from "./server/api/agent/agent.routes";
 import aiCreatedCode from "./server/api/aiCreatedCode/aiCreatedCode.routes";
 import codeCompletionRoutes from "./server/api/codeCompletion/codeCompletion.routes";
@@ -14,6 +14,7 @@ import searchRoutes from "./server/api/search/search.routes";
 import slackRoutes from "./server/api/slack/slack.route";
 import { runScheduledTasks } from "./cron";
 import taskRoutes from "./server/api/task/task.routes";
+import githubRoutes from "./server/api/github/github.routes";
 
 export enum ApiRoutes {
   CODE_DIRECTORY = "/code-directory",
@@ -28,6 +29,7 @@ export enum ApiRoutes {
   CODE_SNIPPET = "/code-snippet",
   CODE_FILE = "/code-file",
   TASK = "/task",
+  GITHUB = "/github",
 }
 
 export function createServer() {
@@ -44,6 +46,18 @@ export function createServer() {
       limit: "50mb",
     })
   );
+
+  app.use(
+    bodyParser.json({
+      verify: (req: Request, res: Response, buf: Buffer, encoding: string) => {
+        if (buf && buf.length) {
+          // @ts-ignore
+          req.rawBody = buf.toString(encoding || "utf8");
+        }
+      },
+    })
+  );
+
   app.use(cors(corsOptions));
 
   app.use(ApiRoutes.AI_COMPLETED_CODE, aiCreatedCode);
@@ -58,5 +72,6 @@ export function createServer() {
   app.use(ApiRoutes.SLACK, slackRoutes);
   app.use(ApiRoutes.EXO_CONFIG, exoConfigRoutes);
   app.use(ApiRoutes.TASK, taskRoutes);
+  app.use(ApiRoutes.GITHUB, githubRoutes);
   return app;
 }

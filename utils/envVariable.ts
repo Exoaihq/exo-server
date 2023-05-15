@@ -9,6 +9,7 @@ const {
   PORT,
   SLACK_BOT_TOKEN,
   SLACK_SIGNING_SECRET,
+  EXO_GITHUB_APP_WEBHOOK_SECRET,
 } = env;
 
 export const supabaseKey = SUPABASE_KEY ? SUPABASE_KEY : "";
@@ -19,4 +20,7 @@ export const port = PORT ? PORT : 8081;
 export const slackBotToken = SLACK_BOT_TOKEN ? SLACK_BOT_TOKEN : "";
 export const slackSigningSecret = SLACK_SIGNING_SECRET
   ? SLACK_SIGNING_SECRET
+  : "";
+export const exoGithubAppWebhookSecret = EXO_GITHUB_APP_WEBHOOK_SECRET
+  ? EXO_GITHUB_APP_WEBHOOK_SECRET
   : "";
