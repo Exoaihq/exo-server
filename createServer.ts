@@ -15,6 +15,8 @@ import slackRoutes from "./server/api/slack/slack.route";
 import { runScheduledTasks } from "./cron";
 import taskRoutes from "./server/api/task/task.routes";
 import githubRoutes from "./server/api/github/github.routes";
+import { isProduction } from "./utils/envVariable";
+const SmeeClient = require("smee-client");
 
 export enum ApiRoutes {
   CODE_DIRECTORY = "/code-directory",
@@ -44,11 +46,6 @@ export function createServer() {
   app.use(
     bodyParser.json({
       limit: "50mb",
-    })
-  );
-
-  app.use(
-    bodyParser.json({
       verify: (req: Request, res: Response, buf: Buffer, encoding: string) => {
         if (buf && buf.length) {
           // @ts-ignore
@@ -57,6 +54,18 @@ export function createServer() {
       },
     })
   );
+
+  if (!isProduction) {
+    const smee = new SmeeClient({
+      source: "https://smee.io/SfInyn7aN4zyGqPs",
+      target: "http://localhost:8081/github",
+      logger: console,
+    });
+
+    const events = smee.start();
+    // // Stop forwarding events
+    // events.close();
+  }
 
   app.use(cors(corsOptions));
 
