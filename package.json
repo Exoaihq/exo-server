@@ -24,6 +24,7 @@
   "dependencies": {
     "@octokit/auth-app": "^4.0.10",
     "@octokit/core": "^4.2.0",
+    "@octokit/rest": "^19.0.8",
     "@octokit/webhooks": "^11.0.0",
     "@octokit/webhooks-types": "^6.11.0",
     "@slack/bolt": "^3.13.0",
@@ -46,6 +47,7 @@
     "rimraf": "^4.4.0",
     "simple-git": "^3.17.0",
     "sinon": "^15.0.4",
+    "smee-client": "^1.2.3",
     "supertest": "^6.3.3",
     "tree-sitter": "^0.20.1",
     "tree-sitter-java": "^0.19.1",
