@@ -1,10 +1,10 @@
 {
-  "name": "code-gen-server",
+  "name": "exo-server",
   "version": "1.0.0",
-  "description": "Server to support the code generation electron app",
+  "description": "Server to support the Exo electron app",
   "main": "index.ts",
   "author": "Kevin Grassi",
-  "license": "UNLICENSED",
+  "license": "MIT",
   "private": true,
   "engines": {
     "node": "18.x",
