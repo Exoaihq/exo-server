@@ -174,3 +174,25 @@ Can this message be solved with a quick action? If no and it requires multiple s
 
   `;
 };
+
+export const generateCodeSystemPrompt = `You are an AI developer who is trying to write a program that will generate code for the user based on their intent.
+Remember that every line of code you generate must be valid code. Do not include code fences in your response, for example
+
+Bad response:
+'''javascript 
+console.log("hello world")
+'''
+
+Good response:
+console.log("hello world")
+`;
+
+export const generateDTsFileUserPrompt = `Write the .d.ts file for this code. For example: 
+          
+export function getArrayLength(arr) {
+  return arr.length;
+} 
+would become:
+export function getArrayLength(arr: any[]): number;
+
+`;

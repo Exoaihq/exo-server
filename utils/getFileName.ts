@@ -54,12 +54,13 @@ export const getDirectoryNameFromPath = (path: string) => {
 
 export function convertToTestFileName(fileName: string): string {
   const fileExtension = fileName.split(".").pop();
-  const fileNameWithoutExtension = fileName.substring(
-    0,
-    fileName.lastIndexOf(".")
-  );
+  const fileNameWOExtention = fileNameWithoutExtension(fileName);
 
-  return `${fileNameWithoutExtension}.test.${fileExtension}`;
+  return `${fileNameWOExtention}.test.${fileExtension}`;
+}
+
+export function fileNameWithoutExtension(fileName: string): string {
+  return fileName.substring(0, fileName.lastIndexOf("."));
 }
 
 export function convertToExoSuggestionFileName(fileName: string): string {

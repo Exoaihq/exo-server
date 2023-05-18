@@ -141,6 +141,7 @@ export interface Database {
           code_directory_parent_id: number | null
           content: string | null
           created_at: string
+          dependencies: string | null
           file_explaination: string | null
           file_explaination_embedding: string | null
           file_name: string | null
@@ -155,6 +156,7 @@ export interface Database {
           code_directory_parent_id?: number | null
           content?: string | null
           created_at?: string
+          dependencies?: string | null
           file_explaination?: string | null
           file_explaination_embedding?: string | null
           file_name?: string | null
@@ -169,6 +171,7 @@ export interface Database {
           code_directory_parent_id?: number | null
           content?: string | null
           created_at?: string
+          dependencies?: string | null
           file_explaination?: string | null
           file_explaination_embedding?: string | null
           file_name?: string | null

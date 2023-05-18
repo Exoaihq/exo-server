@@ -1,9 +1,7 @@
-import { Response, Request } from "express";
-import { AuthenticatedRequest } from "../../middleware/isAuthenticated";
-import { WebhookEvent, IssuesOpenedEvent } from "@octokit/webhooks-types";
-import { Webhooks } from "@octokit/webhooks";
 import { Octokit } from "@octokit/core";
-import { add } from "lodash";
+import { Webhooks } from "@octokit/webhooks";
+import { Request, Response } from "express";
+import { AuthenticatedRequest } from "../../middleware/isAuthenticated";
 import {
   initOctokit,
   kgExoAppInstallationId,

@@ -14,12 +14,13 @@
     "prestart": "yarn run build",
     "start": "node dist/server.js",
     "preserve": "yarn run build",
-    "serve": "concurrently \"npx tsc -w\" \"nodemon dist/server.js\"",
+    "dev": "concurrently \"npx tsc -w\" \"nodemon dist/server.js\"",
     "generate-db-types": "npx supabase gen types typescript --project-id xexjtohvdexqxpomspdb --schema public > types/supabase.ts",
     "tsc": "./node_modules/typescript/bin/tsc",
     "build": "tsc",
     "postinstall": "npm run build",
-    "test": "jest --watchAll --verbose --forceExit"
+    "test": "jest --watchAll --verbose --forceExit",
+    "create-db-schema": "source .env && psql --single-transaction --variable ON_ERROR_STOP=1 --file schema.sql --dbname \"postgresql://postgres:\"$SUPABASE_DATABASE_PASSWORD\"@db.\"$SUPABASE_DB_ID\".supabase.co:5432/postgres\""
   },
   "dependencies": {
     "@octokit/auth-app": "^4.0.10",
@@ -44,6 +45,7 @@
     "lodash": "^4.17.21",
     "node-cron": "^3.0.2",
     "openai": "^3.2.1",
+    "pg": "^8.11.0",
     "rimraf": "^4.4.0",
     "simple-git": "^3.17.0",
     "sinon": "^15.0.4",

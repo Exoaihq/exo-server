@@ -2,7 +2,7 @@ require("dotenv").config();
 
 export const { env } = process;
 const {
-  SUPABASE_KEY,
+  SUPABASE_ANON,
   SUPABASE_URL,
   PWD,
   OPENAI_API_KEY,
@@ -17,7 +17,7 @@ const {
 
 export const isProduction =
   NODE_ENV && NODE_ENV === "production" ? true : false;
-export const supabaseKey = SUPABASE_KEY ? SUPABASE_KEY : "";
+export const supabaseKey = SUPABASE_ANON ? SUPABASE_ANON : "";
 export const supabaseUrl = SUPABASE_URL ? SUPABASE_URL : "";
 export const rootProjectDirectory = PWD ? PWD : __dirname;
 export const openAiApiKey = OPENAI_API_KEY ? OPENAI_API_KEY : "";

@@ -6,7 +6,7 @@ import {
   commandLineLoading,
 } from "../../../utils/commandLineLoadingl";
 
-import { logError } from "../../../utils/commandLineColors";
+import { logError, logInfo } from "../../../utils/commandLineColors";
 import { OpenAiChatCompletionResponse } from "../codeCompletion/codeCompletion.types";
 import {
   baseCreateChat,
@@ -43,6 +43,12 @@ export async function createChatWithUserRoleAndLowTemp(
 
 export async function getSummaryOfCode(codeContent: string) {
   const interval = commandLineLoading("Summarizing code");
+
+  if (!codeContent) {
+    return null;
+  }
+
+  logInfo(`Code content length ${codeContent.length}`);
 
   const res = await createChatCompletion(
     [

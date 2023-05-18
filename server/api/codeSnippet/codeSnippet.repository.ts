@@ -1,11 +1,33 @@
 import { supabaseBaseServerClient } from "../../../server";
-import { ParsedCode } from "../../../types/parseCode.types";
+import { ParsedCode, SnippetByFileName } from "../../../types/parseCode.types";
 import { Database } from "../../../types/supabase";
 import { extractFunctionName } from "../../../utils/getMethodName";
 import { findFileByAccountIdAndFullFilePath } from "../codeFile/codeFile.repository";
 import { createEmbeddings } from "../openAi/openAi.repository";
 import { getSummaryOfCode } from "../openAi/openai.service";
 import { matchImportSnippetWithExport } from "./codeSnippet.service";
+
+export async function findSnippetByFileNameAndAccount(
+  fileName: string,
+  accountId: string
+): Promise<SnippetByFileName[] | null> {
+  const { data, error } = await supabaseBaseServerClient
+    .from("code_snippet")
+    .select(
+      "file_name, id, code_file_id, code_string, code_explaination, start_row, start_column, end_row, end_column, parsed_code_type, account_id"
+    )
+    .eq("file_name", fileName)
+    .eq("account_id", accountId);
+
+  if (error) {
+    console.log(error);
+    return null;
+  }
+  if (!data) {
+    return null;
+  }
+  return data;
+}
 
 export const updateSnippetById = async (
   id: number,

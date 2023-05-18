@@ -17,6 +17,7 @@ import taskRoutes from "./server/api/task/task.routes";
 import githubRoutes from "./server/api/github/github.routes";
 import { isProduction } from "./utils/envVariable";
 const SmeeClient = require("smee-client");
+// const { Client } = require("pg");
 
 export enum ApiRoutes {
   CODE_DIRECTORY = "/code-directory",
@@ -39,6 +40,26 @@ export function createServer() {
 
   runScheduledTasks();
 
+  // TODO - Start of connection to postgres via docker
+  // const client = new Client({
+  //   host: "localhost",
+  //   port: 5432,
+  //   database: "exo",
+  //   user: "kg",
+  //   password: "password",
+  // });
+
+  // client.connect((err: { stack: any }) => {
+  //   if (err) {
+  //     console.error("connection error", err.stack);
+  //   } else {
+  //     console.log("connected");
+  //   }
+  // });
+
+  // Will also need to add this to package.json
+  // "predev": "docker-compose up -d"
+
   var corsOptions = {
     origin: "*",
   };
@@ -55,7 +76,7 @@ export function createServer() {
     })
   );
 
-  if (!isProduction) {
+  if (!isProduction && false) {
     const smee = new SmeeClient({
       source: "https://smee.io/SfInyn7aN4zyGqPs",
       target: "http://localhost:8081/github",

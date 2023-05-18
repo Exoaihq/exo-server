@@ -1,0 +1,16 @@
+# TODO - This is how you can run the db locally with docker. But this will not work without running the supabase client locally.
+
+version: '3'
+
+services:
+  db:
+    image: postgres:15
+    restart: always
+    ports:
+      - "5432:5432"
+    environment:
+      - POSTGRES_USER=kg
+      - POSTGRES_PASSWORD=password
+      - POSTGRES_DB=exo
+    volumes:
+      - ./schema.sql:/docker-entrypoint-initdb.d/schema.sql
