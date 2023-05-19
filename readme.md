@@ -13,11 +13,19 @@ Exo server is the backend for the Exo electron app.
 
 Here is the repo for the Exo [electron app](https://github.com/). This is the Exo server repo. You'll need to clone both to get the app to work locally.
 
-[Exo app next to vscode ](./side-by-side.png)
+Screen shot of the Exo app next to vscode:
+
+<p align="center">
+  <a href="https://star-history.com/#Torantulino/auto-gpt&Date">
+    <img src="./side-by-side.png" alt="Star History Chart">
+  </a>
+</p>
 
 ## ⚠️⚠️⚠️ Caution ⚠️⚠️⚠️
 
-Exo is under under construction! I have released this into the wild far before it is production ready. Use at your own risk!
+Exo is under under construction!
+
+I have released this into the wild far before it is production ready. Use at your own risk!
 
 ## Table of Contents
 
@@ -30,7 +38,9 @@ Exo is under under construction! I have released this into the wild far before i
 1. [Road map](#road-map)
 1. [Contact and more info](#contact-and-more-info)
 
-## [Demo](https://www.loom.com/share/5f34499ccfb54bfdae32ee50f454b365)
+## Demo
+
+https://www.loom.com/share/5f34499ccfb54bfdae32ee50f454b365
 
 ## Quickstart
 
@@ -95,4 +105,4 @@ TODO - Add some notes about limitations
 
 You can find a bunch of videos describing how this was built on my [twitter feed](https://twitter.com/KevinGrassi).
 
-Feel free to dm me on twitter or email
+Feel free to dm me on twitter or email: `kmgrassi` with the usual email client
