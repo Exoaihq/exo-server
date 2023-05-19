@@ -11,7 +11,9 @@ In short, Exo is an app that can help you read, write and refactor code directly
 
 Exo server is the backend for the Exo electron app.
 
-Here is the repo for the [electron app](https://github.com/).
+Here is the repo for the Exo [electron app](https://github.com/). This is the Exo server repo. You'll need to clone both to get the app to work locally.
+
+[Exo app next to vscode ](./side-by-side.png)
 
 ## ⚠️⚠️⚠️ Caution ⚠️⚠️⚠️
 
