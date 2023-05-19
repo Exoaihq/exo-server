@@ -1,7 +1,7 @@
 # Exo Server
 
-[![Website](https://img.shields.io/badge/Website-getexo.dev-blue)](https://agpt.co)
-[![Twitter Follow](https://img.shields.io/twitter/follow/kevinGrassi?style=social)](https://twitter.com/SigGravitas)
+[![Website](https://img.shields.io/badge/Website-getexo.dev-blue)](https://www.getexo.dev/)
+[![Twitter Follow](https://img.shields.io/twitter/follow/kevinGrassi?style=social)](https://twitter.com/kevingrassi)
 
 ## TLDR
 
