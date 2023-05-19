@@ -13,14 +13,14 @@
   "scripts": {
     "prestart": "yarn run build",
     "start": "node dist/server.js",
-    "preserve": "yarn run build",
     "dev": "concurrently \"npx tsc -w\" \"nodemon dist/server.js\"",
     "generate-db-types": "npx supabase gen types typescript --project-id xexjtohvdexqxpomspdb --schema public > types/supabase.ts",
     "tsc": "./node_modules/typescript/bin/tsc",
     "build": "tsc",
     "postinstall": "npm run build",
     "test": "jest --watchAll --verbose --forceExit",
-    "create-db-schema": "source .env && psql --single-transaction --variable ON_ERROR_STOP=1 --file schema.sql --dbname \"postgresql://postgres:\"$SUPABASE_DATABASE_PASSWORD\"@db.\"$SUPABASE_DB_ID\".supabase.co:5432/postgres\""
+    "create-db-schema": "source .env && psql --single-transaction --variable ON_ERROR_STOP=1 --file schema.sql --dbname \"postgresql://postgres:\"$SUPABASE_DATABASE_PASSWORD\"@db.\"$SUPABASE_DB_ID\".supabase.co:5432/postgres\"",
+    "export-db-schema": "source .env && npx supabase init && npx supabase link --project-ref \"$SUPABASE_DB_ID\" && npx supabase db dump -f supabase/schema.sql"
   },
   "dependencies": {
     "@octokit/auth-app": "^4.0.10",
