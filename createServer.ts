@@ -11,7 +11,6 @@ import exoConfigRoutes from "./server/api/exoConfig/exoConfig.routes";
 import messageRoutes from "./server/api/message/message.routes";
 import promptRoutes from "./server/api/prompt/prompt.routes";
 import searchRoutes from "./server/api/search/search.routes";
-import slackRoutes from "./server/api/slack/slack.route";
 import { runScheduledTasks } from "./cron";
 import taskRoutes from "./server/api/task/task.routes";
 import githubRoutes from "./server/api/github/github.routes";
@@ -27,7 +26,6 @@ export enum ApiRoutes {
   AGENT = "/agent",
   SEARCH = "/search",
   PROMPT = "/prompt",
-  SLACK = "/slack",
   EXO_CONFIG = "/exo-config",
   CODE_SNIPPET = "/code-snippet",
   CODE_FILE = "/code-file",
@@ -99,7 +97,6 @@ export function createServer() {
   app.use(ApiRoutes.AGENT, agentRouter);
   app.use(ApiRoutes.SEARCH, searchRoutes);
   app.use(ApiRoutes.PROMPT, promptRoutes);
-  app.use(ApiRoutes.SLACK, slackRoutes);
   app.use(ApiRoutes.EXO_CONFIG, exoConfigRoutes);
   app.use(ApiRoutes.TASK, taskRoutes);
   app.use(ApiRoutes.GITHUB, githubRoutes);
