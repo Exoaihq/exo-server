@@ -44,12 +44,12 @@ https://www.loom.com/share/5f34499ccfb54bfdae32ee50f454b365
 
 ## Vision
 
-The goal of the Exo app is to create [Tony Stark's Jarvis/F.R.I.D.A.Y.](https://www.youtube.com/watch?v=uKndgvIu5MY) - a chat or voice interface that you can interaction with to write code and build things. 
+The goal of the Exo app is to create [Tony Stark's Jarvis/F.R.I.D.A.Y.](https://www.youtube.com/watch?v=uKndgvIu5MY) - a chat or voice interface that you can interact with to write code and build things. 
 
 How this is different from other code generation tools?
-Exo is a freestanding app the lives on your desktop. We are far from it now, but the idea would be your would use Exo to build software (as opposed to an IDE). 
+Exo is a freestanding app the lives on your desktop. We are far from it now, but in the future you could use *Exo* to build software (as opposed to an IDE). 
 
-Because it is a freestanding app it supports UI tools that are might better suit coding practices in a post-LLM world. 
+Being a freestanding application, Exo embraces UI tools that are more aligned with coding practices in a post-LLM world.
 
 ## How it works
 
