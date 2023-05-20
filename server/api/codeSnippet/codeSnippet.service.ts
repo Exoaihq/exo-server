@@ -1,7 +1,6 @@
 import { createClient } from "@supabase/supabase-js";
 import { ChatUserType } from "../../../types/chatMessage.type";
 import { supabaseKey, supabaseUrl } from "../../../utils/envVariable";
-import { findArray, removeQuotes } from "../../../utils/findArrayInAString";
 import {
   extractFunctionName,
   getImportMethodNames,
@@ -27,6 +26,7 @@ import {
 } from "./codeSnippet.repository";
 import { logInfo, logWarning } from "../../../utils/commandLineColors";
 import { createEmbeddings } from "../openAi/openAi.repository";
+import { findArray, removeQuotes } from "../../../utils/findArrayInAString";
 
 const supabase = createClient(supabaseUrl, supabaseKey);
 

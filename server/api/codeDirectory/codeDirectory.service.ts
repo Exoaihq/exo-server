@@ -247,7 +247,9 @@ export const updateDirectoryExplaination = async () => {
 
 export const findMissingDirectoryNodes = async () => {
   const directories = await findAllDirectories();
-  console.log("Total directories", directories?.length);
+  if (!directories || directories.length === 0) {
+    return;
+  }
 
   for (let directory of directories!) {
     const {

@@ -13,7 +13,7 @@
   "scripts": {
     "prestart": "yarn run build",
     "start": "node dist/server.js",
-    "dev": "concurrently \"npx tsc -w\" \"nodemon dist/server.js\"",
+    "dev": "tsc --watch & nodemon dist/server.js",
     "generate-db-types": "npx supabase gen types typescript --project-id xexjtohvdexqxpomspdb --schema public > types/supabase.ts",
     "tsc": "./node_modules/typescript/bin/tsc",
     "build": "tsc",
