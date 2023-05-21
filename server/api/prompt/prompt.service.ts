@@ -158,3 +158,97 @@ export const handleUsingSelectedPrompt = async (
     );
   }
 };
+
+export const generateFileSystemPrompt = (
+  prompt: string,
+  filePaths: string,
+  sharedDependecies: string
+) => {
+  return `You are an AI developer who is trying to write a program that will generate code for the user based on their intent.
+        
+  the app is: ${prompt}
+
+  the files we have decided to generate are: ${filePaths}
+
+  the shared dependencies (like filenames and variable names) we have decided on are: ${sharedDependecies}
+  
+  only write valid code for the given filepath and file type, and return only the code.
+  do not add any other explanation, only return valid code for that file type.
+  `;
+};
+
+export const generateFileUserPrompt = (
+  fileName: string,
+  functionName: string,
+  prompt: string,
+  sharedDependencies: string,
+  existingFileContent?: string
+) => {
+  return `
+We have broken up the program into per-file generation. 
+Now your job is to generate only the code for the file ${fileName} with the functions:  ${functionName}. 
+Make sure to have consistent filenames if you reference other files we are also generating.
+
+the shared dependencies (like filenames and variable names) we have decided on are: ${sharedDependencies}
+
+${
+  existingFileContent ||
+  `Here is the existing code for the file ${existingFileContent}`
+}
+
+Remember that you must obey 3 things: 
+   - you are generating code for the file ${fileName}
+   - do not stray from the names of the files and the shared dependencies we have decided on
+   - MOST IMPORTANT OF ALL - the purpose of our app is ${prompt} - every line of code you generate must be valid code. Do not include code fences in your response, for example
+
+Bad response:
+'''javascript 
+console.log("hello world")
+'''
+
+Good response:
+console.log("hello world")
+
+Begin generating the code now for the file ${fileName} with the function name ${functionName}. 
+`;
+};
+
+export const generateFilePathsSystemPrompt = (existingFunctions: string) => {
+  return `
+  You are an AI developer who is trying to write a program that will generate code for the user based on their intent.
+        
+    When given their intent, create a complete, exhaustive list of functions and files that the user would write to make the program.
+
+    Here is a list of functions that already exist in the program:
+    ${existingFunctions}
+    
+    only list the functions and files you would write, and return them as a javaScript array of objects. For example:
+    [{
+      "file_name": "index.js",
+      "functions": [ "main", "helperFunction"]
+    }]
+    do not add any other explanation, only return a javaScript array of objects.
+  `;
+};
+
+export const generateSharedDependenciesSystemPrompt = (
+  prompt: string,
+  filePaths: string
+) => {
+  return `
+ You are an AI developer who is trying to write a program that will generate code for the user based on their intent.
+                
+In response to the user's prompt:
+
+---
+the app is: ${prompt}
+---
+            
+the files we have decided to generate are: ${filePaths}
+
+Now that we have a list of files, we need to understand what dependencies they share.
+Please name and briefly describe what is shared between the files we are generating, including exported variables, data schemas, message names, and function names.
+Exclusively focus on the names of the shared dependencies, and do not add any other explanation.
+  `;
+};
+

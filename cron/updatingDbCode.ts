@@ -4,7 +4,10 @@ import {
   getFilesAndMapToDirectories,
   updateDirectoryExplaination,
 } from "../server/api/codeDirectory/codeDirectory.service";
-import { findFilesWithoutExplainationAndAssignExplaination } from "../server/api/codeFile/codeFile.service";
+import {
+  findAndAddDependenciesPerFile,
+  findFilesWithoutExplainationAndAssignExplaination,
+} from "../server/api/codeFile/codeFile.service";
 import {
   findSnippetsWithoutFilesAndAssignFiles,
   updateCodeSnippetNames,
@@ -46,5 +49,10 @@ export const runUpdateCodeDbEntries = () => {
     // Some snippets are created but the methods are not named. This finds all snippets without names and assigns them a name.
     //TODO - makes sure snippets are named when they are created
     updateCodeSnippetNames();
+  });
+
+  cron.schedule("*/5 * * * * ", () => {
+    // This creates the d.ts contents for each file in the database - it stores the contents of the d.ts file in the database (vs actually creating the d.ts file).
+    findAndAddDependenciesPerFile();
   });
 };

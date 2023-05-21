@@ -21,6 +21,7 @@ import {
 import {
   createCodeFile,
   findFileByAccountIdAndFullFilePath,
+  findFilesWithoutDependencies,
   findFilesWithoutExplaination,
   findSnippetByFileNameAndAccount,
   updateFileById,
@@ -36,6 +37,10 @@ import {
   generateTestCodeTool,
 } from "../agent/tools/generateTestCode.tool";
 import { createMessageWithUser } from "../message/message.service";
+import {
+  generateCodeSystemPrompt,
+  generateDTsFileUserPrompt,
+} from "../agent/agent.prompt";
 
 const limiter = new RateLimiter({ tokensPerInterval: 15, interval: "minute" });
 
@@ -425,4 +430,60 @@ export async function writeTestsForFiles(
       file_path: extractedPath,
     });
   }
+}
+
+export async function findAndAddDependenciesPerFile() {
+  console.log("Running find/update dependencies per file");
+
+  const filesWithoutDependencies = await findFilesWithoutDependencies();
+
+  if (!filesWithoutDependencies) {
+    logInfo(`Files without dependencies 0`);
+    return;
+  }
+
+  logInfo(
+    `Files without dependencies ${
+      filesWithoutDependencies.length ? filesWithoutDependencies.length : 0
+    }`
+  );
+
+  let updateCount = 0;
+
+  for (const file of filesWithoutDependencies) {
+    logInfo(`file length ${file.content.length}`);
+    if (file.content.length > 13000) {
+      // TODO - add logic to split up files that are too large
+      continue;
+    }
+    const dependencies = await createDependenciesWithAi(file.content);
+
+    if (!dependencies) {
+      continue;
+    } else {
+      await updateFileById(file.id, {
+        dependencies,
+      });
+      updateCount++;
+    }
+  }
+  logInfo(`Files updated with dependencies ${updateCount}`);
+}
+
+export async function createDependenciesWithAi(code: string) {
+  return await createChatCompletion(
+    [
+      {
+        content: generateCodeSystemPrompt,
+        role: ChatUserType.system,
+      },
+      {
+        content: code + generateDTsFileUserPrompt,
+        role: ChatUserType.user,
+      },
+    ],
+    EngineName.GPT4,
+    0.2,
+    4000
+  );
 }

@@ -9,7 +9,7 @@ import { createAiWritenCode } from "../aiCreatedCode/aiCreatedCode.repository";
 import { findCodeDirectoryById } from "../codeDirectory/codeDirectory.repository";
 import { getCodeStandards } from "../codeDirectory/codeDirectory.service";
 import { createCodeSnippet } from "../codeSnippet/codeSnippet.repository";
-import { DbFile, FileWithSnippets } from "./codeFile.type";
+import { DbFile, FileWithConfirmedContentAndAccount, FileWithSnippets } from "./codeFile.type";
 
 export async function findSnippetByFileNameAndAccount(
   fileName: string,
@@ -412,5 +412,49 @@ export async function deleteMulipleFilesById(ids: number[]) {
     return null;
   }
   logInfo(`Deleted files ${JSON.stringify(data)}`);
+  return data;
+}
+
+
+
+export async function findFilesWithoutDependencies(): Promise<
+  FileWithConfirmedContentAndAccount[] | null
+> {
+  const { data, error } = await supabaseBaseServerClient
+    .from("code_file")
+    .select("*")
+    .is("dependencies", null)
+    .eq("code_directory_parent_id", 3141)
+    .not("content", "is", null)
+    .not("account_id", "is", null)
+    .limit(100);
+
+  if (error) {
+    logError(error.message);
+    return null;
+  }
+  if (!data) {
+    return null;
+  }
+  return data as FileWithConfirmedContentAndAccount[];
+}
+
+export async function findFilesByDirectoryPathAndAccount(
+  directoryPath: string,
+  accountId: string
+): Promise<Database["public"]["Tables"]["code_file"]["Row"][] | null> {
+  const { data, error } = await supabaseBaseServerClient
+    .from("code_file")
+    .select("*")
+    .eq("file_path", directoryPath)
+    .eq("account_id", accountId);
+
+  if (error) {
+    logError(error.message);
+    return null;
+  }
+  if (!data) {
+    return null;
+  }
   return data;
 }
