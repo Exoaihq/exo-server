@@ -1,11 +1,10 @@
 # Exo Server
 
-[![Website](https://img.shields.io/badge/Website-getexo.dev-blue)](https://www.getexo.dev/)
 [![Twitter Follow](https://img.shields.io/twitter/follow/kevinGrassi?style=social)](https://twitter.com/kevingrassi)
 
 ## TLDR
 
-[Exo](https://www.getexo.dev/) is an experimental project that uses an electron app with access to the file system to support common software development tasks using LLMs.
+Exo is an experimental project that uses an electron app with access to the file system to support common software development tasks using LLMs.
 
 In short, Exo is an app that can help you read, write and refactor code directly in your codebase. You can find a bunch of demos on my Twitter page above.
 
